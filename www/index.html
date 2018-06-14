@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<head>
+	<meta charset="utf-8">
+	<title>I2P DARKNET MAP</title>
+	<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<style>
+		h1 { 
+			font-family: sans-serif;
+			font-size: 60px;
+			margin-bottom: 50px;
+			color: #cc6600;
+		}
+		h2 {
+			font-family: times;
+			font-size: 20px;
+			margin-bottom: 50px;
+			color: rgb(255, 153, 51);
+		}
+		body { 
+			font-family: Palatino;
+			background-color: #1a001a;
+			background-image: url("fondos/fondo.png");
+		}
+		.caja {
+			font-family: Palatino;
+			font-size: 15px;
+			font-weight: 400;
+			width: 12%;
+			min-width: 150px;
+			color: #ffffff;
+			background: #889ccf;
+			overflow: hidden;
+			padding: 20px;
+			border-radius: 35px 0px 35px 0px;
+			-moz-border-radius: 35px 0px 35px 0px;
+			-webkit-border-radius: 35px 0px 35px 0px;
+			border: 2px solid #5878ca;
+			text-align: center;
+			margin: 0 auto;
+		}
+		.links line {
+			stroke: #999;
+			stroke-opacity: 0.6;
+		}
+		.nodes circle {
+			stroke: #fff;
+			stroke-width: 1.5px;
+		}	
+		svg {
+			width: 100%; height: auto;
+		}
+	</style>
+</head>
+
+<body>
+
+	<h1 align="center">I2P DARKNET MAP</h1>
+	<h2 align="center">This page shows the I2P's eepsites conectivity map.</h2>
+	<div class="caja">
+		<p><b><u>Node Information</u></b></p>
+		<p id="info"></p>
+	</div>
+	<div align="center">
+		<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="960" height="400" viewBox="0 0 960 400" preserveAspectRatio="xMidYMid meet"></svg>
+	</div>
+	
+	<script>
+	
+		var svg = d3.select("svg"); // se selecciona el elemento svg y se crea una referencia
+		var width = svg.attr("width"); // se crea una referencia al valor de la anchura del svg
+		var	height = svg.attr("height"); // se crea una referencia al valor de la altura del svg
+
+		var color = d3.scaleOrdinal(d3.schemeCategory20); // se define una escala de tipo "ordinal" con una paleta de 20 colores y se crea una referencia a ella
+
+		var simulation = d3.forceSimulation() // se define una simulación (que comienza inmediatamente) y se crea una referencia a ella
+			.force("link", d3.forceLink().id(function(d) { return d.id; }))
+			.force("charge", d3.forceManyBody())
+			.force("center", d3.forceCenter(width / 2, height / 2));
+
+		d3.json("i2p_data.json", function(error, graph) { // obtiene el archivo json especificado "i2p.json" y ejecuta la función principal
+		  if (error) throw error; // lanza una excepción si se produce un error
+
+		  var link = svg.append("g")
+			  .attr("class", "links") // le asigna el estilo CSS de la clase links
+			.selectAll("line")
+			.data(graph.links) // "pasa" por cada uno de los datos (los "datos links" en este caso) y crea un elemento link para cada uno
+			.enter().append("line")
+			  .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+		  var node = svg.append("g")
+			  .attr("class", "nodes") // le asigna el estilo CSS de la clase nodes
+			.selectAll("circle")
+			.data(graph.nodes) // "pasa" por cada uno de los datos (los "datos nodos" en este caso) y crea un elemento círculo para cada uno
+			.enter().append("circle")
+			  .on("click", function (d, i) {
+				var data = d.id;
+				//document.getElementById("info").innerHTML = data;
+				//document.getElementById("info").innerHTML = "bola="+data;
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+					  document.getElementById("info").innerHTML = this.responseText;
+					}
+				};
+				xhttp.open("POST", "reaction.php", true);
+				xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				xhttp.send("bola=" +data);
+				})
+			  .attr("r", function(d) { return d.degree; }) // se define el valor del radio del nodo en función del grado
+			  .attr("fill", function(d) { return color(d.degree); })
+			  .attr("id", function(d) { return d.id; })
+			  .call(d3.drag() // para crear el comportamiento de arrastre (el drag que d3.drag() devuelve es a la vez un objeto y una función)
+				  .on("start", dragstarted)
+				  .on("drag", dragged)
+				  .on("end", dragended));
+		  
+		  node.append("title") // añade el atributo título a cada nodo
+			  .text(function(d) { return d.name; });
+
+		  simulation // ejecuta simulación referente a los nodos
+			  .nodes(graph.nodes)
+			  .on("tick", ticked);
+
+		  simulation.force("link") // ejecuta simulación referente a los links
+			  .links(graph.links);
+
+		  function ticked() { // asigna los atributos correspondientes a las coordenadas de las rectas (links) y los círculos (nodos)
+			link
+				.attr("x1", function(d) { return d.source.x; })
+				.attr("y1", function(d) { return d.source.y; })
+				.attr("x2", function(d) { return d.target.x; })
+				.attr("y2", function(d) { return d.target.y; });
+
+			node
+				.attr("cx", function(d) { return d.x; })
+				.attr("cy", function(d) { return d.y; });
+		  }
+		  
+		});
+
+		function dragstarted(d) {
+		  if (!d3.event.active) simulation.alphaTarget(0.3).restart(); // si no hay ningún evento evento activo, reinicia la simulación con un alfa de 0.3
+		  d.fx = d.x;
+		  d.fy = d.y;
+		}
+
+		function dragged(d) {
+		  d.fx = d3.event.x;
+		  d.fy = d3.event.y;
+		}
+
+		function dragended(d) {
+		  if (!d3.event.active) simulation.alphaTarget(0); // si no hay ningún evento activo, pone alfa a 0 ("detiene" la simulación)
+		  d.fx = null;
+		  d.fy = null;
+		}
+
+	</script>
+
+</body>

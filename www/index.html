@@ -1,44 +1,29 @@
 <!DOCTYPE html>
 
 <head>
+
 	<meta charset="utf-8">
 	<title>I2P DARKNET MAP</title>
 	<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="eepsite.css">
+	<link rel="apple-touch-icon" sizes="57x57" href="/favicon/apple-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="/favicon/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/favicon/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="/favicon/apple-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/favicon/apple-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="/favicon/apple-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/favicon/apple-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png">
+	<link rel="icon" type="image/png" sizes="192x192"  href="/favicon/android-icon-192x192.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+	<link rel="manifest" href="/favicon/manifest.json">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png">
+	<meta name="theme-color" content="#ffffff">
 	<style>
-		h1 { 
-			font-family: sans-serif;
-			font-size: 60px;
-			margin-bottom: 50px;
-			color: #cc6600;
-		}
-		h2 {
-			font-family: times;
-			font-size: 20px;
-			margin-bottom: 50px;
-			color: rgb(255, 153, 51);
-		}
-		body { 
-			font-family: Palatino;
-			background-color: #1a001a;
-			background-image: url("fondos/fondo.png");
-		}
-		.caja {
-			font-family: Palatino;
-			font-size: 15px;
-			font-weight: 400;
-			width: 12%;
-			min-width: 150px;
-			color: #ffffff;
-			background: #889ccf;
-			overflow: hidden;
-			padding: 20px;
-			border-radius: 35px 0px 35px 0px;
-			-moz-border-radius: 35px 0px 35px 0px;
-			-webkit-border-radius: 35px 0px 35px 0px;
-			border: 2px solid #5878ca;
-			text-align: center;
-			margin: 0 auto;
-		}
 		.links line {
 			stroke: #999;
 			stroke-opacity: 0.6;
@@ -51,18 +36,33 @@
 			width: 100%; height: auto;
 		}
 	</style>
+	
 </head>
 
 <body>
 
-	<h1 align="center">I2P DARKNET MAP</h1>
-	<h2 align="center">This page shows the I2P's eepsites conectivity map.</h2>
-	<div class="caja">
-		<p><b><u>Node Information</u></b></p>
-		<p id="info"></p>
-	</div>
-	<div align="center">
-		<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="960" height="400" viewBox="0 0 960 400" preserveAspectRatio="xMidYMid meet"></svg>
+	<div class="main">
+		<div id="navbar">
+			<a href="https://geti2p.net" target="_blank">I2P Site</a>
+			<a href="https://github.com/Abellan09/proyecto_tfg" target="_blank">Proyect's GitHub</a>
+			<a href="#map">Map</a>
+		</div>
+		<a href="."><h1>I2P DARKNET MAP</h1></a>
+		<h2>This page shows the I2P's eepsites conectivity map</h2>
+		<div class="subtitle">
+			<u>NODE INFORMATION</u>
+			<p id="info">Click on any node in order to view its main information.</p>
+		</div>
+		<div id="map" class="subtitle">
+			EEPSITES' CONNECTIVITY MAP
+		</div>
+		<div class="notify">
+			<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="960" height="400" viewBox="0 0 960 400" preserveAspectRatio="xMidYMid meet"></svg>
+		</div> 
+		<hr>
+		<div class="footnote">	
+			Author: Ast4Th0r.
+		</div>
 	</div>
 	
 	<script>
@@ -86,7 +86,7 @@
 			.selectAll("line")
 			.data(graph.links) // "pasa" por cada uno de los datos (los "datos links" en este caso) y crea un elemento link para cada uno
 			.enter().append("line")
-			  .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+			  .attr("stroke-width", function(d) { return Math.sqrt(5); });
 
 		  var node = svg.append("g")
 			  .attr("class", "nodes") // le asigna el estilo CSS de la clase nodes
@@ -107,7 +107,7 @@
 				xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 				xhttp.send("bola=" +data);
 				})
-			  .attr("r", function(d) { return d.degree; }) // se define el valor del radio del nodo en función del grado
+			  .attr("r", function(d) { return d.incoming_sites; }) // se define el valor del radio del nodo en función del grado
 			  .attr("fill", function(d) { return color(d.degree); })
 			  .attr("id", function(d) { return d.id; })
 			  .call(d3.drag() // para crear el comportamiento de arrastre (el drag que d3.drag() devuelve es a la vez un objeto y una función)
@@ -157,5 +157,6 @@
 		}
 
 	</script>
-
+	
 </body>
+

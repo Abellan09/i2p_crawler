@@ -2,9 +2,9 @@
 
 import os			# https://docs.python.org/2/library/os.html
 import shutil		# https://docs.python.org/2/library/shutil.html
-import time 		# https://docs.python.org/2/library/time.html
-import subprocess 	# https://docs.python.org/2/library/subprocess.html
-import urlparse 	# https://docs.python.org/2/library/urlparse.html
+import time			# https://docs.python.org/2/library/time.html
+import subprocess	# https://docs.python.org/2/library/subprocess.html
+import urlparse		# https://docs.python.org/2/library/urlparse.html
 import copy			# https://docs.python.org/2/library/copy.html
 import sqlite3		# https://docs.python.org/2/library/sqlite3.html
 import json			# https://docs.python.org/2/library/json.html
@@ -74,20 +74,30 @@ def process_fail():
 	print("DEBUG - Dentro de process_fail()")
 	global fail_files
 	global pending_sites
+	global ongoing_sites
+	global ongoing_crawlers
 	files_to_remove = []
 	print("DEBUG - Fail_files antes del bucle: " + str(fail_files))
-	for fil in fail_files:
-		eliminar = "i2p/spiders/finished/" + fil
-		os.remove(eliminar)
-		fil_without_extension = fil.replace(".fail", "")
-		if fil_without_extension not in pending_sites:
-			pending_sites.append(fil_without_extension)
-			print("DEBUG - " + fil_without_extension + " add to pending_sites")
-		files_to_remove.append(fil)
-	#print ("Files to remove: " + str(files_to_remove))
-	for i in files_to_remove:
-		fail_files.remove(i)
-	print("DEBUG - Fail_files despues del bucle: " + str(fail_files))
+	try:
+		for fil in fail_files:
+			files_to_remove.append(fil)
+			eliminar = "i2p/spiders/ongoing/" + fil.replace(".fail", ".json")
+			os.remove(eliminar)
+			eliminar = "i2p/spiders/finished/" + fil
+			os.remove(eliminar)
+			fil_without_extension = fil.replace(".fail", "")
+			ongoing_sites.remove(fil_without_extension)
+			ongoing_crawlers -= 1
+			if fil_without_extension not in pending_sites:
+				pending_sites.append(fil_without_extension)
+				print("DEBUG - " + fil_without_extension + " add to pending_sites")
+		#print ("Files to remove: " + str(files_to_remove))
+	except Exception as e:
+		print("ERROR - Se ha producido algun error al intentar borrar los archivos")
+	finally:
+		for i in files_to_remove:
+			fail_files.remove(i)
+		print("DEBUG - Fail_files despues del bucle: " + str(fail_files))
 	
 def process_ok():
 	'''
@@ -110,33 +120,37 @@ def process_ok():
 	global ongoing_crawlers
 	files_to_remove = []
 	print("DEBUG - ok_files antes del bucle: " + str(ok_files))
-	for fil in ok_files:
-		fil_without_extension = fil.replace(".ok", "")
-		fil_json_extension = fil.replace(".ok", ".json")
-		source = "i2p/spiders/ongoing/" + fil_json_extension
-		target = "i2p/spiders/finished/" + fil_json_extension
-		shutil.move(source, target)
-		ongoing_sites.remove(fil_without_extension)
-		ongoing_crawlers -= 1
-		with open(target) as f:
-			crawled_items = json.load(f)
-		crawled_eepsites = crawled_items[len(crawled_items) - 1]["extracted_eepsites"]
-		print("INFO - Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
-		if fil_without_extension not in visited_sites:
-			visited_sites.append(fil_without_extension)
-			db_dictionary[fil_without_extension]=crawled_eepsites
-			print db_dictionary
-		for site in crawled_eepsites:
-			if (site not in pending_sites) and (site not in ongoing_sites) and (site not in visited_sites):
-				pending_sites.append(site)
-				#print site
-				print("DEBUG - " + site + " add to pending_sites")
-		files_to_remove.append(fil)
-		eliminar = "i2p/spiders/finished/" + fil
-		os.remove(eliminar)
-	for i in files_to_remove:
-		ok_files.remove(i)
-	print("DEBUG - ok_files despues del bucle: " + str(ok_files))
+	try:
+		for fil in ok_files:
+			files_to_remove.append(fil)
+			fil_without_extension = fil.replace(".ok", "")
+			fil_json_extension = fil.replace(".ok", ".json")
+			source = "i2p/spiders/ongoing/" + fil_json_extension
+			target = "i2p/spiders/finished/" + fil_json_extension
+			shutil.move(source, target)
+			ongoing_sites.remove(fil_without_extension)
+			ongoing_crawlers -= 1
+			with open(target) as f:
+				crawled_items = json.load(f)
+			crawled_eepsites = crawled_items[len(crawled_items) - 1]["extracted_eepsites"]
+			print("INFO - Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
+			if fil_without_extension not in visited_sites:
+				visited_sites.append(fil_without_extension)
+				db_dictionary[fil_without_extension]=crawled_eepsites
+				print db_dictionary
+			for site in crawled_eepsites:
+				if (site not in pending_sites) and (site not in ongoing_sites) and (site not in visited_sites) and (site endswith(".i2p")):
+					pending_sites.append(site)
+					#print site
+					print("DEBUG - " + site + " add to pending_sites")
+			eliminar = "i2p/spiders/finished/" + fil
+			os.remove(eliminar)
+	except:
+		print("ERROR - Se ha producido algun error al intentar borrar los archivos")
+	finally:
+		for i in files_to_remove:
+			ok_files.remove(i)
+		print("DEBUG - ok_files despues del bucle: " + str(ok_files))
 		
 def add_to_database():
 	'''
@@ -291,15 +305,16 @@ def results():
 	print("RESULT - Total Launched Crawlers: " + str(total_crawlers))
 	print("RESULT - Total Loop Executions: " + str(total_loop_executions))
 
+
 def dict_factory(cursor, row):
 	'''
 	EN: Function taken from https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.row_factory
 	SP: Función tomada de https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.row_factory
 	'''
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
+	d = {}
+	for idx, col in enumerate(cursor.description):
+		d[col[0]] = row[idx]
+	return d
 
 def db_to_json():
 	'''
@@ -369,7 +384,7 @@ def main():
 		throw_crawler()
 		check()
 		total_loop_executions += 1
-		time.sleep(2) # duerme 2 segundos
+		time.sleep(1) # duerme 2 segundos
 	add_to_database()
 	db_to_json()
 	results()

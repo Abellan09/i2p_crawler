@@ -23,9 +23,9 @@ class I2PFilterMiddleware(object):
     ".xls", ".xlsx", ".ppt", ".pptx", ".pps", ".doc", ".docx", ".odt", ".ods", ".odg",
     ".odp",
     # code
-    ".c", ".cpp", ".h", ".java", ".class", ".jar", ".py", ".pyc", ".pyo", ".pyw", ".rb", ".rbw", ".pl", ".pm", ".cgi"
+    ".cpp", ".java", ".class", ".jar", ".py", ".pyc", ".pyo", ".pyw", ".rb", ".rbw", ".pl", ".pm", ".cgi",
     # other
-    ".css", ".pdf", ".exe", ".bin", ".rss", ".zip", ".rar", ".tar", ".gz"
+    ".css", ".pdf", ".exe", ".bin", ".rss", ".zip", ".rar", ".tar", ".gz",
 	]
 	
 	def process_request(self, request, spider):

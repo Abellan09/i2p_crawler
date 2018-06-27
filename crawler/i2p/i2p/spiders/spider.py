@@ -3,6 +3,7 @@
 import scrapy		# https://doc.scrapy.org/en/latest
 import shutil		# https://docs.python.org/2/library/shutil.html
 import urlparse		# https://docs.python.org/2/library/urlparse.html
+import time			# https://docs.python.org/2/library/time.html
 from i2p.items import I2PItem, I2PItemFinal
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spidermiddlewares.httperror import HttpError
@@ -20,6 +21,8 @@ class I2P_Spider(scrapy.Spider):
 	'''
 	
 	name = "i2p"
+	end_time = 0
+	start_time = 0
 	start_urls = []
 	visited_links = []
 	parse_eepsite = None
@@ -39,10 +42,12 @@ class I2P_Spider(scrapy.Spider):
 		:param url: url of the site to crawl / url del site a crawlear
 		'''
 		super(I2P_Spider, self).__init__(*args, **kwargs)
+		self.logger.debug("Dentro de __init__()")
 		if url is not None:
 			self.start_urls.append(url)
 			self.parse_eepsite = urlparse.urlparse(url)
-			#print self.parse_eepsite
+			self.start_time = time.time()
+			self.logger.info("Start URL: %s", self.parse_eepsite)
 		else:
 			self.logger.error("No URL passed to crawl")
 	
@@ -51,6 +56,7 @@ class I2P_Spider(scrapy.Spider):
 		EN: It returns an iterable of Requests which the Spider will begin to crawl.
 		SP: Devuelve un iterable de Requests que el Spider comenzará a crawlear.
 		'''
+		self.logger.debug("Dentro de start_requests()")
 		for u in self.start_urls:
 			yield scrapy.Request(u, callback = self.parse, errback = self.err, dont_filter=True)  
 	
@@ -66,6 +72,7 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param response: response returned by an eepsite / respuesta devuelta por un eepsite.
 		'''
+		self.logger.debug("Dentro de parse()")
 		self.error = False
 		self.logger.info("Recieved response from {}".format(response.url))
 		self.visited_links.append(response.url)
@@ -80,6 +87,7 @@ class I2P_Spider(scrapy.Spider):
 			if (parse_link.netloc not in self.item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc):
 				self.item["extracted_eepsites"].append(parse_link.netloc)
 			if (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc):
+				self.visited_links.append(link.url)
 				yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
 		self.aux["list_of_urls"] = urls_list
 		yield self.aux
@@ -93,6 +101,7 @@ class I2P_Spider(scrapy.Spider):
 		:param response: response returned by an eepsite / respuesta devuelta por un eepsite
 		:return: list that contains the extracted links / lista que contiene los links extraídos
 		'''
+		self.logger.debug("Dentro de get_links()")
 		links = self.extractor_i2p.extract_links(response)
 		return links
 	
@@ -108,26 +117,28 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param reason: a string which describes the reason why the spider was closed / string que describre por qué ha finalizado el spider
 		'''
-		print ("DEBUG - Dentro de closed()")
-		print ("SPIDER FINALIZADO")
-		print ("ERROR = " + str(self.error))
+		self.logger.debug("Dentro de closed()")
+		self.logger.info("SPIDER FINALIZADO")
+		self.logger.info("ERROR = " + str(self.error))
 		site = self.parse_eepsite.netloc
 		#source = "./i2p/spiders/ongoing/" + site + ".json"
 		ok = "./i2p/spiders/finished/" + site + ".ok"
 		fail = "./i2p/spiders/finished/" + site + ".fail"
+		self.end_time = time.time()
 		# self.error = False
 		if self.error:
 			f = open(fail, "w")
 			f.close()
-			print ("DEBUG - " + site + ".fail has been created at /i2p/spiders/finished")
+			self.logger.info(site + ".fail has been created at /i2p/spiders/finished")
 			#shutil.move(source, fail)
 			#shutil.copy(source, fail)
 		else:
 			f = open(ok, "w")
 			f.close()
-			print ("DEBUG - " + site + ".ok has been created at /i2p/spiders/finished")
+			self.logger.info(site + ".ok has been created at /i2p/spiders/finished")
 			#shutil.move(source, target)
 			#shutil.copy(source, ok)
+			self.logger.info("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
 		
 	def err(self, failure):
 		'''
@@ -141,6 +152,7 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
+		self.logger.debug("Dentro de err()")
 		self.error = True
 		self.logger.error(repr(failure))  
 		if failure.check(HttpError):

@@ -30,7 +30,7 @@ class I2P_Spider(scrapy.Spider):
 	aux = I2PItem()
 	item = I2PItemFinal()
 	item["extracted_eepsites"]=[]
-	extractor_i2p = LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),deny_domains=('net','com','info','org'),deny_extensions=())
+	extractor_i2p = LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),allow_domains=('i2p'),deny_extensions=())
 	# extractor_multimedia = LinkExtractor(tags=('audio','embed','iframe','img','input','script','source','track','video'),attrs=('src','srcset'),deny_domains=('net','com','info','org'),deny_extensions=())
 	# extractor_links = LinkExtractor(tags=('a','area','base','link'),attrs=('href'),deny_domains=('net','com','info','org'),deny_extensions=())
 	

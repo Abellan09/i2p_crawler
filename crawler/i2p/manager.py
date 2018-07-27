@@ -21,19 +21,29 @@ def throw_crawler():
 	spider.py para crawlear el siguiente eepsite contenido en la lista pending_sites.
 	'''
 	logging.debug("Dentro de throw_crawler()")
+	global ignored_sites
 	global pending_sites
 	global ongoing_sites
 	global ongoing_crawlers
 	global maximum_crawlers
 	global total_crawlers
-	if (ongoing_crawlers < maximum_crawlers) and (pending_sites):
+	if (ongoing_crawlers <= maximum_crawlers) and (pending_sites):
 		next_site = pending_sites.pop()
-		ongoing_sites.append(next_site)
-		param1 = "url=http://" + next_site
-		param2 = "i2p/spiders/ongoing/" + next_site + ".json"
-		subprocess.Popen(["scrapy", "crawl", "i2p", "-a", param1, "-o", param2 ], shell=False)
-		ongoing_crawlers += 1
-		total_crawlers += 1
+		if next_site in attempts_dict:
+			attempts = attempts_dict.get(next_site)
+			if (attempts > 5) and (next_site not in ignored_sites):
+				ignored_sites.append(next_site)
+			else:
+				attempts_dict.update({next_site:attempts+1})
+		else:
+			attempts_dict.update({next_site:1})
+		if(next_site not in ignored_sites):
+			ongoing_sites.append(next_site)
+			param1 = "url=http://" + next_site
+			param2 = "i2p/spiders/ongoing/" + next_site + ".json"
+			subprocess.Popen(["scrapy", "crawl", "i2p", "-a", param1, "-o", param2 ], shell=False)
+			ongoing_crawlers += 1
+			total_crawlers += 1
 
 def check():
 	'''
@@ -101,15 +111,14 @@ def process_ok():
 	EN: It processes the files with ".ok" extension.
 	SP: Procesa los ficheros con extensión ".ok".
 	
-	It moves the ".json" files of the sites that have been crawled correctly (.ok) from the /ongoing directory to 
-	the /finished directory, opens said ".json" files and adds the pertinent data to db_dictionary, adds the sites 
-	that haven't been visited yet to the pending_sites and deletes the ".ok" files once processed.
-	Mueve los ficheros ".json" de los sites que han sido crawleados correctamente (.ok) del directorio /ongoing
-	al directorio /finished, abre dichos ficheros ".json" y añade a db_dictionary los datos pertinentes, añade
-	a pending_sites los sites que no se hayan visitado y borra los ficheros ".ok" una vez procesados.
+	It moves the ".json" files of the sites that have been crawled correctly (.ok) from the /ongoing directory to the /finished
+	directory, opens said ".json" files, calls the add_to_database() function in order to add the pertinent data to database, 
+	adds the sites that haven't been visited yet to the pending_sites and deletes the ".ok" files once processed.
+	Mueve los ficheros ".json" de los sites que han sido crawleados correctamente (.ok) del directorio /ongoing	al directorio
+	/finished, abre dichos ficheros ".json", llama a la función add_to_database() para añadir los datos pertinentes a la 
+	base de datos, añade a pending_sites los sites que no se hayan visitado y borra los ficheros ".ok" una vez procesados.
 	'''
 	logging.debug("Dentro de process_ok()")
-	global db_dictionary
 	global ok_files
 	global visited_sites
 	global pending_sites
@@ -133,8 +142,7 @@ def process_ok():
 			logging.info("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
 			if fil_without_extension not in visited_sites:
 				visited_sites.append(fil_without_extension)
-				db_dictionary[fil_without_extension]=crawled_eepsites
-				# print db_dictionary
+				add_to_database(fil_without_extension, crawled_eepsites)
 			for site in crawled_eepsites:
 				if (site not in pending_sites) and (site not in ongoing_sites) and (site not in visited_sites) and (site.endswith(".i2p")):
 					pending_sites.append(site)
@@ -148,143 +156,137 @@ def process_ok():
 			ok_files.remove(i)
 		logging.debug("ok_files despues del bucle: " + str(ok_files))
 		
-def add_to_database():
+def add_to_database(site, targeted_sites):
 	'''
 	EN: It adds the extracted data by the crawler to the database.
 	SP: Añade los datos extraídos por el crawler a la base de datos.
 	
-	First, it fills in some fields of the table "nodes" (name and outgoing_sites), then it fills in all the fields
-	of the "links" table, and finally, it fills in the incoming_sites and degree fields of the table "nodes".
-	En primer lugar, rellena algunos campos de la tabla "nodes" (name y outgoing_sites), después rellena
-	todos los campos de la tabla "links", y finalmente, rellena los campos incoming_sites y degree de la
-	tabla "nodes".
+	:param site: site in question to add to the database / site en cuestión a añadir a la base de datos
+	:param targeted_sites: sites to which the site points at / sitios a los que el site apunta
 	'''
 	logging.debug("Dentro de add_to_database()")
-	global db_dictionary
-	for key in db_dictionary:
-		source = key
-		targets = db_dictionary[key]
-		add_nodes_to_database(source, len(targets))
-	for key in db_dictionary:
-		source = key
-		targets = db_dictionary[key]
-		targets_id_aux = []
-		try:
-			connection = sqlite3.connect("i2p_database.db") # open the db
-			cursor = connection.cursor() # get a cursor object
-			cursor.execute("SELECT id FROM nodes WHERE name=?", (source,))
-			source_id_aux = cursor.fetchone()
-			for target in targets:
-				cursor.execute("SELECT id FROM nodes WHERE name=?", (target,))
-				target_id = cursor.fetchone()
-				targets_id_aux.append(target_id)
-		except sqlite3.DatabaseError as e:
-			logging.error("Something was wrong with the Database")
-			connection.rollback() # roll back any change if something goes wrong
-			raise e
-		finally:
-			connection.close() # close the db connection
-		source_id = source_id_aux[0]
-		targets_id = []
-		for i in targets_id_aux:
-			targets_id.append(i[0])
-		logging.debug("Source_ID = " + str(source_id))
-		logging.debug("Targets_ID = " + str(targets_id))
-		add_links_to_database(source_id, targets_id)
-	add_degree_to_nodes()
-
-def add_nodes_to_database(site, targeted_sites):
-	'''
-	EN: It adds to the table "nodes" the data of each site referring to the fields "name" and "outgoing_sites".
-	SP: Añade a la tabla "nodes" los datos referentes a los campos "name" y "outgoing_sites" de cada site.
-	'''
-	logging.debug("Dentro de add_nodes_to_database()")
 	name = site
-	outgoing_sites = targeted_sites
+	outgoing_sites = len(targeted_sites)
 	try:
-		connection = sqlite3.connect("i2p_database.db") # open the db
+		connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db") # open the db
 		cursor = connection.cursor() # get a cursor object
-		cursor.execute('''INSERT INTO nodes(name, outgoing_sites)
-						VALUES(?,?)''', (name, outgoing_sites))
+		cursor.execute("SELECT name FROM nodes WHERE name=?", (name,))
+		found = cursor.fetchone()
+		if found is None:
+			cursor.execute("INSERT INTO nodes(name, incoming_sites, outgoing_sites)	VALUES(?,?,?)", (name, 0, outgoing_sites))
+		else:
+			cursor.execute("UPDATE nodes SET outgoing_sites=? WHERE name=?", (outgoing_sites, name,))
+		for iterator in range(len(targeted_sites)):
+			cursor.execute("SELECT incoming_sites FROM nodes WHERE name=?", (targeted_sites[iterator],))
+			found = cursor.fetchone()
+			if found is None:
+				cursor.execute("INSERT INTO nodes(name, incoming_sites, outgoing_sites)	VALUES(?,?,?)", (targeted_sites[iterator], 1, 0))
+			else:
+				incoming_sites = found[0] + 1
+				cursor.execute("UPDATE nodes SET incoming_sites=? WHERE name=?", (incoming_sites, targeted_sites[iterator],))
+		cursor.execute("SELECT id FROM nodes WHERE name=?", (name,))
+		source_id_aux = cursor.fetchone()
+		source_id = source_id_aux[0]
+		for iterator in range(len(targeted_sites)):
+			cursor.execute("SELECT id FROM nodes WHERE name=?", (targeted_sites[iterator],))
+			target_id_aux = cursor.fetchone()
+			target_id = target_id_aux[0]
+			cursor.execute("INSERT INTO links(source, target) VALUES(?,?)", (source_id, target_id))
 		connection.commit() # commit the change(s)
 	except sqlite3.DatabaseError as e:
-		logging.error("Something was wrong with the Database")
+		logging.error("ERROR - Something was wrong with the Database")
 		connection.rollback() # roll back any change if something goes wrong
 		raise e
 	finally:
 		connection.close() # close the db connection
 
-def add_links_to_database(source_id, targets_id):
-	'''
-	EN: It adds to the table "links" the data of each site referring to the fields "source" and "target".
-	SP: Añade a la tabla "links" los datos referentes a los campos "source" y "target" de cada site.
-	'''
-	logging.debug("Dentro de add_links_to_database()")
-	try:
-		connection = sqlite3.connect("i2p_database.db") # open the db
-		cursor = connection.cursor() # get a cursor object
-		for target_id in targets_id:
-			cursor.execute('''INSERT INTO links(source, target)
-						VALUES(?,?)''', (source_id, target_id))
-		connection.commit() # commit the change(s)
-	except sqlite3.DatabaseError as e:
-		logging.error("Something was wrong with the Database")
-		connection.rollback() # roll back any change if something goes wrong
-		raise e
-	finally:
-		connection.close() # close the db connection
-
-def add_degree_to_nodes():
-	'''
-	EN: It adds to the table "nodes" the data of each site referring to the fields "incoming_sites" and "degree".
-	SP: Añade a la tabla "nodes" los datos referentes a los campos "incoming_sites" y "degree" de cada site.
-	'''
-	logging.debug("Dentro de add_degree_to_nodes()")
-	try:
-		connection = sqlite3.connect("i2p_database.db") # open the db
-		cursor = connection.cursor() # get a cursor object
-		cursor.execute("SELECT id FROM nodes")
-		nodes_ids_aux = cursor.fetchall()
-		nodes_ids = []
-		for i in nodes_ids_aux:
-			nodes_ids.append(i[0])
-		for ide in nodes_ids:
-			cursor.execute("SELECT id FROM links WHERE target=?", (ide,))
-			resultado = cursor.fetchall()
-			incoming_sites = len(resultado)
-			degree = set_degree(incoming_sites)
-			cursor.execute('''UPDATE nodes SET incoming_sites=?, degree=?
-							WHERE nodes.id=?''', (incoming_sites, degree, ide))
-			connection.commit()
-	except sqlite3.DatabaseError as e:
-		logging.error("Something was wrong with the Database")
-		connection.rollback() # roll back any change if something goes wrong
-		raise e
-	finally:
-		connection.close() # close the db connection
-
-def set_degree(incoming_sites):
+def set_degree(num):
 	'''
 	EN: It assings a certain degree to a site depending on the sites that point at it.
 	SP: Asigna un determinado grado a un site en función de los sites que lo apuntan.
 	
-	:param incoming_sites: number of sites that point to the site / número de sitios que apuntan al site
+	:param num: number of sites that point to the site / número de sitios que apuntan al site
 	:return: the assigned degree / el grado asignado
 	'''
+	if num >= 15:
+		return 8
+	elif num >= 12:
+		return 7
+	elif num >= 10:
+		return 6
+	elif num >= 8:
+		return 5
+	elif num >= 6:
+		return 4
+	elif num >= 4:
+		return 3
+	elif num >= 2:
+		return 2
+	else:
+		return 1
+
+def update_degree_to_database():
+	'''
+	EN: It updates the degree value for each site in the database.
+	SP: Actualiza el valor de degree para cada site en la base de datos.
+	'''
 	logging.debug("Dentro de set_degree()")
-	degree = 3
-	if incoming_sites >= 10:
-		degree = 15
-	elif incoming_sites >= 7:
-		degree = 12
-	elif incoming_sites >= 5:
-		degree = 10
-	elif incoming_sites >= 3:
-		degree = 8
-	elif incoming_sites >= 1:
-		degree = 5
-	logging.debug("DEGREE = " + str(degree))
-	return degree
+	try:
+		connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db") # open the db
+		cursor = connection.cursor() # get a cursor object
+		cursor.execute("SELECT id, incoming_sites, name FROM nodes")
+		result = cursor.fetchall()
+		for i in range(len(result)):
+			node_id = result[i][0]
+			incoming_sites = result[i][1]
+			name = result[i][2]
+			degree = set_degree(incoming_sites)
+			logging.debug("DEGREE = " + str(degree) + " assigned to " + str(name))
+			cursor.execute("UPDATE nodes SET degree=? WHERE id=?", (degree, node_id,))
+		connection.commit() # commit the change(s)
+	except sqlite3.DatabaseError as e:
+		logging.error("ERROR - Something was wrong with the Database")
+		connection.rollback() # roll back any change if something goes wrong
+		raise e
+	finally:
+		connection.close() # close the db connection
+
+def update_top():
+	'''
+	EN: It updates the TOP tables of sites with more incoming_sites (Table Incoming_Top) and with more outgoing_sites (Table Outgoing_Top).
+	SP: Actualiza las tablas de los TOP de sites con más incoming_sites (Tabla Incoming_Top) y con más outgoing_sites (Tabla Outgoing_Top).
+	'''
+	logging.debug("Dentro de update_top()")
+	try:
+		connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db") # open the db
+		cursor = connection.cursor() # get a cursor object
+		cursor.execute("SELECT id, incoming_sites FROM nodes ORDER BY incoming_sites DESC LIMIT 5")
+		incoming = cursor.fetchall()
+		logging.debug("INCOMING: " + str(incoming))
+		if (len(incoming)==5):
+			for i in range(5):
+				logging.debug("Dentro de for de incoming, ANTES consulta")
+				top_id = i+1
+				node_id = incoming[i][0]
+				cursor.execute("UPDATE incoming_top SET node_id=? WHERE id=?", (node_id, top_id,))
+				logging.debug("Dentro de for de incoming, DESPUÉS consulta")
+			logging.debug("The table Incoming_Top has been updated")
+			cursor.execute("SELECT id, outgoing_sites FROM nodes ORDER BY outgoing_sites DESC LIMIT 5")
+			outgoing = cursor.fetchall()
+			for i in range(5):
+				logging.debug("Dentro de for de outgoing, ANTES consulta")
+				top_id = i+1
+				node_id = outgoing[i][0]
+				cursor.execute("UPDATE outgoing_top SET node_id=? WHERE id=?", (node_id, top_id,))
+				logging.debug("Dentro de for de outgoing, DESPUÉS consulta")
+			logging.debug("The table Outgoing_Top has been updated")
+			connection.commit() # commit the change(s)
+	except sqlite3.DatabaseError as e:
+		logging.error("ERROR - Something was wrong with the Database")
+		connection.rollback() # roll back any change if something goes wrong
+		raise e
+	finally:
+		connection.close() # close the db connection
 
 def results():
 	'''
@@ -297,7 +299,6 @@ def results():
 	logging.debug("Dentro de results()")
 	logging.info("Total Launched Crawlers: " + str(total_crawlers))
 	logging.info("Total Loop Executions: " + str(total_loop_executions))
-
 
 def dict_factory(cursor, row):
 	'''
@@ -316,7 +317,7 @@ def db_to_json():
 	SP: Genera un archivo en formato json con los nodos y links contenidos en la base de datos.
 	'''
 	logging.debug("Dentro de db_to_json()")
-	connection = sqlite3.connect("i2p_database.db")
+	connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db")
 	connection.row_factory = dict_factory
 	cursor = connection.cursor()
 	cursor.execute("SELECT * FROM nodes ORDER BY id")
@@ -324,24 +325,219 @@ def db_to_json():
 	cursor.execute("SELECT * FROM links ORDER BY source")
 	links = cursor.fetchall()
 	json_result = json.dumps({"nodes": nodes, "links": links}, sort_keys=True, indent=4, separators=(',', ': '))
-	with open('i2p_data.json', 'wb') as f:
+	with open('C:\Program Files (x86)\Ampps\www\i2p_data.json', 'wb') as f:
 		f.write(json_result)
 
 seed_sites = [
-	"identiguy.i2p",
-	"secure.thetinhat.i2p",
-	"i2pwiki.i2p",
-	"i2p-projekt.i2p",
-	"echelon.i2p",
-	"exchanged.i2p",
-	"zzz.i2p",
-	"planet.i2p",
-	"zerobin.i2p",
-	"i2pforum.i2p",
-	"stats.i2p",
+	"auchan.i2p",
+	"city.i2p",
+	"mochimochi.i2p",
+	"wa11ed.city.i2p",
+	"102chan.i2p", 
+	"1st.i2p", 
+	"333.i2p", 
+	"alice.i2p",
+	"andmp.i2p", 
+	"animal.i2p",
+	"anodex.i2p",
+	"anongw.i2p",
 	"anoncoin.i2p",
+	"aosp.i2p",
+	"arc2.i2p",
+	"archaicbinarybbs.i2p",
+	"archiv.tutorials.i2p",
+	"backup.i2p",
+	"bigbrother.i2p",
+	"bitlox.i2p",
+	"black.i2p",
+	"blog.tinlans.i2p",
+	"bmw.i2p", 
+	"bmworc.i2p",
+	"bobthebuilder.i2p",
+	"boerse.i2p",
+	"bofh.i2p",
+	"bote.i2p",
+	"cathugger.i2p",
+	"cerapadus.i2p",
+	"check.kovri.i2p",
+	"chess.i2p",
+	"chitanka.i2p",
+	"ciphercraft.i2p",
+	"co.i2p",
+	"crypthost.i2p",
+	"darkrealm.i2p",
+	"darrob.i2p",
+	"dead.i2p",
+	"deb-mirror.i2p",
+	"deepwebradio.i2p",
+	"def2.i2p",
+	"def3.i2p",
+	"def4.i2p",
+	"det.i2p",
+	"diasporg.i2p",
+	"diftracker.i2p",
+	"dumpteam.i2p",
+	"echelon.i2p",
+	"epub-eepsite.i2p",
+	"exch.i2p",
+	"exchange.gostcoin.i2p",
+	"exchanged.i2p",
+	"explorer.gostcoin.i2p",
+	"fa.i2p",
+	"fantasy-worlds.i2p",
+	"fido.r4sas.i2p", 
+	"flibusta.i2p",
+	"forum.rus.i2p",
+	"forums.i2p",
+	"freedomforum.i2p",
+	"freefallheavens.i2p",
+	"fs.i2p",
+	"fsoc.i2p",
+	"ginnegappen.i2p",
+	"git.crypthost.i2p",
+	"git.psi.i2p",
+	"git.repo.i2p",
+	"go.i2p",
+	"h13.i2p",
+	"hackerculture.i2p",
+	"hagen.i2p",
+	"heisenberg.i2p",
+	"hiddenbooru.i2p",
+	"hiddenchan.i2p",
+	"hq.postman.i2p",
+	"i2p-epub-eepsite.i2p",
+	"i2p-scene.i2p",
+	"i2pbuggenie.i2p",
+	"i2pd.i2p",
+	"i2p-projekt.i2p",
 	"i2pdarknetmap.i2p",
+	"i2pdocs.str4d.i2p",
+	"i2pforum.i2p",
+	"i2pjump.i2p",
+	"i2pnews.i2p",
+	"i2podisy.i2p",
+	"i2push.i2p", 
+	"i2pwiki.i2p",
+	"identiguy.i2p",
+	"ilcosmista.i2p",
+	"ilita.i2p",
+	"in.i2p",
+	"inclib.i2p",
+	"infosecurity.i2p",
+	"infoserver.i2p",
+	"inr.i2p",
+	"irc.r4sas.i2p",
+	"isotoxin.i2p",
+	"ivorytower.i2p",
+	"jikx.i2p",
+	"k1773r.i2p", 
+	"kellett.i2p",
+	"keys.echelon.i2p",
+	"kycklingar.i2p",
+	"libertor.i2p",
+	"lifebox.i2p",
+	"lm.i2p",
+	"lodikon.i2p",
+	"lolicatgirls.i2p",
+	"lolifox.i2p",
+	"magix.i2p",
+	"magnets.i2p",
+	"marlin23732.i2p",
+	"me.i2p",
+	"meeh.i2p",
+	"monero-build.i2p",
+	"mosbot.i2p",
+	"mosfet.i2p",
+	"mrbamboo.i2p",
+	"mysterious.i2p",
+	"mystery.i2p",
+	"nastycomics.i2p",
+	"neodome.i2p",
+	"no.i2p",
+	"normal.i2p",
+	"novospice.i2p",
+	"nvspc.i2p",
+	"obscuratus.i2p",
+	"ol.i2p",
+	"onelon.i2p",
+	"onhax.i2p",
+	"oniichan.i2p",
+	"opendiftracker.i2p",
+	"opentracker.dg2.i2p",
+	"opsec.i2p",
+	"orc.i2p",
+	"overchan.oniichan.i2p",
+	"papel.i2p",
+	"passwd.i2p",
+	"pasta-nojs.i2p",
+	"paste.crypthost.i2p",
+	"paste.r4sas.i2p",
+	"pisekot.i2p",
+	"pizdabol.i2p",
+	"planet.i2p",
+	"pomoyka.i2p",
+	"pool.gostcoin.i2p",
+	"pravtor.i2p",
+	"project-future.i2p",
+	"projectmayhem2012-086.i2p",
+	"psi.i2p",
+	"psy.i2p",
+	"ptt.i2p",
+	"publicwww.i2p",
+	"r4sas.i2p",
+	"rebel.i2p",
+	"redzara.i2p",
+	"reg.rus.i2p",
+	"repo.i2p",
+	"repo.r4sas.i2p",
+	"reseed.i2p",
+	"rideronthestorm.i2p",
+	"rpi.i2p",
+	"ru.i2p",
+	"rufurus.i2p",
+	"rus.i2p",
+	"ruslibgen.i2p",
+	"rust.i2p",
+	"rutor.i2p",
+	"secure.thetinhat.i2p",
+	"seeker.i2p",
+	"serien.i2p",
+	"shoronil.i2p",
+	"skank.i2p",
+	"stats.i2p",
+	"status.str4d.i2p",
+	"str4d.i2p",
+	"stream.i2p",
+	"suicidal.i2p",
+	"syndie-project.i2p",
+	"tabak.i2p",
+	"thebland.i2p",
+	"thisthingimade.i2p",
+	"thornworld.i2p",
+	"thoughtfoundryblog.i2p",
+	"torrentfinder.i2p",
+	"torrfreedom.i2p",
+	"trac.i2p2.i2p",
+	"tracker.crypthost.i2p",
+	"tracker.lodikon.i2p",
+	"tracker.thebland.i2p",
+	"tracker2.postman.i2p",
+	"traditio.i2p",
+	"ts.i2p",
+	"tutorials.i2p",
+	"unqueued.i2p",
+	"visibility.i2p",
+	"w.i2p",
+	"wallet.gostcoin.i2p",
+	"wiki.ilita.i2p",
+	"infoserver.i2p",
+	"xc.i2p",
+	"xotc.i2p",
+	"zab.i2p",
+	"zerobin.i2p",
+	"zzz.i2p",
 ]
+ignored_sites = []
 visited_sites = []
 ongoing_sites = []
 pending_sites = []
@@ -352,38 +548,48 @@ total_crawlers = 0
 total_loop_executions = 0
 ok_files = []
 fail_files = []
-db_dictionary = {}
+attempts_dict = {}
 
 def main():
 	'''
 	EN: It controls the whole process of the crawling through a loop that is repeated every 2 seconds.
 	SP: Controla todo el proceso del crawling mediante un bucle que se repite cada 2 segundos.
 	
-	Every two seconds it enters the main loop (if there are still sites to visit or sites that are been visited) to crawl all the sites.
+	Every second it enters the main loop (if there are still sites to visit or sites that are been visited) to crawl all the sites.
 	Finally, the extracted info is added to the database and the json file that will be used for web visualitation of the node map is generated.
-	Cada dos segundos se entra en el bucle principal (si quedan sitios por visitar o se están visitando) para crawlear todos los sites.
+	Cada segundo se entra en el bucle principal (si quedan sitios por visitar o se están visitando) para crawlear todos los sites.
 	Finalmente, la información extraída se añade a la base de datos y se genera el archivo json que se utilizará para la visulación web del mapa de nodos.
 	'''
 	logging.basicConfig(filename='registro.log',level=logging.DEBUG)
 	logging.debug("Dentro de main()")
 	global total_loop_executions
 	global ongoing_crawlers
+	global ignored_sites
 	global pending_sites
 	global visited_sites
 	global ongoing_sites
+	time1 = time.time()
+	time2 = time.time()
 	while pending_sites or ongoing_sites:
 		logging.info(time.strftime("Time: " + "%H:%M:%S", time.gmtime()))
 		logging.info("Ongoing_crawlers: " + str(ongoing_crawlers))
 		logging.debug("Pending sites: " + str(pending_sites))
 		logging.debug("Finished sites: " + str(visited_sites))
+		logging.debug("Ignored sites: " + str(ignored_sites))
 		logging.debug("Ongoing sites: " + str(ongoing_sites))
 		throw_crawler()
 		check()
 		total_loop_executions += 1
 		time.sleep(1) # duerme 1 segundo
-	add_to_database()
-	db_to_json()
-	results()
+		if ((time2 - time1) < 60):
+			time2 = time.time()
+		else:
+			time1 = time.time()
+			time2 = time.time()
+			update_degree_to_database()
+			update_top()
+			db_to_json()
+			results()
 
 if __name__ == '__main__':
     main()

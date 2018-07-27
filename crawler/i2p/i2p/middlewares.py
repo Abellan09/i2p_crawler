@@ -10,6 +10,11 @@ from scrapy import exceptions
 
 class I2PFilterMiddleware(object):
 	
+	'''
+	EN: Middleware that is responsible for filtering extensions that are not going to be taken into account.
+	SP: Middleware que se encarga de filtrar las extensiones que no se van a tener en cuenta.
+	'''
+	
 	extensions = [
 	# images
 	".mng", ".pct", ".bmp", ".gif", ".jpg", ".jpeg", ".png", ".pst", ".psp", ".tif",
@@ -36,18 +41,23 @@ class I2PFilterMiddleware(object):
 
 
 class I2PProxyMiddleware(object):
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        # This method is used by Scrapy to create your spiders.
-        s = cls()
-        crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
-        return s
-
-    def process_request(self, request, spider):
+	
+	'''
+	EN: Middleware that is responsible for defining the proxy so that requests are made to the I2P network.
+	SP: Middleware que se encarga de definir el proxy para que las peticiones se hagan a la red I2P.
+	'''	
+	
+	@classmethod
+	def from_crawler(cls, crawler):
+		# This method is used by Scrapy to create your spiders.
+		s = cls()
+		crawler.signals.connect(s.spider_opened, signal=signals.spider_opened)
+		return s
+	
+	def process_request(self, request, spider):
 		request.meta['proxy'] = "http://127.0.0.1:4444"
 		return None
-        # Called for each request that goes through the downloader
+		# Called for each request that goes through the downloader
         # middleware.
 
         # Must either:
@@ -56,25 +66,25 @@ class I2PProxyMiddleware(object):
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-
-    def process_response(self, request, response, spider):
-        # Called with the response returned from the downloader.
+	
+	def process_response(self, request, response, spider):
+		# Called with the response returned from the downloader.
 
         # Must either;
         # - return a Response object
         # - return a Request object
         # - or raise IgnoreRequest
-        return response
-
-    def process_exception(self, request, exception, spider):
-        # Called when a download handler or a process_request()
+		return response
+		
+	def process_exception(self, request, exception, spider):
+		# Called when a download handler or a process_request()
         # (from other downloader middleware) raises an exception.
 
         # Must either:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
-        pass
-
-    def spider_opened(self, spider):
-        spider.logger.info('Spider opened: %s' % spider.name)
+		pass
+		
+	def spider_opened(self, spider):
+		spider.logger.info('Spider opened: %s' % spider.name)

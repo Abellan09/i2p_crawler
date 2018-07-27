@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+
+<head>
+
+	<meta charset="utf-8">
+	<title>I2P DARKNET MAP</title>
+	<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="eepsite.css">
+	<link rel="apple-touch-icon" sizes="57x57" href="/favicon/apple-icon-57x57.png">
+	<link rel="apple-touch-icon" sizes="60x60" href="/favicon/apple-icon-60x60.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="/favicon/apple-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="76x76" href="/favicon/apple-icon-76x76.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="/favicon/apple-icon-114x114.png">
+	<link rel="apple-touch-icon" sizes="120x120" href="/favicon/apple-icon-120x120.png">
+	<link rel="apple-touch-icon" sizes="144x144" href="/favicon/apple-icon-144x144.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="/favicon/apple-icon-152x152.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-icon-180x180.png">
+	<link rel="icon" type="image/png" sizes="192x192"  href="/favicon/android-icon-192x192.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+	<link rel="manifest" href="/favicon/manifest.json">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png">
+	<meta name="theme-color" content="#ffffff">
+	
+</head>
+
+<body onload="load_data()">
+
+	<div class="main">
+		<div id="navbar">
+			<a href="/index.html">Map View</a>
+			<a href="/top.html">Top Sites</a>
+			<a href="https://geti2p.net" target="_blank">I2P Site</a>
+			<a href="https://github.com/Abellan09/tfg_crawler_i2p" target="_blank">Proyect's GitHub</a>
+		</div>
+		<a href="."><h1>I2P DARKNET MAP</h1></a>
+		<h2>This page shows information and top sites of the I2P's eepsites connectivity map</h2>
+		<div class="subtitle">
+			<br/><u>INFORMATION</u><br/><br/>
+			<div class="info" id="info">
+			TOTAL sites: 
+			</br>
+			Degree 1 sites:
+			</br>
+			Degree 2 sites:
+			</br>
+			Degree 3 sites:
+			</br>
+			Degree 4 sites:
+			</br>
+			Degree 5 sites:
+			</br>
+			Degree 6 sites:
+			</br>
+			Degree 7 sites:
+			</br>
+			Degree 8 sites:
+			</br>
+			</div>
+		</div>
+		<div class="subtitle">
+			<br/><u>INCOMING SITES - TOP 5</u><br/><br/>
+			<div class="top" id="i1">
+			TOP 1: NAME SITE
+			</div>
+			<div class="top" id="i2">
+			TOP 2: NAME SITE
+			</div>
+			<div class="top" id="i3">
+			TOP 3: NAME SITE
+			</div>
+			<div class="top" id="i4">
+			TOP 4: NAME SITE
+			</div>
+			<div class="top" id="i5">
+			TOP 5: NAME SITE
+			</div>
+		</div>
+		<div class="subtitle">
+			<br/><u>OUTGOING SITES - TOP 5</u><br/><br/>
+			<div class="top" id="o1">
+			TOP 1: NAME SITE
+			</div>
+			<div class="top" id="o2">
+			TOP 2: NAME SITE
+			</div>
+			<div class="top" id="o3">
+			TOP 3: NAME SITE
+			</div>
+			<div class="top" id="o4">
+			TOP 4: NAME SITE
+			</div>
+			<div class="top" id="o5">
+			TOP 5: NAME SITE
+			</div>
+		</div>
+		<hr>
+		<div class="footnote">	
+			Author: Ast4Th0r.
+		</div>
+	</div>
+	
+	<script>
+	
+	function get(id, php_file){
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+				document.getElementById(id).innerHTML = this.responseText;
+			}
+		};
+		xhttp.open("GET", php_file, true);
+		xhttp.send();
+	}
+	
+	function post(id, php_file, data, type){
+		var xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+				document.getElementById(id).innerHTML = this.responseText;
+			}
+		};
+		xhttp.open("POST", php_file, true);
+		xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhttp.send("bola=" + data + "&type=" + type);
+	}
+	
+	function load_data(){
+		get("info", "info.php")
+		for (var i=1; i<=5; i++){
+			post("i"+i, "top.php", i, "incoming")
+		}
+		for (var i=1; i<=5; i++){
+			post("o"+i, "top.php", i, "outgoing")
+		}
+	}
+	
+	</script>
+	
+</body>
+

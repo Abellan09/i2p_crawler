@@ -262,6 +262,32 @@ div.notify {
     -webkit-filter: drop-shadow(0 0 1px #000);
 }
 
+div.top {
+    margin: 15px auto 15px auto;
+	width: 45%;
+    padding: 10px;
+    border: 1px solid #940;
+    border-radius: 2px;
+    background: #440a00;
+	background: #220800 url("css/fondo.png");
+    box-shadow: inset 0 0 0 1px #000;
+    filter: drop-shadow(0 0 1px #000);
+    -webkit-filter: drop-shadow(0 0 1px #000);
+}
+
+div.info {
+    margin: 15px auto 15px auto;
+	width: 20%;
+    padding: 10px;
+    border: 1px solid #940;
+    border-radius: 2px;
+    background: #440a00;
+	background: #220800 url("css/fondo.png");
+    box-shadow: inset 0 0 0 1px #000;
+    filter: drop-shadow(0 0 1px #000);
+    -webkit-filter: drop-shadow(0 0 1px #000);
+}
+
 div.subtitle {
     font-size: 13pt;
     padding: 4px 10px;

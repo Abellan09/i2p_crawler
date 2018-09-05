@@ -194,7 +194,7 @@ def add_to_database(site, targeted_sites):
 			cursor.execute("INSERT INTO links(source, target) VALUES(?,?)", (source_id, target_id))
 		connection.commit() # commit the change(s)
 	except sqlite3.DatabaseError as e:
-		logging.error("ERROR - Something was wrong with the Database")
+		logging.error("Something was wrong with the Database")
 		connection.rollback() # roll back any change if something goes wrong
 		raise e
 	finally:
@@ -245,7 +245,7 @@ def update_degree_to_database():
 			cursor.execute("UPDATE nodes SET degree=? WHERE id=?", (degree, node_id,))
 		connection.commit() # commit the change(s)
 	except sqlite3.DatabaseError as e:
-		logging.error("ERROR - Something was wrong with the Database")
+		logging.error("Something was wrong with the Database")
 		connection.rollback() # roll back any change if something goes wrong
 		raise e
 	finally:
@@ -265,24 +265,20 @@ def update_top():
 		logging.debug("INCOMING: " + str(incoming))
 		if (len(incoming)==5):
 			for i in range(5):
-				logging.debug("Dentro de for de incoming, ANTES consulta")
 				top_id = i+1
 				node_id = incoming[i][0]
 				cursor.execute("UPDATE incoming_top SET node_id=? WHERE id=?", (node_id, top_id,))
-				logging.debug("Dentro de for de incoming, DESPUÉS consulta")
 			logging.debug("The table Incoming_Top has been updated")
 			cursor.execute("SELECT id, outgoing_sites FROM nodes ORDER BY outgoing_sites DESC LIMIT 5")
 			outgoing = cursor.fetchall()
 			for i in range(5):
-				logging.debug("Dentro de for de outgoing, ANTES consulta")
 				top_id = i+1
 				node_id = outgoing[i][0]
 				cursor.execute("UPDATE outgoing_top SET node_id=? WHERE id=?", (node_id, top_id,))
-				logging.debug("Dentro de for de outgoing, DESPUÉS consulta")
 			logging.debug("The table Outgoing_Top has been updated")
 			connection.commit() # commit the change(s)
 	except sqlite3.DatabaseError as e:
-		logging.error("ERROR - Something was wrong with the Database")
+		logging.error("Something was wrong with the Database")
 		connection.rollback() # roll back any change if something goes wrong
 		raise e
 	finally:

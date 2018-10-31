@@ -65,7 +65,7 @@ def check():
 			ok_files.append(fil)
 		elif (fil.endswith(".fail")) and (fil not in fail_files):
 			fail_files.append(fil)	
-		finished_files.remove(fil)
+		#finished_files.remove(fil)
 	process_fail()
 	process_ok()
 
@@ -168,7 +168,7 @@ def add_to_database(site, targeted_sites):
 	name = site
 	outgoing_sites = len(targeted_sites)
 	try:
-		connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db") # open the db
+		connection = sqlite3.connect("../../www/i2p_database.db") # open the db
 		cursor = connection.cursor() # get a cursor object
 		cursor.execute("SELECT name FROM nodes WHERE name=?", (name,))
 		found = cursor.fetchone()
@@ -232,7 +232,7 @@ def update_degree_to_database():
 	'''
 	logging.debug("Dentro de set_degree()")
 	try:
-		connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db") # open the db
+		connection = sqlite3.connect("../../www/i2p_database.db") # open the db
 		cursor = connection.cursor() # get a cursor object
 		cursor.execute("SELECT id, incoming_sites, name FROM nodes")
 		result = cursor.fetchall()
@@ -258,7 +258,7 @@ def update_top():
 	'''
 	logging.debug("Dentro de update_top()")
 	try:
-		connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db") # open the db
+		connection = sqlite3.connect("../../www/i2p_database.db") # open the db
 		cursor = connection.cursor() # get a cursor object
 		cursor.execute("SELECT id, incoming_sites FROM nodes ORDER BY incoming_sites DESC LIMIT 5")
 		incoming = cursor.fetchall()
@@ -313,7 +313,7 @@ def db_to_json():
 	SP: Genera un archivo en formato json con los nodos y links contenidos en la base de datos.
 	'''
 	logging.debug("Dentro de db_to_json()")
-	connection = sqlite3.connect("C:\Program Files (x86)\Ampps\www\i2p_database.db")
+	connection = sqlite3.connect("../../www/i2p_database.db")
 	connection.row_factory = dict_factory
 	cursor = connection.cursor()
 	cursor.execute("SELECT * FROM nodes ORDER BY id")
@@ -321,223 +321,14 @@ def db_to_json():
 	cursor.execute("SELECT * FROM links ORDER BY source")
 	links = cursor.fetchall()
 	json_result = json.dumps({"nodes": nodes, "links": links}, sort_keys=True, indent=4, separators=(',', ': '))
-	with open('C:\Program Files (x86)\Ampps\www\i2p_data.json', 'wb') as f:
+	with open('../../www/i2p_data.json', 'wb') as f:
 		f.write(json_result)
 
-seed_sites = [
-	"auchan.i2p",
-	"city.i2p",
-	"mochimochi.i2p",
-	"wa11ed.city.i2p",
-	"102chan.i2p", 
-	"1st.i2p", 
-	"333.i2p", 
-	"alice.i2p",
-	"andmp.i2p", 
-	"animal.i2p",
-	"anodex.i2p",
-	"anongw.i2p",
-	"anoncoin.i2p",
-	"aosp.i2p",
-	"arc2.i2p",
-	"archaicbinarybbs.i2p",
-	"archiv.tutorials.i2p",
-	"backup.i2p",
-	"bigbrother.i2p",
-	"bitlox.i2p",
-	"black.i2p",
-	"blog.tinlans.i2p",
-	"bmw.i2p", 
-	"bmworc.i2p",
-	"bobthebuilder.i2p",
-	"boerse.i2p",
-	"bofh.i2p",
-	"bote.i2p",
-	"cathugger.i2p",
-	"cerapadus.i2p",
-	"check.kovri.i2p",
-	"chess.i2p",
-	"chitanka.i2p",
-	"ciphercraft.i2p",
-	"co.i2p",
-	"crypthost.i2p",
-	"darkrealm.i2p",
-	"darrob.i2p",
-	"dead.i2p",
-	"deb-mirror.i2p",
-	"deepwebradio.i2p",
-	"def2.i2p",
-	"def3.i2p",
-	"def4.i2p",
-	"det.i2p",
-	"diasporg.i2p",
-	"diftracker.i2p",
-	"dumpteam.i2p",
-	"echelon.i2p",
-	"epub-eepsite.i2p",
-	"exch.i2p",
-	"exchange.gostcoin.i2p",
-	"exchanged.i2p",
-	"explorer.gostcoin.i2p",
-	"fa.i2p",
-	"fantasy-worlds.i2p",
-	"fido.r4sas.i2p", 
-	"flibusta.i2p",
-	"forum.rus.i2p",
-	"forums.i2p",
-	"freedomforum.i2p",
-	"freefallheavens.i2p",
-	"fs.i2p",
-	"fsoc.i2p",
-	"ginnegappen.i2p",
-	"git.crypthost.i2p",
-	"git.psi.i2p",
-	"git.repo.i2p",
-	"go.i2p",
-	"h13.i2p",
-	"hackerculture.i2p",
-	"hagen.i2p",
-	"heisenberg.i2p",
-	"hiddenbooru.i2p",
-	"hiddenchan.i2p",
-	"hq.postman.i2p",
-	"i2p-epub-eepsite.i2p",
-	"i2p-scene.i2p",
-	"i2pbuggenie.i2p",
-	"i2pd.i2p",
-	"i2p-projekt.i2p",
-	"i2pdarknetmap.i2p",
-	"i2pdocs.str4d.i2p",
-	"i2pforum.i2p",
-	"i2pjump.i2p",
-	"i2pnews.i2p",
-	"i2podisy.i2p",
-	"i2push.i2p", 
-	"i2pwiki.i2p",
-	"identiguy.i2p",
-	"ilcosmista.i2p",
-	"ilita.i2p",
-	"in.i2p",
-	"inclib.i2p",
-	"infosecurity.i2p",
-	"infoserver.i2p",
-	"inr.i2p",
-	"irc.r4sas.i2p",
-	"isotoxin.i2p",
-	"ivorytower.i2p",
-	"jikx.i2p",
-	"k1773r.i2p", 
-	"kellett.i2p",
-	"keys.echelon.i2p",
-	"kycklingar.i2p",
-	"libertor.i2p",
-	"lifebox.i2p",
-	"lm.i2p",
-	"lodikon.i2p",
-	"lolicatgirls.i2p",
-	"lolifox.i2p",
-	"magix.i2p",
-	"magnets.i2p",
-	"marlin23732.i2p",
-	"me.i2p",
-	"meeh.i2p",
-	"monero-build.i2p",
-	"mosbot.i2p",
-	"mosfet.i2p",
-	"mrbamboo.i2p",
-	"mysterious.i2p",
-	"mystery.i2p",
-	"nastycomics.i2p",
-	"neodome.i2p",
-	"no.i2p",
-	"normal.i2p",
-	"novospice.i2p",
-	"nvspc.i2p",
-	"obscuratus.i2p",
-	"ol.i2p",
-	"onelon.i2p",
-	"onhax.i2p",
-	"oniichan.i2p",
-	"opendiftracker.i2p",
-	"opentracker.dg2.i2p",
-	"opsec.i2p",
-	"orc.i2p",
-	"overchan.oniichan.i2p",
-	"papel.i2p",
-	"passwd.i2p",
-	"pasta-nojs.i2p",
-	"paste.crypthost.i2p",
-	"paste.r4sas.i2p",
-	"pisekot.i2p",
-	"pizdabol.i2p",
-	"planet.i2p",
-	"pomoyka.i2p",
-	"pool.gostcoin.i2p",
-	"pravtor.i2p",
-	"project-future.i2p",
-	"projectmayhem2012-086.i2p",
-	"psi.i2p",
-	"psy.i2p",
-	"ptt.i2p",
-	"publicwww.i2p",
-	"r4sas.i2p",
-	"rebel.i2p",
-	"redzara.i2p",
-	"reg.rus.i2p",
-	"repo.i2p",
-	"repo.r4sas.i2p",
-	"reseed.i2p",
-	"rideronthestorm.i2p",
-	"rpi.i2p",
-	"ru.i2p",
-	"rufurus.i2p",
-	"rus.i2p",
-	"ruslibgen.i2p",
-	"rust.i2p",
-	"rutor.i2p",
-	"secure.thetinhat.i2p",
-	"seeker.i2p",
-	"serien.i2p",
-	"shoronil.i2p",
-	"skank.i2p",
-	"stats.i2p",
-	"status.str4d.i2p",
-	"str4d.i2p",
-	"stream.i2p",
-	"suicidal.i2p",
-	"syndie-project.i2p",
-	"tabak.i2p",
-	"thebland.i2p",
-	"thisthingimade.i2p",
-	"thornworld.i2p",
-	"thoughtfoundryblog.i2p",
-	"torrentfinder.i2p",
-	"torrfreedom.i2p",
-	"trac.i2p2.i2p",
-	"tracker.crypthost.i2p",
-	"tracker.lodikon.i2p",
-	"tracker.thebland.i2p",
-	"tracker2.postman.i2p",
-	"traditio.i2p",
-	"ts.i2p",
-	"tutorials.i2p",
-	"unqueued.i2p",
-	"visibility.i2p",
-	"w.i2p",
-	"wallet.gostcoin.i2p",
-	"wiki.ilita.i2p",
-	"infoserver.i2p",
-	"xc.i2p",
-	"xotc.i2p",
-	"zab.i2p",
-	"zerobin.i2p",
-	"zzz.i2p",
-]
+seed_sites = []
 ignored_sites = []
 visited_sites = []
 ongoing_sites = []
 pending_sites = []
-pending_sites = copy.deepcopy(seed_sites)
 maximum_crawlers = 20
 ongoing_crawlers = 0
 total_crawlers = 0
@@ -560,10 +351,19 @@ def main():
 	logging.debug("Dentro de main()")
 	global total_loop_executions
 	global ongoing_crawlers
+	global seed_sites
 	global ignored_sites
 	global pending_sites
 	global visited_sites
 	global ongoing_sites
+	f = open("seed_urls.txt")
+	line = f.readline()
+	while line != "":
+		line = line.replace("\n", "")
+		seed_sites.append(line)
+		line = f.readline()
+	f.close()
+	pending_sites=copy.deepcopy(seed_sites)
 	time1 = time.time()
 	time2 = time.time()
 	while pending_sites or ongoing_sites:

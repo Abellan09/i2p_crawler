@@ -1,35 +1,121 @@
-# tfg_crawler_i2p
+# I2P CRAWLER
 
-The quintessential Internet service, the WWW, better known simply as
-"the Web", has a hidden face that most users ignore.
-Most of users browse the Surface Web (the content of the WWW that
-common search engines are able to index). However, the Surface Web is just
-the top of the WWW iceberg.
-The great part of the WWW content is hosted in the known as Deep Web,
-where all the content of the WWW that the common search engines aren't
-able to index is hosted. Inside the Deep Web there are some \anonymous"
-networks, called Darknets. These networks can only be accessed through
-special configurations or using specific software.
-Due to their names, these networks can incite people to value them with
-the negative connotation of the term, but it doesn't have to be like it seems.
-There are many other things than illegal and pernicious content in these
-networks. Many of these networks emerged looking for freedom and privacy
-(freedom of expression is not enjoyed in all countries). Although it is true
-that there is no need to give a pejorative character to the Darknets, it must
-be taken into account that these networks are the most hidden part of the
-WWW, and where the level of privacy and anonymity is, without any doubt,
-the highest.
-This fact turns the Darknets into very interesting networks, due to the
-implications of a very high level of anonymity. In fact, these networks are
-experiencing a great boom, and their use grows more and more. The best
-known, the TOR network, is the most explored, studied and analyzed among
-all the Darknets. This is not the case of other Darknets like I2P, which has
-been explored and studied to a lesser extent.
-This project aims to study the problem of exploring and investigating
-the I2P Darknet from the perspective and focus of the crawling. In this
-project, it is going to be developed a crawler that is capable of extracting
-the greatest possible number of eepsites as well as the relationships among
-them, in order to create an interconnectivity map of eepsites that allows
-drawing conclusions about the architecture of the I2P Darknet (if it has the
-most scattered eepsites, if they are connected to each other and the network
-is more or less centralized, etc).
+This tool enables crawling on the I2P Darknet.
+
+## How to install
+
+You can launch the crawler on Windows 10 and Ubuntu Linux (from 16.04 version) systems.
+
+In both systems, just download or clone this repository:
+
+```
+git clone https://github.com/Abellan09/i2p_crawler
+```
+
+Then, you have to install/configure some things:
+
+First of all, it is neccesary to install an instance of I2P.
+In second place, you need Python 2.7 and Scrapy.
+It is recommended to install DB Browser for SQLite to manage the database easily.
+Last, you have to create the "ongoing" and "finished" directories.
+
+### Windows
+
+1) I2P.
+
+Download (and execute) the installer from [I2P](https://geti2p.net/es/download).
+
+2) Python and Scrapy
+
+Download (and execute) the installer from [Python](https://www.python.org/downloads).
+Then, to install scrapy: ```pip install scrapy```
+
+3) DB Browser for SQLite.
+
+Download (and execute) the installer from [SQLite Browser](https://sqlitebrowser.org).
+
+4) Ongoing and finished directories.
+
+Go to the root of the cloned project.
+Change directory to ~/spiders and create the directories inside it.
+
+```
+cd /i2p_crawler/crawler/i2p/i2p/spiders
+mkdir ongoing
+mkdir finished
+```
+
+### Linux
+
+1) I2P.
+
+```
+sudo apt-add-repository ppa:i2p-maintainers/i2p
+sudo apt-get update
+sudo apt-get install i2p
+```
+
+2) Python and Scrapy
+
+```
+sudo apt install python2.7
+sudo apt install python-pip
+sudo pip install scrapy
+```
+
+3) DB Browser for SQLite.
+
+```
+sudo add-apt-repository -y ppa:linuxgndu/sqlitebrowser
+sudo apt-get update
+sudo apt-get install sqlitebrowser
+```
+
+4) Ongoing and finished directories.
+
+```
+cd /i2p_crawler/crawler/i2p/i2p/spiders
+mkdir ongoing
+mkdir finished
+```
+
+## Usage example
+
+First, you have to raise an instance of I2P (it is recommended that the instance is active as much time as possible for better results).
+
+In Windows, just click on the "Start I2P" button; in Linux, start the service with ```i2prouter start```
+
+Then, go to the directory ~i2p_crawler/crawler/i2p with ```cd ~/i2p_crawler/crawler/i2p/``` and run the crawler:
+
+```
+python manager.py
+```
+
+The script "manager.py" will try to crawl the entire I2P (all the eepsites it finds). This can take too much time (difficult to estimate).
+If you prefer crawling only one eepsite, run the spider "spider.py" in the next way:
+
+```
+scrapy crawl i2p -a url=URL -o OUTPUT.json
+```
+
+Where "URL" is the URL of the eepsite you want to crawl and "OUTPUT" is the name of the file where the results of crawling will be.
+For example:
+
+```
+scrapy crawl i2p -a url=http://eepsite.example.i2p -o output_example.json
+```
+
+## Built With
+
+* [Python](https://www.python.org) - Used language.
+* [Scrapy](https://scrapy.org) - Used crawling framework.
+
+## Author
+
+* **Alberto Abellán**
+
+See also the list of [contributors](https://github.com/Abellan09/i2p_crawler/graphs/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.

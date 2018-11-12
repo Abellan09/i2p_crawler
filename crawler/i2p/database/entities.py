@@ -1,6 +1,9 @@
 from pony.orm import *
 from datetime import datetime
 
+db = Database()
+db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_database')
+
 class Node(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str)
@@ -69,3 +72,6 @@ class NodeFootprinting(db.Entity):
     http_headers = Optional(str)
     meta = Optional(str)
     node = Optional(Node)
+
+# Creates tablas from the above entities if they do not exist
+db.generate_mapping(create_tables=True)

@@ -26,3 +26,16 @@ class I2PItemFinal(scrapy.Item):
 	'''
 	
 	extracted_eepsites = scrapy.Field()
+	
+class LanguageItem(scrapy.Item):
+	
+	'''
+	EN: Item that represents the language in which the page is written.
+	SP: Item que representa el lenguaje en que está escrito el eepsite.
+	'''	
+	
+	eepsite = scrapy.Field()
+	language = scrapy.Field()
+	title = scrapy.Field()
+	sample = scrapy.Field()
+	time = scrapy.Field()

@@ -1,3 +1,5 @@
 scrapy
 pony
 PyMySQL
+nltk
+py_translator

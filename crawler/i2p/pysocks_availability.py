@@ -5,7 +5,7 @@ import threading
 import time
 import pandas as pd
 
-with open('seed_urls.txt') as seeds:
+with open('extracted_eepsites.txt') as seeds:
     list_seeds = seeds.readlines()
 
 # Test 400 error
@@ -15,17 +15,18 @@ with open('seed_urls.txt') as seeds:
 # print(list_seeds)
 
 # Setting up experiment test
-max_rounds = 50
+max_rounds = 1
 rounds = 0
 while rounds < max_rounds:
-    for seed in list_seeds:
+    for seed in list_seeds[0:2]:
         #print(seed)
         #print(seed)
-        #seed = str.replace(seed,'\n','')
+        seed = str.replace(seed,'\n','')
+        seed = str.replace(seed,'\r','')
         #print(seed)
-        #seed = "http://" + seed
+        seed = "http://" + seed
         #print(seed)
-        #print(seed)
+        print(seed)
         time.sleep(0.3)
         i2pt = thread.I2PThread(seed,rounds)
         i2pt.start()

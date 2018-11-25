@@ -20,7 +20,7 @@ class Node(db.Entity):
 
 class NodeType(db.Entity):
     id = PrimaryKey(int, auto=True)
-    type = Required(str, default='hola')
+    type = Required(str)
     description = Optional(str)
     nodes = Set(Node)
 

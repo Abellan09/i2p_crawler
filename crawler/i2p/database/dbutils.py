@@ -70,11 +70,6 @@ def get_all_nodelinks():
     nodelinks = select(link for link in entities.NodeLink)[:]
     return nodelinks
 
-@db_session
-def get_incoming_node_links(node_id):
-    incoming = select(link for link in entities.NodeLink for target_node in link.target_node if target_node.id == node_id)[:]
-    return incoming
-
 # NODE ENTITY - CRUD (Create Read Update Delete)
 @db_session
 def create_node(n_url,n_type=settings.NT_COD_I2P,n_status=settings.NS_COD_ONGOING):
@@ -170,26 +165,60 @@ def create_link(sn_url,tn_url):
     s_node = entities.Node.get(name=sn_url)
     if not isinstance(s_node, entities.Node):
         # if the source node does not exists
-        raise ObjectNotFound(s_node)
+        return None
     # Gets target node
     t_node = entities.Node.get(name=tn_url)
     if not isinstance(t_node, entities.Node):
         # if the target node does not exists
-        raise ObjectNotFound(t_node)
+        return None
 
     # Does the link exists?
-    link = entities.NodeLink.get(src_node=s_node, target_node=t_node)
-    if not isinstance(link, entities.NodeLink):
-        # Creates the link
-        link = entities.NodeLink(src_node=s_node, target_node=t_node)
+    # FIXME: Check if the link exists?
+    #link = entities.NodeLink.get(src_node=s_node)
+    #if not isinstance(link, entities.NodeLink):
+    # Creates the link
+    link = entities.NodeLink(src_node=s_node, target_node=t_node)
 
     return link
 
+@db_session
+def get_incoming_links(tn_url):
+    """
+    Gets all incoming links to a target node
 
+    :param tn_url: str - URL/name of the target node
+    :return: list of NodeLink
+    """
+    incoming = select(
+        link for link in entities.NodeLink for target_node in link.target_node if target_node.name == tn_url)[:]
+    return incoming
 
+@db_session
+def get_outcoming_links(sn_url):
+    """
+    Gets all outcoming links from a source node
 
+    :param sn_url: str - URL/name of the source node
+    :return: list of NodeLink
+    """
+    outcoming = select(
+        link for link in entities.NodeLink for src_node in link.src_node if src_node.name == sn_url)[:]
+    return outcoming
 
+@db_session
+def delete_links(n_url):
+    """
+    Deletes all links to and from a specific node
 
+    :param n_url: tr - URL/name of the node
+    """
+    # Delete incoming links
+    incoming = get_incoming_links(n_url)
+    [link.delete() for link in incoming]
+
+    # Delete outcoming links
+    outcoming = get_outcoming_links(n_url)
+    [link.delete() for link in outcoming]
 
 @db_session
 def set_qos_to_node_by_node_name(node_name,qos):

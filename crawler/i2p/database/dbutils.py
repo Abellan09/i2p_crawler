@@ -154,6 +154,42 @@ def set_node_type(n_url, n_type=settings.NT_COD_I2P):
         node.node_type = entities.NodeType.get(type=n_type)
     return node
 
+# NODE LINKS - CRUD (Create Read Update Delete)
+@db_session
+def create_link(sn_url,tn_url):
+    """
+    Creates a link if and only if both nodes, source and target node, exist.
+
+    :param sn_url: str - URL/name of the source node
+    :param tn_url: str - URL/name of the target node
+    :raises: ObjectNotFound when either the source node or the target node do not exist
+    :return: The created link
+    """
+
+    # Gets source node
+    s_node = entities.Node.get(name=sn_url)
+    if not isinstance(s_node, entities.Node):
+        # if the source node does not exists
+        raise ObjectNotFound(s_node)
+    # Gets target node
+    t_node = entities.Node.get(name=tn_url)
+    if not isinstance(t_node, entities.Node):
+        # if the target node does not exists
+        raise ObjectNotFound(t_node)
+
+    # Does the link exists?
+    link = entities.NodeLink.get(src_node=s_node, target_node=t_node)
+    if not isinstance(link, entities.NodeLink):
+        # Creates the link
+        link = entities.NodeLink(src_node=s_node, target_node=t_node)
+
+    return link
+
+
+
+
+
+
 
 @db_session
 def set_qos_to_node_by_node_name(node_name,qos):

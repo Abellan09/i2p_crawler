@@ -26,11 +26,17 @@ set_sql_debug(True)
 #dbutils.set_qos_to_node_by_node_name('http://i2ptarget.i2p',10.3)
 
 # Node tests
-#dbutils.create_node("i2ptracker.i2p")
+#dbutils.create_node("i2ptracker_src.i2p")
+#dbutils.create_node("i2ptracker_target.i2p")
 
 #dbutils.delete_node("i2ptracker.i2p")
 
 #print(dbutils.get_node("i2ptracker.i2p").name)
 
-dbutils.set_node_status("i2ptracker.i2p",settings.NS_COD_PENDING)
-dbutils.set_node_type("i2ptracker.i2p",settings.NT_COD_SURFACE)
+#dbutils.set_node_status("i2ptracker.i2p",settings.NS_COD_PENDING)
+#dbutils.set_node_type("i2ptracker.i2p",settings.NT_COD_SURFACE)
+
+# Link tests
+link = dbutils.create_link("i2ptracker_src.i2p","i2ptracker_target.i2p")
+with db_session:
+    print(link.src_node.name)

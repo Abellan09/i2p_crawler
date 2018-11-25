@@ -11,7 +11,7 @@ class Node(db.Entity):
     node_status = Required('NodeStatus')
     node_link_stat = Optional('NodeLinkStat')
     node_footprinting = Optional('NodeFootprinting')
-    src_links = Set('NodeLink', reverse='src_node')
+    src_link = Set('NodeLink', reverse='src_node')
     target_link = Set('NodeLink', reverse='target_node')
     node_categories = Set('NodeCategory')
     node_languages = Set('NodeLanguage')
@@ -42,7 +42,7 @@ class NodeLinkStat(db.Entity):
 
 class NodeLink(db.Entity):
     id = PrimaryKey(int, auto=True)
-    src_node = Set(Node, reverse='src_links')
+    src_node = Set(Node, reverse='src_link')
     target_node = Set(Node, reverse='target_link')
 
 

@@ -75,6 +75,86 @@ def get_incoming_node_links(node_id):
     incoming = select(link for link in entities.NodeLink for target_node in link.target_node if target_node.id == node_id)[:]
     return incoming
 
+# NODE ENTITY - CRUD (Create Read Update Delete)
+@db_session
+def create_node(n_url,n_type=settings.NT_COD_I2P,n_status=settings.NS_COD_ONGOING):
+    """
+    Creates a new node. If no type and status is provided, I2P and Ongoing status are setup
+
+    :param n_url: str - URL of the site, which will the name of the new node
+    :param n_type: str - Type of the new node
+    :param n_status: str - Processing status of the new node
+
+    :return: Node - The new node
+    """
+    # Gets the node type
+    node_type = entities.NodeType.get(type=n_type)
+    # Gets the processing status
+    node_status = entities.NodeStatus.get(type=n_status)
+    # Creates the new node and returns it
+    return entities.Node(name=n_url,node_type=node_type,node_status=node_status)
+
+@db_session
+def get_node(n_url):
+    """
+    Gets the node by its URL which is the name of the node
+
+    :param n_url: str - URL/name of the node
+    :return: Node - The node or None if it was not found.
+    """
+    # Gets the node by url
+    return entities.Node.get(name=n_url)
+
+@db_session
+def delete_node(n_url):
+    """
+    Deletes the node by its URL which is the name of the node if it exists.
+
+    :param n_url: str - URL/name of the node
+    """
+    # Gets the node to delete
+    node = entities.Node.get(name=n_url)
+    # If the node exists
+    if isinstance(node, entities.Node):
+        node.delete()
+
+@db_session
+def set_node_status(n_url,n_status=settings.NS_COD_ONGOING):
+    """
+    Set a new status of a node if it exists
+
+    :param n_url: str - URL/name of the node
+    :param n_status: str - The new processing status
+
+    :return: Node - The updated node or None if the node does not exists
+    """
+    # Gets the node to update
+    node = entities.Node.get(name=n_url)
+    # If the node exists
+    if isinstance(node, entities.Node):
+        # Get and set the new estatus
+        node.node_status = entities.NodeStatus.get(type=n_status)
+    return node
+
+@db_session
+def set_node_type(n_url, n_type=settings.NT_COD_I2P):
+    """
+    Set a new type of a node if it exists
+
+    :param n_url: str - URL/name of the node
+    :param n_type: str - Type of the new node
+
+    :return: Node - The updated node or None if the node does not exists
+    """
+    # Gets the node to update
+    node = entities.Node.get(name=n_url)
+    # If the node exists
+    if isinstance(node, entities.Node):
+        # Get and set the new type
+        node.node_type = entities.NodeType.get(type=n_type)
+    return node
+
+
 @db_session
 def set_qos_to_node_by_node_name(node_name,qos):
     # Get the corresponding node

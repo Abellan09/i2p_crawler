@@ -2,12 +2,13 @@ from pony.orm import *
 from database import dbutils
 from database import entities
 from datetime import datetime
+from database import settings
 
 # pony SQL debug
 set_sql_debug(True)
 
 # Set default info into the database
-dbutils.add_default_info()
+#dbutils.add_default_info()
 
 # An example of how to set and get an entity info
 #dbutils.add_fake_links()
@@ -24,3 +25,12 @@ dbutils.add_default_info()
 # Setting up the QoS entity results
 #dbutils.set_qos_to_node_by_node_name('http://i2ptarget.i2p',10.3)
 
+# Node tests
+#dbutils.create_node("i2ptracker.i2p")
+
+#dbutils.delete_node("i2ptracker.i2p")
+
+#print(dbutils.get_node("i2ptracker.i2p").name)
+
+dbutils.set_node_status("i2ptracker.i2p",settings.NS_COD_PENDING)
+dbutils.set_node_type("i2ptracker.i2p",settings.NT_COD_SURFACE)

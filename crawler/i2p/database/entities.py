@@ -6,7 +6,7 @@ db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_
 
 class Node(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Required(str)
+    name = Required(str, unique=True)
     node_type = Required('NodeType')
     node_status = Required('NodeStatus')
     node_link_stat = Optional('NodeLinkStat')

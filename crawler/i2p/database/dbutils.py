@@ -45,31 +45,6 @@ def add_default_node_types():
     for type in settings.NT_DEFAULT_INFO.keys():
         entities.NodeType(type=type,description=settings.NT_DEFAULT_INFO[type])
 
-@db_session
-def add_fake_links():
-    target_node = entities.Node(name="http://i2ptarget.i2p",
-                                node_type=entities.NodeType[1],
-                                node_status=entities.NodeStatus[1])
-    src_node = entities.Node(name="http://i2src.onion",
-                                node_type=entities.NodeType[2],
-                                node_status=entities.NodeStatus[2])
-    another_src_node = entities.Node(name="http://i2anothersrc.surface",
-                             node_type=entities.NodeType[3],
-                             node_status=entities.NodeStatus[3])
-    entities.NodeLink(target_node=target_node,src_node=src_node)
-    entities.NodeLink(target_node=target_node, src_node=another_src_node)
-
-@db_session
-def get_nodelink_info(id):
-    nl = entities.NodeLink[id]
-    for nodes in nl.src_node:
-        print(nodes.to_dict())
-
-@db_session
-def get_all_nodelinks():
-    nodelinks = select(link for link in entities.NodeLink)[:]
-    return nodelinks
-
 # NODE ENTITY - CRUD (Create Read Update Delete)
 @db_session
 def create_node(n_url,n_type=settings.NT_COD_I2P,n_status=settings.NS_COD_ONGOING):
@@ -219,6 +194,7 @@ def delete_links(n_url):
     # Delete outcoming links
     outcoming = get_outcoming_links(n_url)
     [link.delete() for link in outcoming]
+
 
 @db_session
 def set_qos_to_node_by_node_name(node_name,qos):

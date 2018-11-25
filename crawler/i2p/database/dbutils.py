@@ -1,21 +1,49 @@
+# -*- coding: utf-8 -*-
+
+"""
+    :mod:`dbutils`
+    ===========================================================================
+    :synopsis: API to talk to database
+    :author: Roberto Magán Carrión
+    :contact: roberto.magan@uca.es, rmagan@ugr.es, robertomagan@gmail.com
+    :organization: University of Cádiz, University of Granada
+    :project: I2P Crawler
+    :since: 0.0.1
+"""
+
 from pony.orm import *
-import entities
 from datetime import datetime
+import entities
+import settings
 
 @db_session
 def add_default_info():
+    """
+    Adds default information to the database
+
+    """
     # Adding node types
-    entities.NodeType(id=1,type='I2P',description='I2P site')
-    entities.NodeType(id=2, type='TOR', description='TOR site')
-    entities.NodeType(id=3, type='Surface', description='Surface site')
+    add_default_node_types()
     # Adding node status
-    entities.NodeStatus(id=1,type='Finished',description='The site has been succesfully crawled')
-    entities.NodeStatus(id=2, type='Ongoing', description='The site is being crawled')
-    entities.NodeStatus(id=3, type='Pending', description='Something was wrong with crawling process, so this site has be crawled again.')
-    entities.NodeStatus(id=4, type='NotCrawleable', description='The site cannot be crawled')
-    # Adding default categories
-    entities.NodeCategory(id=1, name="Forum", description="Forum related category")
-    entities.NodeCategory(id=2, name="Wiki", description="Wiki related category")
+    add_default_node_status()
+
+@db_session
+def add_default_node_status():
+    """
+    Adds default status for node crawling. (See NS_DEFAULT_INFO at settings.py)
+
+    """
+    for status in settings.NS_DEFAULT_INFO.keys():
+        entities.NodeStatus(type=status,description=settings.NS_DEFAULT_INFO[status])
+
+@db_session
+def add_default_node_types():
+    """
+    Adds default types of nodes found. (See NT_DEFAULT_INFO at settings.py)
+
+    """
+    for type in settings.NT_DEFAULT_INFO.keys():
+        entities.NodeType(type=type,description=settings.NT_DEFAULT_INFO[type])
 
 @db_session
 def add_fake_links():

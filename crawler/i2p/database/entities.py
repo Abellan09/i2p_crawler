@@ -10,17 +10,17 @@ class Node(db.Entity):
     node_type = Required('NodeType')
     node_status = Required('NodeStatus')
     node_link_stat = Optional('NodeLinkStat')
-    node_category = Optional('NodeCategory')
-    node_language = Optional('NodeLanguage')
-    node_qos = Optional('NodeQoS')
     node_footprinting = Optional('NodeFootprinting')
     src_links = Set('NodeLink', reverse='src_node')
     target_link = Set('NodeLink', reverse='target_node')
+    node_categories = Set('NodeCategory')
+    node_languages = Set('NodeLanguage')
+    node_qo_ss = Set('NodeQoS')
 
 
 class NodeType(db.Entity):
     id = PrimaryKey(int, auto=True)
-    type = Required(str)
+    type = Required(str, default='hola')
     description = Optional(str)
     nodes = Set(Node)
 
@@ -58,13 +58,14 @@ class NodeLanguage(db.Entity):
     name = Optional(str)
     description = Optional(str)
     nodes = Set(Node)
+    variant = Optional(str)
 
 
 class NodeQoS(db.Entity):
     id = PrimaryKey(int, auto=True)
     timestamp = Required(datetime)
     delay = Optional(float)
-    node = Optional(Node)
+    node = Required(Node)
 
 
 class NodeFootprinting(db.Entity):

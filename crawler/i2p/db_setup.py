@@ -5,7 +5,7 @@ from datetime import datetime
 from database import settings
 
 # pony SQL debug
-#set_sql_debug(True)
+set_sql_debug(True)
 
 # Set default info into the database
 #dbutils.add_default_info()
@@ -42,17 +42,20 @@ from database import settings
 #link = dbutils.create_link("i2ptracker_src.i2p","i2ptracker_target_2.i2p")
 #link = dbutils.create_link("i2ptracker_src.i2p","i2ptracker_target_3.i2p")
 
-dbutils.delete_links("i2ptracker_src.i2p")
+#dbutils.delete_links("i2ptracker_src.i2p")
 
-with db_session:
-    links = dbutils.get_incoming_links("i2ptracker_target_2.i2p")
-    print(links)
-    for link in links:
-        #print([node.name for node in link.src_node])
-        print([node.name for node in link.src_node])
+# with db_session:
+#     links = dbutils.get_incoming_links("i2ptracker_target_2.i2p")
+#     print(links)
+#     for link in links:
+#         #print([node.name for node in link.src_node])
+#         print([node.name for node in link.src_node])
+#
+#     links = dbutils.get_outgoing_links("i2ptracker_src.i2p")
+#     print(links)
+#     for link in links:
+#         print([node.name for node in link.target_node])
+#         #print([node.name for node in link.target_node])
 
-    links = dbutils.get_outcoming_links("i2ptracker_src.i2p")
-    print(links)
-    for link in links:
-        print([node.name for node in link.target_node])
-        #print([node.name for node in link.target_node])
+#dbutils.create_statistics("i2ptracker_target_1.i2p",1,1,1)
+dbutils.delete_statistics("i2ptracker_target_1.i2p")

@@ -16,6 +16,7 @@ from datetime import datetime
 import entities
 import settings
 
+
 @db_session
 def add_default_info():
     """
@@ -27,6 +28,7 @@ def add_default_info():
     # Adding node status
     add_default_node_status()
 
+
 @db_session
 def add_default_node_status():
     """
@@ -34,7 +36,8 @@ def add_default_node_status():
 
     """
     for status in settings.NS_DEFAULT_INFO.keys():
-        entities.NodeStatus(type=status,description=settings.NS_DEFAULT_INFO[status])
+        entities.NodeStatus(type=status, description=settings.NS_DEFAULT_INFO[status])
+
 
 @db_session
 def add_default_node_types():
@@ -43,11 +46,12 @@ def add_default_node_types():
 
     """
     for type in settings.NT_DEFAULT_INFO.keys():
-        entities.NodeType(type=type,description=settings.NT_DEFAULT_INFO[type])
+        entities.NodeType(type=type, description=settings.NT_DEFAULT_INFO[type])
+
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
 @db_session
-def create_node(n_url,n_type=settings.NT_COD_I2P,n_status=settings.NS_COD_ONGOING):
+def create_node(n_url, n_type=settings.NT_COD_I2P, n_status=settings.NS_COD_ONGOING):
     """
     Creates a new node. If no type and status is provided, I2P and Ongoing status are setup
 
@@ -62,7 +66,8 @@ def create_node(n_url,n_type=settings.NT_COD_I2P,n_status=settings.NS_COD_ONGOIN
     # Gets the processing status
     node_status = entities.NodeStatus.get(type=n_status)
     # Creates the new node and returns it
-    return entities.Node(name=n_url,node_type=node_type,node_status=node_status)
+    return entities.Node(name=n_url, node_type=node_type, node_status=node_status)
+
 
 @db_session
 def get_node(n_url):
@@ -74,6 +79,7 @@ def get_node(n_url):
     """
     # Gets the node by url
     return entities.Node.get(name=n_url)
+
 
 @db_session
 def delete_node(n_url):
@@ -88,8 +94,9 @@ def delete_node(n_url):
     if isinstance(node, entities.Node):
         node.delete()
 
+
 @db_session
-def set_node_status(n_url,n_status=settings.NS_COD_ONGOING):
+def set_node_status(n_url, n_status=settings.NS_COD_ONGOING):
     """
     Set a new status of a node if it exists
 
@@ -105,6 +112,7 @@ def set_node_status(n_url,n_status=settings.NS_COD_ONGOING):
         # Get and set the new estatus
         node.node_status = entities.NodeStatus.get(type=n_status)
     return node
+
 
 @db_session
 def set_node_type(n_url, n_type=settings.NT_COD_I2P):
@@ -124,9 +132,52 @@ def set_node_type(n_url, n_type=settings.NT_COD_I2P):
         node.node_type = entities.NodeType.get(type=n_type)
     return node
 
+
+# NODE LINK STATS - CRUD (Create Read Update Delete)
+@db_session
+def set_statistics(n_url, n_incoming, n_outgoing, n_degree):
+    """
+    Creates or updates node statistics
+
+    :param n_url: str - URL/name of the node
+    :param n_incoming: int - # of incoming links
+    :param n_outgoing: int - # of outgoing links
+    :param n_degree: int - node degree
+    :return: NodeLinkStats - The node statistics
+    """
+    # Gets the node
+    node = entities.Node.get(name=n_url)
+    # If the node exists
+    if isinstance(node, entities.Node):
+        # If the node has statistics, we are going to update values
+        if isinstance(node.node_link_stat,entities.NodeLinkStat):
+            node.node_link_stat.incoming = n_incoming
+            node.node_link_stat.outgoing = n_outgoing
+            node.node_link_stat.degree = n_degree
+        else:
+            # set statistics
+            entities.NodeLinkStat(node=node, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree)
+
+    return node.node_link_stat
+
+
+@db_session
+def delete_statistics(n_url):
+    """
+    Deletes the node statistics
+
+    :param n_url: str - URL/name of the node
+    """
+    # Gets the node
+    node = entities.Node.get(name=n_url)
+    # If the node exists
+    if isinstance(node, entities.Node):
+        # Delete its statistics
+        node.node_link_stat.delete()
+
 # NODE LINKS - CRUD (Create Read Update Delete)
 @db_session
-def create_link(sn_url,tn_url):
+def create_link(sn_url, tn_url):
     """
     Creates a link if and only if both nodes, source and target node, exist.
 
@@ -149,12 +200,13 @@ def create_link(sn_url,tn_url):
 
     # Does the link exists?
     # FIXME: Check if the link exists?
-    #link = entities.NodeLink.get(src_node=s_node)
-    #if not isinstance(link, entities.NodeLink):
+    # link = entities.NodeLink.get(src_node=s_node)
+    # if not isinstance(link, entities.NodeLink):
     # Creates the link
     link = entities.NodeLink(src_node=s_node, target_node=t_node)
 
     return link
+
 
 @db_session
 def get_incoming_links(tn_url):
@@ -168,17 +220,19 @@ def get_incoming_links(tn_url):
         link for link in entities.NodeLink for target_node in link.target_node if target_node.name == tn_url)[:]
     return incoming
 
+
 @db_session
-def get_outcoming_links(sn_url):
+def get_outgoing_links(sn_url):
     """
-    Gets all outcoming links from a source node
+    Gets all outgoing links from a source node
 
     :param sn_url: str - URL/name of the source node
     :return: list of NodeLink
     """
-    outcoming = select(
+    outgoing = select(
         link for link in entities.NodeLink for src_node in link.src_node if src_node.name == sn_url)[:]
-    return outcoming
+    return outgoing
+
 
 @db_session
 def delete_links(n_url):
@@ -191,16 +245,14 @@ def delete_links(n_url):
     incoming = get_incoming_links(n_url)
     [link.delete() for link in incoming]
 
-    # Delete outcoming links
-    outcoming = get_outcoming_links(n_url)
-    [link.delete() for link in outcoming]
+    # Delete outgoing links
+    outgoing = get_outgoing_links(n_url)
+    [link.delete() for link in outgoing]
 
 
 @db_session
-def set_qos_to_node_by_node_name(node_name,qos):
+def set_qos_to_node_by_node_name(node_name, qos):
     # Get the corresponding node
     qos = entities.NodeQoS(timestamp=datetime.today(), delay=qos)
     node = entities.Node.get(name=node_name)
     qos.node = node
-
-

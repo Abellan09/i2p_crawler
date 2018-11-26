@@ -20,14 +20,14 @@ class Node(db.Entity):
 
 class NodeType(db.Entity):
     id = PrimaryKey(int, auto=True)
-    type = Required(str)
+    type = Required(str,unique=True)
     description = Optional(str)
     nodes = Set(Node)
 
 
 class NodeStatus(db.Entity):
     id = PrimaryKey(int, auto=True)
-    type = Required(str)
+    type = Required(str,unique=True)
     description = Optional(str)
     nodes = Set(Node)
 

@@ -10,6 +10,9 @@ import sqlite3		# https://docs.python.org/2/library/sqlite3.html
 import json			# https://docs.python.org/2/library/json.html
 import logging		# https://docs.python.org/2/library/logging.html
 
+from pony.orm import *
+from crawler.i2p.database import dbutils
+
 def throw_crawler():
 	'''
 	EN: It runs an instance of spider.py (if applicable).
@@ -165,40 +168,21 @@ def add_to_database(site, targeted_sites):
 	:param targeted_sites: sites to which the site points at / sitios a los que el site apunta
 	'''
 	logging.debug("Dentro de add_to_database()")
-	name = site
-	outgoing_sites = len(targeted_sites)
+
 	try:
-		connection = sqlite3.connect("../../www/i2p_database.db") # open the db
-		cursor = connection.cursor() # get a cursor object
-		cursor.execute("SELECT name FROM nodes WHERE name=?", (name,))
-		found = cursor.fetchone()
-		if found is None:
-			cursor.execute("INSERT INTO nodes(name, incoming_sites, outgoing_sites)	VALUES(?,?,?)", (name, 0, outgoing_sites))
-		else:
-			cursor.execute("UPDATE nodes SET outgoing_sites=? WHERE name=?", (outgoing_sites, name,))
-		for iterator in range(len(targeted_sites)):
-			cursor.execute("SELECT incoming_sites FROM nodes WHERE name=?", (targeted_sites[iterator],))
-			found = cursor.fetchone()
-			if found is None:
-				cursor.execute("INSERT INTO nodes(name, incoming_sites, outgoing_sites)	VALUES(?,?,?)", (targeted_sites[iterator], 1, 0))
-			else:
-				incoming_sites = found[0] + 1
-				cursor.execute("UPDATE nodes SET incoming_sites=? WHERE name=?", (incoming_sites, targeted_sites[iterator],))
-		cursor.execute("SELECT id FROM nodes WHERE name=?", (name,))
-		source_id_aux = cursor.fetchone()
-		source_id = source_id_aux[0]
-		for iterator in range(len(targeted_sites)):
-			cursor.execute("SELECT id FROM nodes WHERE name=?", (targeted_sites[iterator],))
-			target_id_aux = cursor.fetchone()
-			target_id = target_id_aux[0]
-			cursor.execute("INSERT INTO links(source, target) VALUES(?,?)", (source_id, target_id))
-		connection.commit() # commit the change(s)
-	except sqlite3.DatabaseError as e:
+		with db_session:
+			# Creates the src node
+			dbutils.create_node(site)
+
+			for eepsite in targeted_sites:
+				# Creates target nodes
+				dbutils.create_node(eepsite)
+				# Linking all
+				dbutils.create_link(site, eepsite)
+
+	except Exception as e:
 		logging.error("Something was wrong with the Database")
-		connection.rollback() # roll back any change if something goes wrong
 		raise e
-	finally:
-		connection.close() # close the db connection
 
 def set_degree(num):
 	'''
@@ -382,9 +366,9 @@ def main():
 		else:
 			time1 = time.time()
 			time2 = time.time()
-			update_degree_to_database()
-			update_top()
-			db_to_json()
+			#update_degree_to_database()
+			#update_top()
+			#db_to_json()
 			results()
 
 if __name__ == '__main__':

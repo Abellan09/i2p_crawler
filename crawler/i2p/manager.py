@@ -11,7 +11,7 @@ import json			# https://docs.python.org/2/library/json.html
 import logging		# https://docs.python.org/2/library/logging.html
 
 from pony.orm import *
-from crawler.i2p.database import dbutils
+from database import dbutils
 
 def throw_crawler():
 	'''

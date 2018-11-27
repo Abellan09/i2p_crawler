@@ -1,7 +1,22 @@
+# -*- coding: utf-8 -*-
+
+"""
+    :mod:`entities`
+    ===========================================================================
+    :synopsis: Declares ORM entities and their relationships
+    :author: Roberto Magán Carrión
+    :contact: roberto.magan@uca.es, rmagan@ugr.es, robertomagan@gmail.com
+    :organization: University of Cádiz, University of Granada
+    :project: I2P Crawler
+    :since: 0.0.1
+"""
+
 from pony.orm import *
 from datetime import datetime
 
 db = Database()
+
+#TODO: move this to a config file
 db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_database')
 
 class Node(db.Entity):

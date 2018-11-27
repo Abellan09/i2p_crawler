@@ -366,9 +366,9 @@ def main():
 		else:
 			time1 = time.time()
 			time2 = time.time()
-			#update_degree_to_database()
-			#update_top()
-			#db_to_json()
+			update_degree_to_database()
+			update_top()
+			db_to_json()
 			results()
 
 if __name__ == '__main__':

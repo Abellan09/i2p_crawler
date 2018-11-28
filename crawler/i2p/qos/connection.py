@@ -2,15 +2,16 @@ import socket
 import time
 
 def connectThroughProxy(eepsite_url):
-    headers = "GET " + eepsite_url + " HTTP/1.1\r\n"
+    headers = "GET " + eepsite_url + " HTTP/1.1\r\n\r\n"
 
     host = "localhost" #proxy server IP
     port = 4444        #proxy server port
 
     try:
         s = socket.socket()
-        #print("Connecting to " + eepsite_url)
+        print("Connecting to " + eepsite_url)
         s.connect((host,port))
+        #print(headers)
         s.send(headers.encode('utf-8'))
         #print("Waiting for response from " + eepsite_url)
 

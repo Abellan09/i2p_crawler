@@ -14,11 +14,13 @@ with open('extracted_eepsites.txt') as seeds:
 # list_seeds = df_qos[(df_qos['code'] == 400)]['url'].tolist()
 # print(list_seeds)
 
+#list_seeds = ["rmagan.i2p"]
+
 # Setting up experiment test
-max_rounds = 1
+max_rounds = 100
 rounds = 0
 while rounds < max_rounds:
-    for seed in list_seeds[0:2]:
+    for seed in list_seeds[0:10]:
         #print(seed)
         #print(seed)
         seed = str.replace(seed,'\n','')
@@ -26,17 +28,17 @@ while rounds < max_rounds:
         #print(seed)
         seed = "http://" + seed
         #print(seed)
-        print(seed)
-        time.sleep(0.3)
+        #print(seed)
+        time.sleep(5)
         i2pt = thread.I2PThread(seed,rounds)
         i2pt.start()
         #print("Starting " + i2pt.name)
 
     # We should wait until all current round thread finish
     # for i in threading.enumerate():
-    #     if i is not threading.currentThread():
-    #         print("Waiting for " + i.name)
-    #         i.join()
+    #      if i is not threading.currentThread():
+    #          print("Waiting for " + i.name)
+    #          i.join()
 
     #print("Round " + str(rounds))
 

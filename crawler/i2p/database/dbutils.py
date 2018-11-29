@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 """
     :mod:`dbutils`
     ===========================================================================
@@ -10,7 +11,6 @@
     :project: I2P Crawler
     :since: 0.0.1
 """
-
 from pony.orm import *
 from datetime import datetime
 import entities
@@ -58,7 +58,7 @@ def create_node(n_url, n_type=settings.NT_COD_I2P, n_status=settings.NS_COD_ONGO
     :param n_type: str - Type of the new node
     :param n_status: str - Processing status of the new node
 
-    :return: Node - The new node or, if the node is already created, this node.
+    :return: Node - The new node if the node does not exist. Otherwise, return None
     """
     if not entities.Node.exists(name=n_url):
         # Gets the node type
@@ -68,7 +68,7 @@ def create_node(n_url, n_type=settings.NT_COD_I2P, n_status=settings.NS_COD_ONGO
         # Creates the new node and returns it
         return entities.Node(name=n_url, node_type=node_type, node_status=node_status)
     else:
-        return get_node(n_url)
+        return None
 
 
 def get_node(n_url):
@@ -187,8 +187,7 @@ def create_link(sn_url, tn_url):
 
     :param sn_url: str - URL/name of the source node
     :param tn_url: str - URL/name of the target node
-    :raises: ObjectNotFound when either the source node or the target node do not exist
-    :return: The created link
+    :return: The created link or None, if the link could not be created.
     """
 
     # Gets source node

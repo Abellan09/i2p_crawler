@@ -21,7 +21,7 @@ class I2PThread(threading.Thread, object):
         # To be overridden
         #response, start_time, end_time, elapsed_time = connection.connectThroughProxy(self._eepsite_url)
         response = request_conn.connectThroughProxy(self._eepsite_url)
-        #print(response)
+        print(response.text)
         # response = response.split('\r\n')
         # print(response)
         # protocol = response[0].split(' ')[0]

@@ -17,10 +17,10 @@ with open('extracted_eepsites.txt') as seeds:
 #list_seeds = ["rmagan.i2p"]
 
 # Setting up experiment test
-max_rounds = 100
+max_rounds = 1
 rounds = 0
 while rounds < max_rounds:
-    for seed in list_seeds[0:10]:
+    for seed in list_seeds[0:1]:
         #print(seed)
         #print(seed)
         seed = str.replace(seed,'\n','')
@@ -29,9 +29,10 @@ while rounds < max_rounds:
         seed = "http://" + seed
         #print(seed)
         #print(seed)
-        time.sleep(5)
-        i2pt = thread.I2PThread(seed,rounds)
-        i2pt.start()
+        for i in range(3):
+            time.sleep(0.3)
+            i2pt = thread.I2PThread(seed,rounds)
+            i2pt.start()
         #print("Starting " + i2pt.name)
 
     # We should wait until all current round thread finish

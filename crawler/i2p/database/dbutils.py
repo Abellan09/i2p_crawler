@@ -62,11 +62,11 @@ def create_node(n_url, n_type=settings.NT_COD_I2P, n_status=settings.NS_COD_ONGO
     """
     if not entities.Node.exists(name=n_url):
         # Gets the node type
-        node_type = entities.NodeType.get(type=n_type)
+        type = entities.NodeType.get(type=n_type)
         # Gets the processing status
-        node_status = entities.NodeStatus.get(type=n_status)
+        status = entities.NodeStatus.get(type=n_status)
         # Creates the new node and returns it
-        return entities.Node(name=n_url, node_type=node_type, node_status=node_status)
+        return entities.Node(name=n_url, type=type, status=status)
     else:
         return None
 
@@ -118,7 +118,7 @@ def set_node_status(n_url, n_status=settings.NS_COD_ONGOING):
     # If the node exists
     if isinstance(node, entities.Node):
         # Get and set the new estatus
-        node.node_status = entities.NodeStatus.get(type=n_status)
+        node.status = entities.NodeStatus.get(type=n_status)
     return node
 
 
@@ -136,7 +136,7 @@ def set_node_type(n_url, n_type=settings.NT_COD_I2P):
     # If the node exists
     if isinstance(node, entities.Node):
         # Get and set the new type
-        node.node_type = entities.NodeType.get(type=n_type)
+        node.type = entities.NodeType.get(type=n_type)
     return node
 
 
@@ -149,22 +149,22 @@ def set_statistics(n_url, n_incoming, n_outgoing, n_degree):
     :param n_incoming: int - # of incoming links
     :param n_outgoing: int - # of outgoing links
     :param n_degree: int - node degree
-    :return: NodeLinkStats - The node statistics
+    :return: NodeConnectivitySummary - The node statistics
     """
     # Gets the node
     node = entities.Node.get(name=n_url)
     # If the node exists
     if isinstance(node, entities.Node):
         # If the node has statistics, we are going to update values
-        if isinstance(node.node_link_stat,entities.NodeLinkStat):
-            node.node_link_stat.incoming = n_incoming
-            node.node_link_stat.outgoing = n_outgoing
-            node.node_link_stat.degree = n_degree
+        if isinstance(node.connectivity_summary,entities.NodeConnectivitySummary):
+            node.connectivity_summary.incoming = n_incoming
+            node.connectivity_summary.outgoing = n_outgoing
+            node.connectivity_summary.degree = n_degree
         else:
             # set statistics
-            entities.NodeLinkStat(node=node, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree)
+            entities.NodeConnectivitySummary(node=node, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree)
 
-    return node.node_link_stat
+    return node.connectivity_summary
 
 
 def delete_statistics(n_url):
@@ -178,15 +178,15 @@ def delete_statistics(n_url):
     # If the node exists
     if isinstance(node, entities.Node):
         # Delete its statistics
-        node.node_link_stat.delete()
+        node.connectivity_summary.delete()
 
 # NODE LINKS - CRUD (Create Read Update Delete)
 def create_link(sn_url, tn_url):
     """
-    Creates a link if and only if both nodes, source and target node, exist.
+    Creates a link if and only if both nodes, source and destination node, exist.
 
     :param sn_url: str - URL/name of the source node
-    :param tn_url: str - URL/name of the target node
+    :param tn_url: str - URL/name of the destination node
     :return: The created link or None, if the link could not be created.
     """
 
@@ -195,10 +195,10 @@ def create_link(sn_url, tn_url):
     if not isinstance(s_node, entities.Node):
         # if the source node does not exists
         return None
-    # Gets target node
+    # Gets destination node
     t_node = entities.Node.get(name=tn_url)
     if not isinstance(t_node, entities.Node):
-        # if the target node does not exists
+        # if the destination node does not exists
         return None
 
     # Does the link exists?
@@ -206,20 +206,20 @@ def create_link(sn_url, tn_url):
     # link = entities.NodeLink.get(src_node=s_node)
     # if not isinstance(link, entities.NodeLink):
     # Creates the link
-    link = entities.NodeLink(src_node=s_node, target_node=t_node)
+    link = entities.NodeLink(src_node=s_node, dst_node=t_node)
 
     return link
 
 
 def get_incoming_links(tn_url):
     """
-    Gets all incoming links to a target node
+    Gets all incoming links to a destination node
 
-    :param tn_url: str - URL/name of the target node
+    :param tn_url: str - URL/name of the destination node
     :return: list of NodeLink
     """
     incoming = select(
-        link for link in entities.NodeLink for target_node in link.target_node if target_node.name == tn_url)[:]
+        link for link in entities.NodeLink for dst_node in link.dst_node if dst_node.name == tn_url)[:]
     return incoming
 
 

@@ -22,32 +22,32 @@ db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_
 class Node(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
-    node_type = Required('NodeType')
-    node_status = Required('NodeStatus')
-    node_link_stat = Optional('NodeLinkStat')
-    node_footprinting = Optional('NodeFootprinting')
+    type = Optional('NodeType')
+    status = Optional('NodeStatus')
+    connectivity_summary = Optional('NodeConnectivitySummary')
+    footprinting = Optional('NodeFootprinting')
     src_link = Set('NodeLink', reverse='src_node')
-    target_link = Set('NodeLink', reverse='target_node')
-    node_categories = Set('NodeCategory')
-    node_languages = Set('NodeLanguage')
-    node_qo_ss = Set('NodeQoS')
+    dst_link = Set('NodeLink', reverse='dst_node')
+    categories = Set('NodeCategory')
+    languages = Set('NodeLanguage')
+    qos = Set('NodeQoS')
 
 
 class NodeType(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    nodes = Set(Node)
+    node = Optional(Node)
 
 
 class NodeStatus(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    nodes = Set(Node)
+    node = Optional(Node)
 
 
-class NodeLinkStat(db.Entity):
+class NodeConnectivitySummary(db.Entity):
     id = PrimaryKey(int, auto=True)
     outgoing = Optional(int, default=0)
     incoming = Optional(int, default=0)
@@ -58,19 +58,19 @@ class NodeLinkStat(db.Entity):
 class NodeLink(db.Entity):
     id = PrimaryKey(int, auto=True)
     src_node = Set(Node, reverse='src_link')
-    target_node = Set(Node, reverse='target_link')
+    dst_node = Set(Node, reverse='dst_link')
 
 
 class NodeCategory(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Optional(str)
+    name = Required(str)
     description = Optional(str)
     nodes = Set(Node)
 
 
 class NodeLanguage(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Optional(str)
+    name = Required(str)
     description = Optional(str)
     nodes = Set(Node)
     variant = Optional(str)
@@ -87,7 +87,7 @@ class NodeFootprinting(db.Entity):
     id = PrimaryKey(int, auto=True)
     http_headers = Optional(str)
     meta = Optional(str)
-    node = Optional(Node)
+    node = Required(Node)
 
 # Creates tablas from the above entities if they do not exist
 db.generate_mapping(create_tables=True)

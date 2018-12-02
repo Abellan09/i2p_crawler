@@ -64,6 +64,53 @@ class I2P_Spider(scrapy.Spider):
 		for u in self.start_urls:
 			yield scrapy.Request(u, callback = self.parse, errback = self.err, dont_filter=True)
 	
+	def detect_language_nltk(self, sample):
+		'''
+		EN: It uses NLTK platform to detect the language of a given sample.
+		SP: Utiliza la plataforma NLTK para detectar el idioma de una muestra dada.
+		
+		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
+		:return: the detected language / el idioma detectado
+		'''
+		# Dividimos el texto de entrada en tokens o palabras únicas
+		tokens = nltk.tokenize.word_tokenize(sample)
+		tokens = [t.strip().lower() for t in tokens] # Convierte todos los textos a minúsculas para su posterior comparación
+		# Creamos un dict donde almacenaremos la cuenta de las stopwords para cada idioma
+		lang_count = {}
+		# Por cada idioma
+		try:
+			for lang in self.languages:
+				# Obtenemos las stopwords del idioma del módulo nltk
+				stop_words = unicode(nltk.corpus.stopwords.words(lang))
+				lang_count[lang] = 0 # Inicializa a 0 el contador para cada idioma
+				# Recorremos las palabras del texto a analizar
+				for word in tokens:
+					if word in stop_words: # Si la palabra se encuentra entre las stopwords, incrementa el contador
+						lang_count[lang] += 1
+			#print lang_count
+			# Obtiene el idioma con el número mayor de coincidencias
+			language_nltk = max(lang_count, key=lang_count.get)
+			if lang_count[language_nltk] == 0:
+				language_nltk = 'undefined'
+		except UnicodeDecodeError as e:
+			print 'Error'
+			language_nltk = 'error'
+		finally:
+			return language_nltk
+	
+	def detect_language_google(self, sample):
+		'''
+		EN: It uses Google Translate to detect the language of a given sample.
+		SP: Utiliza el Traductor de Google para detectar el idioma de una muestra dada.
+		
+		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
+		:return: the detected language / el idioma detectado
+		'''
+		translator = Translator()
+		det = translator.detect(sample)
+		language_google = self.LANGUAGES[det.lang]
+		return language_google
+	
 	def parse(self, response):
 		'''
 		EN: It handles the downloaded response for each of the made requests.
@@ -89,12 +136,6 @@ class I2P_Spider(scrapy.Spider):
 		h2 = response.xpath('//h2/text()').extract()
 		h3 = response.xpath('//h3/text()').extract()
 		h4 = response.xpath('//h4/text()').extract()
-
-		#print paragraphs
-		#print h1
-		#print h2
-		#print h3
-		#print h4
 		
 		sample = title + paragraphs + h1 + h2 + h3 + h4
 		sample = ' '.join(sample)
@@ -103,43 +144,17 @@ class I2P_Spider(scrapy.Spider):
 		self.item["sample"] = sample
 		
 		# Con API de GOOGLE:
-		translator = Translator()
-		det = translator.detect(sample)
-		language_google = self.LANGUAGES[det.lang]
+		language_google=self.detect_language_google(sample)
 		
 		# Con nltk:
-		# Dividimos el texto de entrada en tokens o palabras únicas
-		tokens = nltk.tokenize.word_tokenize(sample)
-		tokens = [t.strip().lower() for t in tokens] # Convierte todos los textos a minúsculas para su posterior comparación
-		# Creamos un dict donde almacenaremos la cuenta de las stopwords para cada idioma
-		lang_count = {}
-		# Por cada idioma
-		try:
-			for lang in self.languages:
-				# Obtenemos las stopwords del idioma del módulo nltk
-				stop_words = unicode(nltk.corpus.stopwords.words(lang))
-				lang_count[lang] = 0 # Inicializa a 0 el contador para cada idioma
-				# Recorremos las palabras del texto a analizar
-				for word in tokens:
-					if word in stop_words: # Si la palabra se encuentra entre las stopwords, incrementa el contador
-						lang_count[lang] += 1
-			#print lang_count
-			# Obtiene el idioma con el número mayor de coincidencias
-			language_nltk = max(lang_count, key=lang_count.get)
-			if lang_count[language_nltk] == 0:
-				language_nltk = 'undefined'
-		except UnicodeDecodeError as e:
-			print 'Error'
-			language_nltk = 'error'
-		finally:
-			print language_nltk
-			print "Language detected!"
+		language_nltk=self.detect_language_nltk(sample)
 			
 		self.item["language"].append(language_google)
 		self.item["language"].append(language_nltk)
 		
 		self.end_time = time.time()
 		self.item["time"] = str(self.end_time - self.start_time)
+		
 		yield self.item
 	
 	def closed (self, reason):

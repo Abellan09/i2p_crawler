@@ -172,12 +172,12 @@ def add_to_database(site, targeted_sites):
 
 	try:
 		with db_session:
-			# Creates the src node
-			dbutils.create_node(site,n_status=settings.NS_COD_FINISHED)
+			# Creates the src site
+			dbutils.create_site(site,n_status=settings.NS_COD_FINISHED)
 
 			for eepsite in targeted_sites:
-				# Creates target nodes
-				dbutils.create_node(eepsite, n_status=settings.NS_COD_PENDING)
+				# Creates target sites
+				dbutils.create_site(eepsite, n_status=settings.NS_COD_PENDING)
 				# Linking all
 				dbutils.create_link(site, eepsite)
 

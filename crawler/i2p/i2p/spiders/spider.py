@@ -4,7 +4,10 @@ import scrapy		# https://doc.scrapy.org/en/latest
 import shutil		# https://docs.python.org/2/library/shutil.html
 import urlparse		# https://docs.python.org/2/library/urlparse.html
 import time			# https://docs.python.org/2/library/time.html
-from i2p.items import I2PItem, I2PItemFinal
+import json			# https://docs.python.org/2/library/json.html
+import nltk			# https://www.nltk.org
+from i2p.items import I2PItem, I2PItemFinal, LanguageItem
+from py_translator import Translator
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError 
@@ -27,12 +30,15 @@ class I2P_Spider(scrapy.Spider):
 	visited_links = []
 	parse_eepsite = None
 	error = True
+	itemLang = LanguageItem()
+	itemLang["language"] = []
+	languages = ["spanish","english","dutch","finnish","german","italian","portuguese","turkish","danish","french","hungarian","norwegian","russian","swedish"] # Lista de idiomas disponibles en la nltk
+	LANGUAGES = {}
+	main_page = True
 	aux = I2PItem()
 	item = I2PItemFinal()
 	item["extracted_eepsites"]=[]
 	extractor_i2p = LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),allow_domains=('i2p'),deny_extensions=())
-	# extractor_multimedia = LinkExtractor(tags=('audio','embed','iframe','img','input','script','source','track','video'),attrs=('src','srcset'),deny_domains=('net','com','info','org'),deny_extensions=())
-	# extractor_links = LinkExtractor(tags=('a','area','base','link'),attrs=('href'),deny_domains=('net','com','info','org'),deny_extensions=())
 	
 	def __init__(self, url=None, *args, **kwargs):
 		'''
@@ -46,6 +52,8 @@ class I2P_Spider(scrapy.Spider):
 		if url is not None:
 			self.start_urls.append(url)
 			self.parse_eepsite = urlparse.urlparse(url)
+			with open("i2p/spiders/languages.json") as f:
+				self.LANGUAGES = json.load(f)
 			self.start_time = time.time()
 			self.logger.info("Start URL: %s", self.parse_eepsite)
 		else:
@@ -60,6 +68,81 @@ class I2P_Spider(scrapy.Spider):
 		for u in self.start_urls:
 			yield scrapy.Request(u, callback = self.parse, errback = self.err, dont_filter=True)  
 	
+	def detect_language_nltk(self, sample):
+		'''
+		EN: It uses NLTK platform to detect the language of a given sample.
+		SP: Utiliza la plataforma NLTK para detectar el idioma de una muestra dada.
+		
+		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
+		:return: the detected language / el idioma detectado
+		'''
+		# Dividimos el texto de entrada en tokens o palabras únicas
+		tokens = nltk.tokenize.word_tokenize(sample)
+		tokens = [t.strip().lower() for t in tokens] # Convierte todos los textos a minúsculas para su posterior comparación
+		# Creamos un dict donde almacenaremos la cuenta de las stopwords para cada idioma
+		lang_count = {}
+		# Por cada idioma
+		try:
+			for lang in self.languages:
+				# Obtenemos las stopwords del idioma del módulo nltk
+				stop_words = unicode(nltk.corpus.stopwords.words(lang))
+				lang_count[lang] = 0 # Inicializa a 0 el contador para cada idioma
+				# Recorremos las palabras del texto a analizar
+				for word in tokens:
+					if word in stop_words: # Si la palabra se encuentra entre las stopwords, incrementa el contador
+						lang_count[lang] += 1
+			#print lang_count
+			# Obtenemos el idioma con el número mayor de coincidencias
+			language_nltk = max(lang_count, key=lang_count.get)
+			if lang_count[language_nltk] == 0:
+				language_nltk = 'undefined'
+		except UnicodeDecodeError as e:
+			print 'Error'
+			language_nltk = 'error'
+		finally:
+			return language_nltk
+	
+	def detect_language_google(self, sample):
+		'''
+		EN: It uses Google Translate to detect the language of a given sample.
+		SP: Utiliza el Traductor de Google para detectar el idioma de una muestra dada.
+		
+		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
+		:return: the detected language / el idioma detectado
+		'''
+		translator = Translator()
+		det = translator.detect(sample)
+		language_google = self.LANGUAGES[det.lang]
+		return language_google
+
+	def detect_language(self, response):
+		'''
+		EN: It detects the language of the main page.
+		SP: Detecta el idioma de la página principal.
+		
+		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite.
+		'''
+		source_url = urlparse.urlparse(response.url)
+		self.itemLang["eepsite"] = source_url.netloc
+		title = response.xpath('normalize-space(//title/text())').extract()
+		self.itemLang["title"] = title
+		paragraphs = response.xpath('normalize-space(//p)').extract()
+		h1 = response.xpath('//h1/text()').extract()
+		h2 = response.xpath('//h2/text()').extract()
+		h3 = response.xpath('//h3/text()').extract()
+		h4 = response.xpath('//h4/text()').extract()
+		sample = title + paragraphs + h1 + h2 + h3 + h4
+		sample = ' '.join(sample)
+		if len(sample)>500:
+			sample = sample[0:500]
+		self.itemLang["sample"] = sample
+		# Con API de GOOGLE:
+		language_google=self.detect_language_google(sample)
+		# Con nltk:
+		language_nltk=self.detect_language_nltk(sample)
+		self.itemLang["language"].append(language_google)
+		self.itemLang["language"].append(language_nltk)
+
 	def parse(self, response):
 		'''
 		EN: It handles the downloaded response for each of the made requests.
@@ -75,6 +158,9 @@ class I2P_Spider(scrapy.Spider):
 		self.logger.debug("Dentro de parse()")
 		self.error = False
 		self.logger.info("Recieved response from {}".format(response.url))
+		if(self.main_page):
+			self.detect_language(response)
+			self.main_page=False
 		self.visited_links.append(response.url)
 		self.aux["source_url"] = response.url
 		source_url = urlparse.urlparse(response.url)
@@ -90,8 +176,11 @@ class I2P_Spider(scrapy.Spider):
 				self.visited_links.append(link.url)
 				yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
 		self.aux["list_of_urls"] = urls_list
+		self.end_time = time.time()
+		self.itemLang["time"] = str(self.end_time - self.start_time)
 		yield self.aux
 		yield self.item
+		yield self.itemLang
 	
 	def get_links(self, response):
 		'''
@@ -121,23 +210,16 @@ class I2P_Spider(scrapy.Spider):
 		self.logger.info("SPIDER FINALIZADO")
 		self.logger.info("ERROR = " + str(self.error))
 		site = self.parse_eepsite.netloc
-		#source = "./i2p/spiders/ongoing/" + site + ".json"
 		ok = "./i2p/spiders/finished/" + site + ".ok"
 		fail = "./i2p/spiders/finished/" + site + ".fail"
-		self.end_time = time.time()
-		# self.error = False
 		if self.error:
 			f = open(fail, "w")
 			f.close()
 			self.logger.info(site + ".fail has been created at /i2p/spiders/finished")
-			#shutil.move(source, fail)
-			#shutil.copy(source, fail)
 		else:
 			f = open(ok, "w")
 			f.close()
 			self.logger.info(site + ".ok has been created at /i2p/spiders/finished")
-			#shutil.move(source, target)
-			#shutil.copy(source, ok)
 			self.logger.info("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
 		
 	def err(self, failure):
@@ -153,7 +235,7 @@ class I2P_Spider(scrapy.Spider):
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
 		self.logger.debug("Dentro de err()")
-		self.error = True
+		#self.error = True
 		self.logger.error(repr(failure))  
 		if failure.check(HttpError):
 			response = failure.value.response 

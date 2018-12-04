@@ -35,7 +35,7 @@ class DatabaseTests(unittest.TestCase):
         # Gets the outgoing links from site to the extracted ones
         created_links = len(dbutils.get_outgoing_links(site))
 
-        self.assertEqual(len(dbutils.get_nodes()),10,msg="The number of created nodes should be 10")
+        self.assertEqual(len(dbutils.get_sites()),10,msg="The number of created sites should be 10")
         self.assertEqual(links_to_create, created_links, msg="The number of links should be 9")
 
 if __name__ == '__main__':

@@ -19,75 +19,75 @@ db = Database()
 #TODO: move this to a config file
 db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_database')
 
-class Node(db.Entity):
+class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
-    type = Optional('NodeType')
-    status = Optional('NodeStatus')
-    connectivity_summary = Optional('NodeConnectivitySummary')
-    footprinting = Optional('NodeFootprinting')
-    src_link = Set('NodeLink', reverse='src_node')
-    dst_link = Set('NodeLink', reverse='dst_node')
-    categories = Set('NodeCategory')
-    languages = Set('NodeLanguage')
-    qos = Set('NodeQoS')
+    type = Optional('SiteType')
+    status = Optional('SiteStatus')
+    connectivity_summary = Optional('SiteConnectivitySummary')
+    footprinting = Optional('SiteFootprinting')
+    src_link = Set('Link', reverse='src_site')
+    dst_link = Set('Link', reverse='dst_site')
+    categories = Set('SiteCategory')
+    languages = Set('SiteLanguage')
+    qos = Set('SiteQoS')
 
 
-class NodeType(db.Entity):
+class SiteType(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    node = Optional(Node)
+    site = Optional(Site)
 
 
-class NodeStatus(db.Entity):
+class SiteStatus(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    node = Optional(Node)
+    site = Optional(Site)
 
 
-class NodeConnectivitySummary(db.Entity):
+class SiteConnectivitySummary(db.Entity):
     id = PrimaryKey(int, auto=True)
     outgoing = Optional(int, default=0)
     incoming = Optional(int, default=0)
     degree = Optional(int, default=0)
-    node = Required(Node)
+    site = Required(Site)
 
 
-class NodeLink(db.Entity):
+class Link(db.Entity):
     id = PrimaryKey(int, auto=True)
-    src_node = Set(Node, reverse='src_link')
-    dst_node = Set(Node, reverse='dst_link')
+    src_site = Set(Site, reverse='src_link')
+    dst_site = Set(Site, reverse='dst_link')
 
 
-class NodeCategory(db.Entity):
-    id = PrimaryKey(int, auto=True)
-    name = Required(str)
-    description = Optional(str)
-    nodes = Set(Node)
-
-
-class NodeLanguage(db.Entity):
+class SiteCategory(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str)
     description = Optional(str)
-    nodes = Set(Node)
+    sites = Set(Site)
+
+
+class SiteLanguage(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    name = Required(str)
+    description = Optional(str)
+    sites = Set(Site)
     variant = Optional(str)
 
 
-class NodeQoS(db.Entity):
+class SiteQoS(db.Entity):
     id = PrimaryKey(int, auto=True)
     timestamp = Required(datetime)
     delay = Optional(float)
-    node = Required(Node)
+    site = Required(Site)
 
 
-class NodeFootprinting(db.Entity):
+class SiteFootprinting(db.Entity):
     id = PrimaryKey(int, auto=True)
     http_headers = Optional(str)
     meta = Optional(str)
-    node = Required(Node)
+    site = Required(Site)
 
 # Creates tablas from the above entities if they do not exist
 db.generate_mapping(create_tables=True)

@@ -1,6 +1,6 @@
 import unittest
 from pony.orm import *
-from crawler.i2p.database import dbutils, entities, settings
+from crawler.i2p.database import populate, dbutils, entities, settings
 from crawler.i2p import manager
 
 class DatabaseTests(unittest.TestCase):
@@ -10,7 +10,7 @@ class DatabaseTests(unittest.TestCase):
         db_session.__enter__()
         sql_debug(True)
         # Adding default info to the database
-        dbutils.add_default_info()
+        populate.add_default_info()
 
     def tearDown(self):
         # Comment to persist the test in the database

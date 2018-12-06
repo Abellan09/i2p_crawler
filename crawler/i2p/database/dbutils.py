@@ -11,46 +11,13 @@
     :project: I2P Crawler
     :since: 0.0.1
 """
-from pony.orm import *
+from pony.orm import select
 from datetime import datetime
 import entities
 import settings
 
-
-
-def add_default_info():
-    """
-    Adds default information to the database
-
-    """
-    # Adding site types
-    add_default_site_types()
-    # Adding site status
-    add_default_site_status()
-
-
-
-def add_default_site_status():
-    """
-    Adds default status for site crawling. (See NS_DEFAULT_INFO at settings.py)
-
-    """
-    for status in settings.NS_DEFAULT_INFO.keys():
-        entities.SiteStatus(type=status, description=settings.NS_DEFAULT_INFO[status])
-
-
-
-def add_default_site_types():
-    """
-    Adds default types of sites found. (See NT_DEFAULT_INFO at settings.py)
-
-    """
-    for type in settings.NT_DEFAULT_INFO.keys():
-        entities.SiteType(type=type, description=settings.NT_DEFAULT_INFO[type])
-
-
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(n_url, n_type=settings.NT_COD_I2P, n_status=settings.NS_COD_ONGOING):
+def create_site(n_url, n_type=settings.Type.I2P.name, n_status=settings.Status.ONGOING.name):
     """
     Creates a new site. If no type and status is provided, I2P and Ongoing status are setup
 
@@ -104,7 +71,7 @@ def delete_site(n_url):
         site.delete()
 
 
-def set_site_status(n_url, n_status=settings.NS_COD_ONGOING):
+def set_site_status(n_url, n_status=settings.Status.ONGOING.name):
     """
     Set a new status of a site if it exists
 
@@ -122,7 +89,7 @@ def set_site_status(n_url, n_status=settings.NS_COD_ONGOING):
     return site
 
 
-def set_site_type(n_url, n_type=settings.NT_COD_I2P):
+def set_site_type(n_url, n_type=settings.Type.I2P.name):
     """
     Set a new type of a site if it exists
 

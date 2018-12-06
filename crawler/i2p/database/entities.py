@@ -13,6 +13,8 @@
 
 from pony.orm import *
 from datetime import datetime
+import settings
+from enum import Enum
 
 db = Database()
 

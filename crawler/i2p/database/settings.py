@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-    :mod:`populate`
+    :mod:`settings`
     ===========================================================================
-    :synopsis: populates database tables and adds default info
+    :synopsis: default data and constants for the database
     :author: Roberto Magán Carrión
     :contact: roberto.magan@uca.es, rmagan@ugr.es, robertomagan@gmail.com
     :organization: University of Cádiz, University of Granada
@@ -11,23 +11,35 @@
     :since: 0.0.1
 """
 
-# Node status and type constants
-# NODE STATUS
-NS_COD_ONGOING = 'O'
-NS_COD_FINISHED = 'F'
-NS_COD_PENDING = 'P'
-NS_COD_NOTCRAWLEABLE = 'NC'
-# {type:description}
-NS_DEFAULT_INFO = {NS_COD_ONGOING:'O (Ongoing): The site is being crawled',
-                   NS_COD_FINISHED:'F (Finished): The site has been successfully crawled',
-                   NS_COD_PENDING:'P (Pending): The site is waiting to be launched again. May there was a processing error.',
-                   NS_COD_NOTCRAWLEABLE:'NC (Not Crawleable): The site cannot be crawled'}
+from enum import Enum, unique
 
-# NODE TYPE
-NT_COD_I2P = 'I2P'
-NT_COD_TOR = 'TOR'
-NT_COD_SURFACE = 'WEB'
+# Site status and type constants
+# SITE STATUS
+
+@unique
+class Status(Enum):
+    ONGOING = 1
+    FINISHED = 2
+    PENDING = 3
+    ERROR = 4
+
+
+# {status:description}
+SITE_STATUS_DEFAULT_INFO = {Status.ONGOING.name:'Ongoing: The site is being crawled',
+                            Status.FINISHED.name:'Finished: The site has been successfully crawled',
+                            Status.PENDING.name:'Pending: The site is waiting to be launched again. May there was a processing error.',
+                            Status.ERROR.name:'Error: The site cannot be crawled'}
+
+# SITE TYPE
+@unique
+class Type(Enum):
+    I2P = 1
+    TOR = 2
+    SURFACE = 3
+    UNKNOWN = 4
+
 #{type:description}
-NT_DEFAULT_INFO = {NT_COD_I2P:'I2P eepsite',
-                   NT_COD_TOR:'TOR onion site',
-                   NT_COD_SURFACE:'Surface web site'}
+SITE_TYPE_DEFAULT_INFO = {Type.I2P.name:'I2P eepsite',
+                          Type.TOR.name:'TOR onion site',
+                          Type.SURFACE.name:'Surface web site',
+                          Type.UNKNOWN.name:'Unknow site type'}

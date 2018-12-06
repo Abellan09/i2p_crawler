@@ -117,7 +117,7 @@ def set_site_type(s_url, s_type):
     # If the site exists
     if isinstance(site, entities.Site):
         # Get and set the new type
-        site.type = entities.SiteType.get(type=s_type)
+        site.type = entities.SiteType.get(type=s_type.name)
     return site
 
 

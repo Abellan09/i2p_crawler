@@ -10,6 +10,7 @@ class DatabaseTests(unittest.TestCase):
         db_session.__enter__()
         sql_debug(True)
         # Adding default info to the database
+        # Comment if it is has already been populated
         populate.add_default_info()
 
     def tearDown(self):

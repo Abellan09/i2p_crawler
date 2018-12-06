@@ -16,37 +16,43 @@ from datetime import datetime
 import entities
 import settings
 
-# NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(n_url, n_type=settings.Type.I2P.name, n_status=settings.Status.ONGOING.name):
-    """
-    Creates a new site. If no type and status is provided, I2P and Ongoing status are setup
 
-    :param n_url: str - URL of the site, which will the name of the new site
-    :param n_type: str - Type of the new site
-    :param n_status: str - Processing status of the new site
+# NODE ENTITY - CRUD (Create Read Update Delete)
+def create_site(s_url, s_type=settings.Type.I2P, s_status=settings.Status.PENDING):
+    """
+    Creates a new site. If no type and status is provided, I2P and PENDING status are setup
+
+    :param s_url: str - URL of the site, which will the name of the new site
+    :param s_type: str - Type of the new site
+    :param s_status: str - Processing status of the new site
 
     :return: Site - The new site if the site does not exist. Otherwise, return None
     """
-    if not entities.Site.exists(name=n_url):
+
+    # TODO: create Exception hierarchy.
+    assert isinstance(s_type, settings.Type), 'Not valid type of site'
+    assert isinstance(s_status, settings.Status), 'Not valid type of status'
+
+    if not entities.Site.exists(name=s_url):
         # Gets the site type
-        type = entities.SiteType.get(type=n_type)
+        type = entities.SiteType.get(type=s_type.name)
         # Gets the processing status
-        status = entities.SiteStatus.get(type=n_status)
+        status = entities.SiteStatus.get(type=s_status.name)
         # Creates the new site and returns it
-        return entities.Site(name=n_url, type=type, status=status)
+        return entities.Site(name=s_url, type=type, status=status)
     else:
         return None
 
 
-def get_site(n_url):
+def get_site(s_url):
     """
     Gets the site by its URL which is the name of the site
 
-    :param n_url: str - URL/name of the site
+    :param s_url: str - URL/name of the site
     :return: Site - The site or None if it was not found.
     """
     # Gets the site by url
-    return entities.Site.get(name=n_url)
+    return entities.Site.get(name=s_url)
 
 def get_sites():
     """
@@ -58,68 +64,76 @@ def get_sites():
     return entities.Site.select()[:]
 
 
-def delete_site(n_url):
+def delete_site(s_url):
     """
     Deletes the site by its URL which is the name of the site if it exists.
 
-    :param n_url: str - URL/name of the site
+    :param s_url: str - URL/name of the site
     """
     # Gets the site to delete
-    site = entities.Site.get(name=n_url)
+    site = entities.Site.get(name=s_url)
     # If the site exists
     if isinstance(site, entities.Site):
         site.delete()
 
 
-def set_site_status(n_url, n_status=settings.Status.ONGOING.name):
+def set_site_status(s_url, s_status=settings.Status.PENDING):
     """
     Set a new status of a site if it exists
 
-    :param n_url: str - URL/name of the site
-    :param n_status: str - The new processing status
+    :param s_url: str - URL/name of the site
+    :param s_status: str - The new processing status
 
     :return: Site - The updated site or None if the site does not exists
     """
+
+    # TODO: create Exception hierarchy.
+    assert isinstance(s_status, settings.Status), 'Not valid type of status'
+
     # Gets the site to update
-    site = entities.Site.get(name=n_url)
+    site = entities.Site.get(name=s_url)
     # If the site exists
     if isinstance(site, entities.Site):
-        # Get and set the new estatus
-        site.status = entities.SiteStatus.get(type=n_status)
+        # Get and set the new status
+        site.status = entities.SiteStatus.get(type=s_status.name)
     return site
 
 
-def set_site_type(n_url, n_type=settings.Type.I2P.name):
+def set_site_type(s_url, s_type):
     """
     Set a new type of a site if it exists
 
-    :param n_url: str - URL/name of the site
-    :param n_type: str - Type of the new site
+    :param s_url: str - URL/name of the site
+    :param s_type: str - Type of the new site
 
     :return: Site - The updated site or None if the site does not exists
     """
+
+    # TODO: create Exception hierarchy.
+    assert isinstance(s_type, settings.Type), 'Not valid type of site'
+
     # Gets the site to update
-    site = entities.Site.get(name=n_url)
+    site = entities.Site.get(name=s_url)
     # If the site exists
     if isinstance(site, entities.Site):
         # Get and set the new type
-        site.type = entities.SiteType.get(type=n_type)
+        site.type = entities.SiteType.get(type=s_type)
     return site
 
 
 # NODE LINK STATS - CRUD (Create Read Update Delete)
-def set_statistics(n_url, n_incoming, n_outgoing, n_degree):
+def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
     """
     Creates or updates site statistics
 
-    :param n_url: str - URL/name of the site
+    :param s_url: str - URL/name of the site
     :param n_incoming: int - # of incoming links
     :param n_outgoing: int - # of outgoing links
     :param n_degree: int - site degree
     :return: SiteConnectivitySummary - The site statistics
     """
     # Gets the site
-    site = entities.Site.get(name=n_url)
+    site = entities.Site.get(name=s_url)
     # If the site exists
     if isinstance(site, entities.Site):
         # If the site has statistics, we are going to update values
@@ -134,36 +148,37 @@ def set_statistics(n_url, n_incoming, n_outgoing, n_degree):
     return site.connectivity_summary
 
 
-def delete_statistics(n_url):
+def delete_statistics(s_url):
     """
     Deletes the site statistics
 
-    :param n_url: str - URL/name of the site
+    :param s_url: str - URL/name of the site
     """
     # Gets the site
-    site = entities.Site.get(name=n_url)
+    site = entities.Site.get(name=s_url)
     # If the site exists
     if isinstance(site, entities.Site):
         # Delete its statistics
         site.connectivity_summary.delete()
 
+
 # NODE LINKS - CRUD (Create Read Update Delete)
-def create_link(sn_url, tn_url):
+def create_link(src_url, dst_url):
     """
     Creates a link if and only if both sites, source and destination site, exist.
 
-    :param sn_url: str - URL/name of the source site
-    :param tn_url: str - URL/name of the destination site
+    :param src_url: str - URL/name of the source site
+    :param dst_url: str - URL/name of the destination site
     :return: The created link or None, if the link could not be created.
     """
 
     # Gets source site
-    s_site = entities.Site.get(name=sn_url)
+    s_site = entities.Site.get(name=src_url)
     if not isinstance(s_site, entities.Site):
         # if the source site does not exists
         return None
     # Gets destination site
-    t_site = entities.Site.get(name=tn_url)
+    t_site = entities.Site.get(name=dst_url)
     if not isinstance(t_site, entities.Site):
         # if the destination site does not exists
         return None
@@ -178,47 +193,60 @@ def create_link(sn_url, tn_url):
     return link
 
 
-def get_incoming_links(tn_url):
+def get_incoming_links(ts_url):
     """
     Gets all incoming links to a destination site
 
-    :param tn_url: str - URL/name of the destination site
+    :param ts_url: str - URL/name of the destination site
     :return: list of Link
     """
     incoming = select(
-        link for link in entities.Link for dst_site in link.dst_site if dst_site.name == tn_url)[:]
+        link for link in entities.Link for dst_site in link.dst_site if dst_site.name == ts_url)[:]
     return incoming
 
 
-def get_outgoing_links(sn_url):
+def get_outgoing_links(ss_url):
     """
     Gets all outgoing links from a source site
 
-    :param sn_url: str - URL/name of the source site
+    :param ss_url: str - URL/name of the source site
     :return: list of Link
     """
     outgoing = select(
-        link for link in entities.Link for src_site in link.src_site if src_site.name == sn_url)[:]
+        link for link in entities.Link for src_site in link.src_site if src_site.name == ss_url)[:]
     return outgoing
 
 
-def delete_links(n_url):
+def delete_links(s_url):
     """
     Deletes all links to and from a specific site
 
-    :param n_url: tr - URL/name of the site
+    :param s_url: str - URL/name of the site
     """
     # Delete incoming links
-    incoming = get_incoming_links(n_url)
+    incoming = get_incoming_links(s_url)
     [link.delete() for link in incoming]
 
     # Delete outgoing links
-    outgoing = get_outgoing_links(n_url)
+    outgoing = get_outgoing_links(s_url)
     [link.delete() for link in outgoing]
 
 
-def set_qos_to_site_by_site_name(site_name, qos):
-    # Get the corresponding site
-    qos = entities.SiteQoS(timestamp=datetime.today(), delay=qos)
-    site = entities.Site.get(name=site_name)
-    qos.site = site
+def set_qos(s_url, s_qos):
+    """
+    Sets a new QoS to the site if existing
+
+    :param s_url: str - URL/name of the site
+    :param s_qos: float - QoS value
+    :return: Site - The updated site or None if not existing.
+    """
+
+    assert isinstance(s_qos,float) , 'QoS value must be float'
+
+    # Gets sites_url
+    site = entities.Site.get(name=s_url)
+    if isinstance(site, entities.Site):
+        # Creates new QoS value
+        qos = entities.SiteQoS(timestamp=datetime.today(), delay=s_qos)
+        site.qos = qos
+    return site

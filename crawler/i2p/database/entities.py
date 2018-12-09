@@ -13,21 +13,20 @@
 
 from pony.orm import *
 from datetime import datetime
-import settings
-from enum import Enum
 
 db = Database()
 
 #TODO: move this to a config file
 db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_database')
 
+
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
     type = Optional('SiteType')
-    status = Optional('SiteStatus')
+    processing_status = Set('SiteProcessingStatus')
     connectivity_summary = Optional('SiteConnectivitySummary')
-    footprinting = Optional('SiteFootprinting')
+    footprint = Optional('SiteFootprint')
     src_link = Set('Link', reverse='src_site')
     dst_link = Set('Link', reverse='dst_site')
     categories = Set('SiteCategory')
@@ -39,14 +38,21 @@ class SiteType(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    site = Optional(Site)
+    site = Optional('Site')
 
 
 class SiteStatus(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    site = Optional(Site)
+    status = Optional('SiteProcessingStatus')
+
+
+class SiteProcessingStatus(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    status = Optional('SiteStatus')
+    site = Optional('Site')
+    timestamp = Required(datetime)
 
 
 class SiteConnectivitySummary(db.Entity):
@@ -54,27 +60,27 @@ class SiteConnectivitySummary(db.Entity):
     outgoing = Optional(int, default=0)
     incoming = Optional(int, default=0)
     degree = Optional(int, default=0)
-    site = Required(Site)
+    site = Required('Site')
 
 
 class Link(db.Entity):
     id = PrimaryKey(int, auto=True)
-    src_site = Set(Site, reverse='src_link')
-    dst_site = Set(Site, reverse='dst_link')
+    src_site = Set('Site', reverse='src_link')
+    dst_site = Set('Site', reverse='dst_link')
 
 
 class SiteCategory(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str)
     description = Optional(str)
-    sites = Set(Site)
+    sites = Set('Site')
 
 
 class SiteLanguage(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str)
     description = Optional(str)
-    sites = Set(Site)
+    sites = Set('Site')
     variant = Optional(str)
 
 
@@ -82,14 +88,14 @@ class SiteQoS(db.Entity):
     id = PrimaryKey(int, auto=True)
     timestamp = Required(datetime)
     delay = Optional(float)
-    site = Required(Site)
+    site = Required('Site')
 
 
-class SiteFootprinting(db.Entity):
+class SiteFootprint(db.Entity):
     id = PrimaryKey(int, auto=True)
     http_headers = Optional(str)
     meta = Optional(str)
-    site = Required(Site)
+    site = Required('Site')
 
 # Creates tablas from the above entities if they do not exist
 db.generate_mapping(create_tables=True)

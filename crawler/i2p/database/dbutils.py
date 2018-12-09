@@ -18,9 +18,9 @@ import settings
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_type=settings.Type.I2P, s_status=settings.Status.PENDING):
+def create_site(s_url, s_type=settings.Type.I2P, s_status=settings.Status.ONGOING):
     """
-    Creates a new site. If no type and status is provided, I2P and PENDING status are setup
+    Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
 
     :param s_url: str - URL of the site, which will the name of the new site
     :param s_type: str - Type of the new site
@@ -33,15 +33,20 @@ def create_site(s_url, s_type=settings.Type.I2P, s_status=settings.Status.PENDIN
     assert isinstance(s_type, settings.Type), 'Not valid type of site'
     assert isinstance(s_status, settings.Status), 'Not valid type of status'
 
+    # The new Site
+    site = None
+
     if not entities.Site.exists(name=s_url):
         # Gets the site type
-        type = entities.SiteType.get(type=s_type.name)
-        # Gets the processing status
-        status = entities.SiteStatus.get(type=s_status.name)
-        # Creates the new site and returns it
-        return entities.Site(name=s_url, type=type, status=status)
-    else:
-        return None
+        new_type = entities.SiteType.get(type=s_type.name)
+
+        # Creates the new site
+        site = entities.Site(name=s_url, type=new_type)
+
+        # Set the processing status
+        site.processing_status = create_processing_status(s_status)
+
+    return site
 
 
 def get_site(s_url):
@@ -53,6 +58,7 @@ def get_site(s_url):
     """
     # Gets the site by url
     return entities.Site.get(name=s_url)
+
 
 def get_sites():
     """
@@ -75,28 +81,6 @@ def delete_site(s_url):
     # If the site exists
     if isinstance(site, entities.Site):
         site.delete()
-
-
-def set_site_status(s_url, s_status=settings.Status.PENDING):
-    """
-    Set a new status of a site if it exists
-
-    :param s_url: str - URL/name of the site
-    :param s_status: str - The new processing status
-
-    :return: Site - The updated site or None if the site does not exists
-    """
-
-    # TODO: create Exception hierarchy.
-    assert isinstance(s_status, settings.Status), 'Not valid type of status'
-
-    # Gets the site to update
-    site = entities.Site.get(name=s_url)
-    # If the site exists
-    if isinstance(site, entities.Site):
-        # Get and set the new status
-        site.status = entities.SiteStatus.get(type=s_status.name)
-    return site
 
 
 def set_site_type(s_url, s_type):
@@ -230,6 +214,28 @@ def delete_links(s_url):
     # Delete outgoing links
     outgoing = get_outgoing_links(s_url)
     [link.delete() for link in outgoing]
+
+
+# NODE PROCESSING STATUS - CRUD
+def create_processing_status(s_status=settings.Status.PENDING):
+    """
+    Creates a new crawler processing status. Default status PENDING
+
+    :param s_status: str - The chosen processing status
+    :return: proc_status: SiteProcessionStatus - The new processing status
+    """
+
+    # is the status valid?
+    assert isinstance(s_status, settings.Status), 'Not valid type of status'
+
+    # Gets the chosen status
+    new_status = entities.SiteStatus.get(type=s_status.name)
+
+    # Creates the new processing status
+    return entities.SiteProcessingStatus(status=new_status,timestamp=datetime.today())
+
+def get_site_processing_status(s_url):
+    pass
 
 
 def set_qos(s_url, s_qos):

@@ -173,11 +173,11 @@ def add_to_database(site, targeted_sites):
 	try:
 		with db_session:
 			# Creates the src site
-			dbutils.create_site(site,s_status=settings.Status.PENDING.name)
+			dbutils.create_site(site,s_status=settings.Status.FINISHED)
 
 			for eepsite in targeted_sites:
 				# Creates target sites
-				dbutils.create_site(eepsite, s_status=settings.Type.I2P.name)
+				dbutils.create_site(eepsite, s_type=settings.Type.I2P)
 				# Linking all
 				dbutils.create_link(site, eepsite)
 

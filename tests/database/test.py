@@ -3,7 +3,8 @@ from pony.orm import *
 from crawler.i2p.database import populate, dbutils, entities, settings
 from crawler.i2p import manager
 
-class DatabaseTests(unittest.TestCase):
+
+class CrawlerTests(unittest.TestCase):
 
     def setUp(self):
         rollback()
@@ -38,6 +39,35 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(len(dbutils.get_sites()),10,msg="The number of created sites should be 10")
         self.assertEqual(links_to_create, created_links, msg="The number of links should be 9")
+
+class DatabaseTests(unittest.TestCase):
+
+    def setUp(self):
+        rollback()
+        db_session.__enter__()
+        sql_debug(True)
+        # Adding default info to the database
+        # Comment if it is has already been populated
+        #populate.add_default_info()
+
+    def tearDown(self):
+        # Comment to persist the test in the database
+        rollback()
+        db_session.__exit__()
+
+    def test_create_site(self):
+
+        # Example data to test
+        # crawled eepsite
+        site = "i2p_src.i2p"
+
+        new_site = dbutils.create_site(s_url=site)
+
+        self.assertIsNotNone(new_site,msg="The site has not been created")
+
+    def test_get_processing_status(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

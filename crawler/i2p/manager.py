@@ -185,57 +185,6 @@ def add_to_database(site, targeted_sites):
 		logging.error("Something was wrong with the Database")
 		raise e
 
-def set_degree(num):
-	'''
-	EN: It assings a certain degree to a site depending on the sites that point at it.
-	SP: Asigna un determinado grado a un site en función de los sites que lo apuntan.
-	
-	:param num: number of sites that point to the site / número de sitios que apuntan al site
-	:return: the assigned degree / el grado asignado
-	'''
-	if num >= 15:
-		return 8
-	elif num >= 12:
-		return 7
-	elif num >= 10:
-		return 6
-	elif num >= 8:
-		return 5
-	elif num >= 6:
-		return 4
-	elif num >= 4:
-		return 3
-	elif num >= 2:
-		return 2
-	else:
-		return 1
-
-def update_degree_to_database():
-	'''
-	EN: It updates the degree value for each site in the database.
-	SP: Actualiza el valor de degree para cada site en la base de datos.
-	'''
-	logging.debug("Dentro de set_degree()")
-	try:
-		connection = sqlite3.connect("../../www/i2p_database.db") # open the db
-		cursor = connection.cursor() # get a cursor object
-		cursor.execute("SELECT id, incoming_sites, name FROM nodes")
-		result = cursor.fetchall()
-		for i in range(len(result)):
-			node_id = result[i][0]
-			incoming_sites = result[i][1]
-			name = result[i][2]
-			degree = set_degree(incoming_sites)
-			logging.debug("DEGREE = " + str(degree) + " assigned to " + str(name))
-			cursor.execute("UPDATE nodes SET degree=? WHERE id=?", (degree, node_id,))
-		connection.commit() # commit the change(s)
-	except sqlite3.DatabaseError as e:
-		logging.error("Something was wrong with the Database")
-		connection.rollback() # roll back any change if something goes wrong
-		raise e
-	finally:
-		connection.close() # close the db connection
-
 def update_top():
 	'''
 	EN: It updates the TOP tables of sites with more incoming_sites (Table Incoming_Top) and with more outgoing_sites (Table Outgoing_Top).
@@ -291,23 +240,6 @@ def dict_factory(cursor, row):
 	for idx, col in enumerate(cursor.description):
 		d[col[0]] = row[idx]
 	return d
-
-def db_to_json():
-	'''
-	EN: It generates a file in json format with the nodes and links that are contained in the database.
-	SP: Genera un archivo en formato json con los nodos y links contenidos en la base de datos.
-	'''
-	logging.debug("Dentro de db_to_json()")
-	connection = sqlite3.connect("../../www/i2p_database.db")
-	connection.row_factory = dict_factory
-	cursor = connection.cursor()
-	cursor.execute("SELECT * FROM nodes ORDER BY id")
-	nodes = cursor.fetchall()
-	cursor.execute("SELECT * FROM links ORDER BY source")
-	links = cursor.fetchall()
-	json_result = json.dumps({"nodes": nodes, "links": links}, sort_keys=True, indent=4, separators=(',', ': '))
-	with open('../../www/i2p_data.json', 'wb') as f:
-		f.write(json_result)
 
 seed_sites = []
 ignored_sites = []
@@ -367,9 +299,7 @@ def main():
 		else:
 			time1 = time.time()
 			time2 = time.time()
-			update_degree_to_database()
 			update_top()
-			db_to_json()
 			results()
 
 if __name__ == '__main__':

@@ -1,0 +1,14 @@
+spanish
+english
+dutch
+finnish
+german
+italian
+portuguese
+turkish
+danish
+french
+hungarian
+norwegian
+russian
+swedish

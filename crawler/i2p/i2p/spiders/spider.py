@@ -32,8 +32,8 @@ class I2P_Spider(scrapy.Spider):
 	error = True
 	itemLang = LanguageItem()
 	itemLang["language"] = []
-	languages = ["spanish","english","dutch","finnish","german","italian","portuguese","turkish","danish","french","hungarian","norwegian","russian","swedish"] # Lista de idiomas disponibles en la nltk
-	LANGUAGES = {}
+	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
+	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
 	main_page = True
 	aux = I2PItem()
 	item = I2PItemFinal()
@@ -52,8 +52,14 @@ class I2P_Spider(scrapy.Spider):
 		if url is not None:
 			self.start_urls.append(url)
 			self.parse_eepsite = urlparse.urlparse(url)
-			with open("i2p/spiders/languages.json") as f:
-				self.LANGUAGES = json.load(f)
+			with open("i2p/spiders/data/languages_google.json") as f:
+				self.LANGUAGES_GOOGLE = json.load(f)
+			with open("i2p/spiders/data/languages_nltk.txt") as g:
+				line = g.readline()
+				while line != "":
+					line = line.replace("\n", "")
+					self.LANGUAGES_NLTK.append(line)
+					line = g.readline()
 			self.start_time = time.time()
 			self.logger.info("Start URL: %s", self.parse_eepsite)
 		else:
@@ -83,7 +89,7 @@ class I2P_Spider(scrapy.Spider):
 		lang_count = {}
 		# Por cada idioma
 		try:
-			for lang in self.languages:
+			for lang in self.LANGUAGES_NLTK:
 				# Obtenemos las stopwords del idioma del módulo nltk
 				stop_words = unicode(nltk.corpus.stopwords.words(lang))
 				lang_count[lang] = 0 # Inicializa a 0 el contador para cada idioma
@@ -112,7 +118,7 @@ class I2P_Spider(scrapy.Spider):
 		'''
 		translator = Translator()
 		det = translator.detect(sample)
-		language_google = self.LANGUAGES[det.lang]
+		language_google = self.LANGUAGES_GOOGLE[det.lang]
 		return language_google
 
 	def detect_language(self, response):

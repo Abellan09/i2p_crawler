@@ -5,7 +5,7 @@ import threading
 import time
 import pandas as pd
 
-with open('extracted_eepsites.txt') as seeds:
+with open('data/extracted_eepsites.txt') as seeds:
     list_seeds = seeds.readlines()
 
 # Test 400 error

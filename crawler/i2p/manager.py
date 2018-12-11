@@ -273,7 +273,7 @@ def main():
 	global pending_sites
 	global visited_sites
 	global ongoing_sites
-	f = open("seed_urls.txt")
+	f = open("data/seed_urls.txt")
 	line = f.readline()
 	while line != "":
 		line = line.replace("\n", "")

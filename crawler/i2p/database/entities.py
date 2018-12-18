@@ -23,8 +23,9 @@ db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
-    type = Optional('SiteType')
-    processing_status = Set('SiteProcessingStatus')
+    type = Required('SiteType')
+    processing_log = Set('SiteProcessingLog')
+    current_processing_status = Optional('SiteStatus')
     connectivity_summary = Optional('SiteConnectivitySummary')
     footprint = Optional('SiteFootprint')
     src_link = Set('Link', reverse='src_site')
@@ -38,20 +39,21 @@ class SiteType(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    site = Optional('Site')
+    site = Set('Site')
 
 
 class SiteStatus(db.Entity):
     id = PrimaryKey(int, auto=True)
     type = Required(str,unique=True)
     description = Optional(str)
-    status = Optional('SiteProcessingStatus')
+    processing_log = Set('SiteProcessingLog')
+    site = Set('Site')
 
 
-class SiteProcessingStatus(db.Entity):
+class SiteProcessingLog(db.Entity):
     id = PrimaryKey(int, auto=True)
-    status = Optional('SiteStatus')
-    site = Optional('Site')
+    status = Required('SiteStatus')
+    site = Required('Site')
     timestamp = Required(datetime)
 
 

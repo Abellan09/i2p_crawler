@@ -18,20 +18,18 @@ import settings
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_type=settings.Type.I2P, s_status=settings.Status.ONGOING):
+def create_site(s_url, s_type=settings.Type.I2P):
     """
     Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
 
     :param s_url: str - URL of the site, which will the name of the new site
     :param s_type: str - Type of the new site
-    :param s_status: str - Processing status of the new site
 
     :return: Site - The new site if the site does not exist. Otherwise, return None
     """
 
     # TODO: create Exception hierarchy.
     assert isinstance(s_type, settings.Type), 'Not valid type of site'
-    assert isinstance(s_status, settings.Status), 'Not valid type of status'
 
     # The new Site
     site = None
@@ -42,9 +40,6 @@ def create_site(s_url, s_type=settings.Type.I2P, s_status=settings.Status.ONGOIN
 
         # Creates the new site
         site = entities.Site(name=s_url, type=new_type)
-
-        # Set the processing status
-        site.processing_status = create_processing_status(s_status)
 
     return site
 
@@ -121,7 +116,7 @@ def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
     # If the site exists
     if isinstance(site, entities.Site):
         # If the site has statistics, we are going to update values
-        if isinstance(site.connectivity_summary,entities.SiteConnectivitySummary):
+        if isinstance(site.connectivity_summary, entities.SiteConnectivitySummary):
             site.connectivity_summary.incoming = n_incoming
             site.connectivity_summary.outgoing = n_outgoing
             site.connectivity_summary.degree = n_degree
@@ -216,28 +211,79 @@ def delete_links(s_url):
     [link.delete() for link in outgoing]
 
 
-# NODE PROCESSING STATUS - CRUD
-def create_processing_status(s_status=settings.Status.PENDING):
+# NODE PROCESSING LOG - CRUD
+def create_processing_log(s_url,s_status=settings.Status.PENDING):
     """
     Creates a new crawler processing status. Default status PENDING
 
+    :param s_url: str - URL/name of the site
     :param s_status: str - The chosen processing status
-    :return: proc_status: SiteProcessionStatus - The new processing status
+    :return: SiteProcessingLog - The new processing status log
     """
 
     # is the status valid?
     assert isinstance(s_status, settings.Status), 'Not valid type of status'
+    print(s_status.name)
 
     # Gets the chosen status
     new_status = entities.SiteStatus.get(type=s_status.name)
 
     # Creates the new processing status
-    return entities.SiteProcessingStatus(status=new_status,timestamp=datetime.today())
-
-def get_site_processing_status(s_url):
-    pass
+    return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today())
 
 
+def get_all_processing_log():
+
+    """
+    Gets all processing log
+
+    :return: list - All processing logs
+    """
+
+    return entities.SiteProcessingLog.select()[:]
+
+
+# NODE PROCESSING STATUS - CRUD
+def get_sites_by_processing_status(s_status):
+    """
+
+    Gets sites by processing status
+
+    :param s_status: str - The chosen processing status
+    :return: sites: list of str - The url of the sites in status ``s_status``
+    """
+    assert isinstance(s_status, settings.Status), 'Not valid type of status'
+
+    sites = select(site.name for site in entities.Site if site.current_processing_status.type is s_status.name)[:]
+
+    return sites
+
+
+def set_site_current_processing_status(s_url, s_status, add_processing_log=True):
+    """
+    Creates and sets a new processing status to a site.
+
+    :param s_url: str - URL/name of the site
+    :param s_status: str - The chosen processing status
+    :param add_processing_log: bool - When True a new procession log is added.
+    :return: site: Site - The updated Site with the updated corresponding processing status.
+    """
+
+    # Gets the site
+    site = entities.Site.get(name=s_url)
+    # If the site exists
+    if isinstance(site, entities.Site):
+        # Creates and set the new processing status
+        site.current_processing_status = entities.SiteStatus.get(type=s_status.name)
+
+        if add_processing_log:
+            # Adds a new processing log
+            create_processing_log(s_url,s_status)
+
+    return site
+
+
+# NODE QoS - CRUD
 def set_qos(s_url, s_qos):
     """
     Sets a new QoS to the site if existing
@@ -247,7 +293,7 @@ def set_qos(s_url, s_qos):
     :return: Site - The updated site or None if not existing.
     """
 
-    assert isinstance(s_qos,float) , 'QoS value must be float'
+    assert isinstance(s_qos, float), 'QoS value must be float'
 
     # Gets sites_url
     site = entities.Site.get(name=s_url)

@@ -223,7 +223,6 @@ def create_processing_log(s_url,s_status=settings.Status.PENDING):
 
     # is the status valid?
     assert isinstance(s_status, settings.Status), 'Not valid type of status'
-    print(s_status.name)
 
     # Gets the chosen status
     new_status = entities.SiteStatus.get(type=s_status.name)
@@ -240,7 +239,7 @@ def get_all_processing_log():
     :return: list - All processing logs
     """
 
-    return entities.SiteProcessingLog.select()[:]
+    return entities.SiteProcessingLog.select()[:].to_list()
 
 
 # NODE PROCESSING STATUS - CRUD
@@ -254,7 +253,7 @@ def get_sites_by_processing_status(s_status):
     """
     assert isinstance(s_status, settings.Status), 'Not valid type of status'
 
-    sites = select(site.name for site in entities.Site if site.current_processing_status.type is s_status.name)[:]
+    sites = select(site.name for site in entities.Site if site.current_processing_status.type is s_status.name)[:].to_list()
 
     return sites
 

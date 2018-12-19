@@ -10,18 +10,19 @@ from qos import connection, request_conn
 
 class I2PThread(threading.Thread, object):
         
-    def __init__(self,eepsite_url,rounds):
+    def __init__(self,eepsite_url,rounds,site_tries):
         threading.Thread.__init__(self)        
         self._stopped_event = threading.Event()
         self._stopped_event.is_set = self._stopped_event.isSet
         self._eepsite_url = eepsite_url
         self._rounds = rounds
+        self._site_tries = site_tries
     
     def run(self):
         # To be overridden
         #response, start_time, end_time, elapsed_time = connection.connectThroughProxy(self._eepsite_url)
         response = request_conn.connectThroughProxy(self._eepsite_url)
-        print(response.text)
+        #print(response.text)
         # response = response.split('\r\n')
         # print(response)
         # protocol = response[0].split(' ')[0]
@@ -32,7 +33,7 @@ class I2PThread(threading.Thread, object):
 
         #print(self._eepsite_url)
         csv_line+= self._eepsite_url + "|" + str(response.status_code) + "|"
-        csv_line+= str(response.elapsed.total_seconds()) + "|" + str(self._rounds)
+        csv_line+= str(response.elapsed.total_seconds()) + "|" + str(self._rounds) + "|" + str(self._site_tries)
         print(csv_line)
 
     def on_stop(self):

@@ -28,7 +28,6 @@ def add_default_info():
     add_default_site_status()
 
 
-
 def add_default_site_status():
     """
     Adds default status for site crawling. (See NS_DEFAULT_INFO at settings.py)
@@ -36,7 +35,6 @@ def add_default_site_status():
     """
     for status in settings.SITE_STATUS_DEFAULT_INFO.keys():
         entities.SiteStatus(type=status, description=settings.SITE_STATUS_DEFAULT_INFO[status])
-
 
 
 def add_default_site_types():

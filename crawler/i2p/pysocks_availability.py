@@ -6,7 +6,7 @@ import time
 import pandas as pd
 from utils import siteutils
 
-list_seeds = siteutils.get_initial_seeds('data/extracted_eepsites.txt')
+list_seeds = siteutils.get_initial_seeds('../../data/extracted_eepsites.txt')
 
 # Test 400 error
 # columns = ['url','protocol','code','start','end','duration','runid']

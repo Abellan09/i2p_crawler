@@ -346,7 +346,7 @@ def main():
     global ongoing_sites
 
     # Gets initial seeds
-    seed_sites = siteutils.get_initial_seeds("data/seed_urls.txt")
+    seed_sites = siteutils.get_initial_seeds("../../data/seed_urls.txt")
 
     # Create all sites with PENDING status. Note that if the site exists, it will not be created
     with db_session:

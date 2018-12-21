@@ -54,9 +54,9 @@ class I2P_Spider(scrapy.Spider):
 		super(I2P_Spider, self).__init__(*args, **kwargs)
 		self.logger.debug("Dentro de __init__()")
 		if url is not None:
-			with open("i2p/spiders/data/languages_google.json") as f:
+			with open("../../data/languages_google.json") as f:
 				self.LANGUAGES_GOOGLE = json.load(f)
-			with open("i2p/spiders/data/languages_nltk.txt") as g:
+			with open("../../data/languages_nltk.txt") as g:
 				line = g.readline()
 				while line != "":
 					line = line.replace("\n", "")

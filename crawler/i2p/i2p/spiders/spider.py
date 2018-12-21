@@ -1,12 +1,14 @@
 # encoding: utf-8
 
 import scrapy		# https://doc.scrapy.org/en/latest
+import os			# https://docs.python.org/2/library/os.html
 import shutil		# https://docs.python.org/2/library/shutil.html
 import urlparse		# https://docs.python.org/2/library/urlparse.html
+import copy			# https://docs.python.org/2/library/copy.html
 import time			# https://docs.python.org/2/library/time.html
 import json			# https://docs.python.org/2/library/json.html
 import nltk			# https://www.nltk.org
-from i2p.items import I2PItem, I2PItemFinal, LanguageItem
+from i2p.items import I2P_spider_state
 from py_translator import Translator
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spidermiddlewares.httperror import HttpError
@@ -28,16 +30,18 @@ class I2P_Spider(scrapy.Spider):
 	start_time = 0
 	start_urls = []
 	visited_links = []
+	non_visited_links = []
 	parse_eepsite = None
 	error = True
-	itemLang = LanguageItem()
-	itemLang["language"] = []
+	state_item = I2P_spider_state()
+	state_item["eepsite"] = "none"
+	state_item["visited_links"] = []
+	state_item["non_visited_links"] = []
+	state_item["language"] = []
+	state_item["extracted_eepsites"] = []
 	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
 	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
 	main_page = True
-	aux = I2PItem()
-	item = I2PItemFinal()
-	item["extracted_eepsites"]=[]
 	extractor_i2p = LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),allow_domains=('i2p'),deny_extensions=())
 	
 	def __init__(self, url=None, *args, **kwargs):
@@ -50,8 +54,6 @@ class I2P_Spider(scrapy.Spider):
 		super(I2P_Spider, self).__init__(*args, **kwargs)
 		self.logger.debug("Dentro de __init__()")
 		if url is not None:
-			self.start_urls.append(url)
-			self.parse_eepsite = urlparse.urlparse(url)
 			with open("i2p/spiders/data/languages_google.json") as f:
 				self.LANGUAGES_GOOGLE = json.load(f)
 			with open("i2p/spiders/data/languages_nltk.txt") as g:
@@ -60,8 +62,28 @@ class I2P_Spider(scrapy.Spider):
 					line = line.replace("\n", "")
 					self.LANGUAGES_NLTK.append(line)
 					line = g.readline()
-			self.start_time = time.time()
-			self.logger.info("Start URL: %s", self.parse_eepsite)
+			self.parse_eepsite = urlparse.urlparse(url)
+			self.state_item["eepsite"]=self.parse_eepsite.netloc
+			spider_file = "i2p/spiders/ongoing" + self.state_item["eepsite"] + ".json"
+			ongoing_spider = os.path.exists(spider_file)
+			if(ongoing_spider):
+				self.logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
+				# Leemos la última línea y cargamos el estado.
+				target = "i2p/spiders/ongoing/" + self.parse_eepsite
+				with open(target) as f:
+					state = json.load(f)
+					self.state_item["visited_links"] = state[len(state) - 1]["visited_links"]
+					self.state_item["non_visited_links"] = state[len(state) - 1]["non_visited_links"]
+					self.state_item["language"] = state[len(state) - 1]["language"]
+					self.state_item["extracted_eepsites"] = state[len(state) - 1]["extracted_eepsites"]
+				self.start_urls = copy.deepcopy(self.state_item["non_visited_links"])
+				self.non_visited_links = copy.deepcopy(self.state_item["non_visited_links"])
+				self.visited_links = copy.deepcopy(self.state_item["visited_links"])
+				self.main_page = False
+			else:
+				self.start_urls.append(url)
+				self.start_time = time.time()
+				self.logger.info("Start URL: %s", self.parse_eepsite)
 		else:
 			self.logger.error("No URL passed to crawl")
 	
@@ -129,9 +151,7 @@ class I2P_Spider(scrapy.Spider):
 		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite.
 		'''
 		source_url = urlparse.urlparse(response.url)
-		self.itemLang["eepsite"] = source_url.netloc
 		title = response.xpath('normalize-space(//title/text())').extract()
-		self.itemLang["title"] = title
 		paragraphs = response.xpath('normalize-space(//p)').extract()
 		h1 = response.xpath('//h1/text()').extract()
 		h2 = response.xpath('//h2/text()').extract()
@@ -141,13 +161,13 @@ class I2P_Spider(scrapy.Spider):
 		sample = ' '.join(sample)
 		if len(sample)>500:
 			sample = sample[0:500]
-		self.itemLang["sample"] = sample
 		# Con API de GOOGLE:
 		language_google=self.detect_language_google(sample)
 		# Con nltk:
 		language_nltk=self.detect_language_nltk(sample)
-		self.itemLang["language"].append(language_google)
-		self.itemLang["language"].append(language_nltk)
+		# Añadiendo al item:
+		self.state_item["language"].append(language_google)
+		self.state_item["language"].append(language_nltk)
 
 	def parse(self, response):
 		'''
@@ -168,25 +188,24 @@ class I2P_Spider(scrapy.Spider):
 			self.detect_language(response)
 			self.main_page=False
 		self.visited_links.append(response.url)
-		self.aux["source_url"] = response.url
-		source_url = urlparse.urlparse(response.url)
-		self.aux["source_site"] = source_url.netloc
+		if response.url in self.non_visited_links:
+			self.non_visited_links.remove(response.url)
+		self.state_item["visited_links"]=copy.deepcopy(self.visited_links)
+		self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
 		links = self.get_links(response)
-		urls_list = []
 		for link in links:
-			urls_list.append(link.url)
 			parse_link = urlparse.urlparse(link.url)
-			if (parse_link.netloc not in self.item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc):
-				self.item["extracted_eepsites"].append(parse_link.netloc)
-			if (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc):
-				self.visited_links.append(link.url)
+			if ((parse_link.netloc not in self.state_item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc)):
+				self.state_item["extracted_eepsites"].append(parse_link.netloc)
+			if ((link.url not in self.non_visited_links) and (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc)):
+				self.non_visited_links.append(link.url)
 				yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
-		self.aux["list_of_urls"] = urls_list
+				if response.url in self.non_visited_links:
+					self.non_visited_links.remove(response.url)
+			self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
+			yield self.state_item
 		self.end_time = time.time()
-		self.itemLang["time"] = str(self.end_time - self.start_time)
-		yield self.aux
-		yield self.item
-		yield self.itemLang
+		yield self.state_item
 	
 	def get_links(self, response):
 		'''
@@ -241,7 +260,6 @@ class I2P_Spider(scrapy.Spider):
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
 		self.logger.debug("Dentro de err()")
-		#self.error = True
 		self.logger.error(repr(failure))  
 		if failure.check(HttpError):
 			response = failure.value.response 

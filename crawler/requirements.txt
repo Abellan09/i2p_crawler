@@ -3,3 +3,7 @@ pony
 PyMySQL
 nltk
 py_translator
+beautifulsoup4
+langdetect
+html
+slugify

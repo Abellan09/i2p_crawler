@@ -62,6 +62,8 @@ class I2P_Spider(scrapy.Spider):
 					line = line.replace("\n", "")
 					self.LANGUAGES_NLTK.append(line)
 					line = g.readline()
+
+			print(self.LANGUAGES_NLTK)
 			self.parse_eepsite = urlparse.urlparse(url)
 			self.state_item["eepsite"]=self.parse_eepsite.netloc
 			spider_file = "i2p/spiders/ongoing" + self.state_item["eepsite"] + ".json"

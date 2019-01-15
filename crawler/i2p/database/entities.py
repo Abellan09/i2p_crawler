@@ -17,12 +17,13 @@ from datetime import datetime
 db = Database()
 
 #TODO: move this to a config file
-db.bind(provider='mysql', host='localhost', user='root', passwd='root', db='i2p_database')
+db.bind(provider='mysql', host='localhost', user='i2p', passwd='4=XoG!*L', db='i2p_database')
 
 
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
+    crawling_tries = Required(int, default=0)
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
     current_processing_status = Optional('SiteStatus')

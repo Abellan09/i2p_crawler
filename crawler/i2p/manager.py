@@ -4,63 +4,18 @@ import os			# https://docs.python.org/2/library/os.html
 import shutil		# https://docs.python.org/2/library/shutil.html
 import time			# https://docs.python.org/2/library/time.html
 import subprocess	# https://docs.python.org/2/library/subprocess.html
-import urlparse		# https://docs.python.org/2/library/urlparse.html
-import copy			# https://docs.python.org/2/library/copy.html
-import sqlite3		# https://docs.python.org/2/library/sqlite3.html
 import json			# https://docs.python.org/2/library/json.html
 import logging		# https://docs.python.org/2/library/logging.html
 import sys
 
-from pony.orm import *
-from scrapy.utils.url import strip_url
-
+from pony.orm import db_session, set_sql_debug
 from database import dbutils
 from database import settings
 from utils import siteutils
-
 from logging.handlers import RotatingFileHandler
-from logging import handlers
-import sys
 
-def throw_crawler():
-    '''
-    EN: It runs an instance of spider.py (if applicable).
-    SP: Lanza una instancia de spider.py (si procede).
+set_sql_debug(debug=True)
 
-    If the maximum number of allowed concurrent crawlers has not been exceeded, a subprocess of spider.py is
-    launched to crawl the next contained eepsite in the pending_sites list.
-    Si no se ha sobrepasado el número máximo de crawlers concurrentes permitidos, se lanza un subproceso de
-    spider.py para crawlear el siguiente eepsite contenido en la lista pending_sites.
-    '''
-    logging.debug("Dentro de throw_crawler()")
-    global ignored_sites
-    global pending_sites
-    global ongoing_sites
-    global ongoing_crawlers
-    global maximum_crawlers
-    global total_crawlers
-
-    if (ongoing_crawlers <= maximum_crawlers) and (pending_sites):
-        next_site = pending_sites.pop()
-        with db_session:
-            # create a site in PENDING status
-            dbutils.create_site(next_site)
-            dbutils.set_site_current_processing_status(s_url=next_site, s_status=settings.Status.PENDING)
-
-        if next_site in attempts_dict:
-            attempts = attempts_dict.get(next_site)
-            if (attempts > 5) and (next_site not in ignored_sites):
-                with db_session:
-                    # create a site in ERROR status
-                    dbutils.create_site(next_site)
-                    dbutils.set_site_current_processing_status(s_url=next_site, s_status=settings.Status.ERROR)
-                ignored_sites.append(next_site)
-            else:
-                attempts_dict.update({next_site:attempts+1})
-        else:
-            attempts_dict.update({next_site:1})
-        if(next_site not in ignored_sites):
-            run_spider(next_site)
 
 def check():
     '''
@@ -82,9 +37,10 @@ def check():
             ok_files.append(fil)
         elif (fil.endswith(".fail")) and (fil not in fail_files):
             fail_files.append(fil)
-    #finished_files.remove(fil)
+    # finished_files.remove(fil)
     process_fail()
     process_ok()
+
 
 def process_fail():
     '''
@@ -98,9 +54,6 @@ def process_fail():
     '''
     logging.debug("Dentro de process_fail()")
     global fail_files
-    global pending_sites
-    global ongoing_sites
-    global ongoing_crawlers
     files_to_remove = []
     logging.debug("Fail_files antes del bucle: " + str(fail_files))
     try:
@@ -110,12 +63,13 @@ def process_fail():
             os.remove(eliminar)
             eliminar = "i2p/spiders/finished/" + fil
             os.remove(eliminar)
-            fil_without_extension = fil.replace(".fail", "")
-            ongoing_sites.remove(fil_without_extension)
-            ongoing_crawlers -= 1
-            if fil_without_extension not in pending_sites:
-                pending_sites.append(fil_without_extension)
-                logging.debug(fil_without_extension + " add to pending_sites")
+
+            # If the crawling process failed, there was an ERROR
+            with db_session:
+                dbutils.set_site_current_processing_status(s_url=fil, s_status=settings.Status.ERROR)
+
+            logging.debug("Setting the ERROR status to site %s",fil)
+
     except Exception as e:
         logging.error("There has been some error with the files")
     finally:
@@ -137,10 +91,7 @@ def process_ok():
     '''
     logging.debug("Dentro de process_ok()")
     global ok_files
-    global visited_sites
-    global pending_sites
-    global ongoing_sites
-    global ongoing_crawlers
+
     files_to_remove = []
     logging.debug("ok_files antes del bucle: " + str(ok_files))
     try:
@@ -151,18 +102,13 @@ def process_ok():
             source = "i2p/spiders/ongoing/" + fil_json_extension
             target = "i2p/spiders/finished/" + fil_json_extension
             shutil.move(source, target)
-            ongoing_sites.remove(fil_without_extension)
-            ongoing_crawlers -= 1
+
             with open(target) as f:
                 crawled_items = json.load(f)
+
             crawled_eepsites = crawled_items[len(crawled_items) - 1]["extracted_eepsites"]
-            logging.info("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
-            if fil_without_extension not in visited_sites:
-                visited_sites.append(fil_without_extension)
-            for site in crawled_eepsites:
-                if (site not in pending_sites) and (site not in ongoing_sites) and (site not in visited_sites) and (site.endswith(".i2p")):
-                    pending_sites.append(site)
-                    logging.debug(site + " add to pending_sites")
+            logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
+
             # moved here to handle the status of crawled eepsites
             add_to_database(fil_without_extension, crawled_eepsites)
             eliminar = "i2p/spiders/finished/" + fil
@@ -188,125 +134,57 @@ def add_to_database(site, targeted_sites):
     try:
         with db_session:
 
-            # Only if the site has been successfully crawler. It means that there was and .ok json file
-            if site in visited_sites:
+            # Creates the src site, if needed
+            dbutils.create_site(site)
+            dbutils.set_site_current_processing_status(s_url=site,s_status=settings.Status.FINISHED)
 
-                # Creates the src site, if needed
-                dbutils.create_site(site)
-                dbutils.set_site_current_processing_status(s_url=site,s_status=settings.Status.FINISHED)
+            for eepsite in targeted_sites:
 
-                for eepsite in targeted_sites:
+                # is it a new site? Create it and set up the status to pending.
+                if dbutils.create_site(s_url=eepsite):
+                    dbutils.set_site_current_processing_status(s_url=eepsite, s_status=settings.Status.PENDING)
 
-                    # is it a new site? Create it and set up the status to pending.
-                    if dbutils.create_site(s_url=eepsite):
-                        dbutils.set_site_current_processing_status(s_url=eepsite, s_status=settings.Status.PENDING)
-                        pending_sites.append(eepsite)
-
-                    # Linking
-                    dbutils.create_link(site, eepsite)
+                # Linking
+                dbutils.create_link(site, eepsite)
 
     except Exception as e:
-        logging.error("Something was wrong with the Database")
+        logging.error("Something was wrong with the database")
         raise e
-
-def update_top():
-    '''
-    EN: It updates the TOP tables of sites with more incoming_sites (Table Incoming_Top) and with more outgoing_sites (Table Outgoing_Top).
-    SP: Actualiza las tablas de los TOP de sites con más incoming_sites (Tabla Incoming_Top) y con más outgoing_sites (Tabla Outgoing_Top).
-    '''
-    logging.debug("Dentro de update_top()")
-    try:
-        connection = sqlite3.connect("../../www/i2p_database.db") # open the db
-        cursor = connection.cursor() # get a cursor object
-        cursor.execute("SELECT id, incoming_sites FROM nodes ORDER BY incoming_sites DESC LIMIT 5")
-        incoming = cursor.fetchall()
-        logging.debug("INCOMING: " + str(incoming))
-        if (len(incoming)==5):
-            for i in range(5):
-                top_id = i+1
-                node_id = incoming[i][0]
-                cursor.execute("UPDATE incoming_top SET node_id=? WHERE id=?", (node_id, top_id,))
-            logging.debug("The table Incoming_Top has been updated")
-            cursor.execute("SELECT id, outgoing_sites FROM nodes ORDER BY outgoing_sites DESC LIMIT 5")
-            outgoing = cursor.fetchall()
-            for i in range(5):
-                top_id = i+1
-                node_id = outgoing[i][0]
-                cursor.execute("UPDATE outgoing_top SET node_id=? WHERE id=?", (node_id, top_id,))
-            logging.debug("The table Outgoing_Top has been updated")
-            connection.commit() # commit the change(s)
-    except sqlite3.DatabaseError as e:
-        logging.error("Something was wrong with the Database")
-        connection.rollback() # roll back any change if something goes wrong
-        raise e
-    finally:
-        connection.close() # close the db connection
-
-def results():
-    '''
-    EN: It shows some results about the execution of the script.
-    SP: Muestra algunos resultados sobre la ejecución del script.
-
-    It prints the total number of launched crawlers, as well as the total number of executions of the main program loop.
-    Imprime el número total de crawlers lanzados, así como el número total de ejecuciones del bucle principal del programa.
-    '''
-    logging.debug("Dentro de results()")
-    logging.info("Total Launched Crawlers: " + str(total_crawlers))
-    logging.info("Total Loop Executions: " + str(total_loop_executions))
-
-def dict_factory(cursor, row):
-    '''
-    EN: Function taken from https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.row_factory
-    SP: Función tomada de https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.row_factory
-    '''
-    logging.debug("Dentro de dict_factory()")
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
 
 
 def run_spider(site):
     """
     Runs a spider
 
-    :param site: str - The url of the site to be crawled
+    :param site: str - the name of the site to be crawled
     :return: p: Popen - The subprocess status
     """
 
-    global ongoing_sites
-    global ongoing_crawlers
-    global total_crawlers
-
+    # Try running a spider
     param1 = "url=http://" + site
-    param2 = "i2p/spiders/ongoing/" + site + ".json"
-    p = subprocess.Popen(["scrapy", "crawl", "i2p", "-a", param1, "-o", param2 ], shell=False)
+    param2 = "./i2p/spiders/ongoing/" + site + ".json"
+    p = subprocess.Popen(['%s/bin/scrapy' % os.environ['CONDA_PREFIX'], "crawl", "i2p", "-a", param1, "-o", param2 ], shell=False)
+    p.wait()
 
     with db_session:
         # Create site if needed.
         dbutils.create_site(s_url=site)
-        # Setting up the correct estatus
+        # Setting up the correct status
         dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.ONGOING)
+        # Increasing tries
+        siteEntity = dbutils.increase_tries(s_url=site)
 
-    ongoing_sites.append(site)
-
-    ongoing_crawlers += 1
-    total_crawlers += 1
+        logging.debug("Running %s, tries=%s",site,siteEntity.crawling_tries)
 
     return p
 
-seed_sites = []
-ignored_sites = []
-visited_sites = []
-ongoing_sites = []
-pending_sites = []
-maximum_crawlers = 20
-ongoing_crawlers = 0
-total_crawlers = 0
-total_loop_executions = 0
+# Number of simultaneous spiders running
+max_ongoing_spiders = 20
+# Number of tries for error sites
+max_crawling_tries = 2
 ok_files = []
 fail_files = []
-attempts_dict = {}
+
 
 def main():
     '''
@@ -333,17 +211,9 @@ def main():
 
     logging.debug("Dentro de main()")
 
-    run_spider("stats.i2p")
-    time.sleep(60)
-    exit()
-
-    global total_loop_executions
-    global ongoing_crawlers
-    global seed_sites
-    global ignored_sites
-    global pending_sites
-    global visited_sites
-    global ongoing_sites
+    # run_spider("stats.i2p")
+    # time.sleep(60)
+    # exit()
 
     # Gets initial seeds
     seed_sites = siteutils.get_initial_seeds("../../data/seed_urls.txt")
@@ -361,20 +231,13 @@ def main():
         # restored pending sites
         pending_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.PENDING)
         # restored ongoing sites
-        restored_ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
+        ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
         # restored error sites
         error_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
+        unknown_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.UNKNOWN) # just for debugging porpuses
+        finished_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.FINISHED)# just for debugging porpuses
 
-    logging.debug("Restoring %s PENDING sites.", len(pending_sites))
-    logging.debug("Restoring %s ONGOING sites.", len(restored_ongoing_sites))
-
-    # restored ONGOING SITES should be launched
-    for site in restored_ongoing_sites:
-        if ongoing_crawlers <= maximum_crawlers:
-            logging.debug("Starting crawling for %s.", site)
-            run_spider(site)
-            
-    logging.debug("Restoring %s ERROR sites.", len(error_sites))
+    logging.debug("Restoring %s ERROR sites by including then as PENDING sites.", len(error_sites))
 
     # Error sites should be tagged as pending sites.
     for site in error_sites:
@@ -384,28 +247,64 @@ def main():
                 # sets up the error site to pending siste
                 dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
 
-    #pending_sites=copy.deepcopy(restored_pending_sites)
+    logging.debug("Restoring %s PENDING sites.", len(pending_sites))
+    logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))
 
-    time1 = time.time()
-    time2 = time.time()
+    # restored ONGOING SITES should be launched
+    for site in ongoing_sites:
+        if len(ongoing_sites) <= max_ongoing_spiders:
+            logging.debug("Starting spider for %s.", site)
+            run_spider(site)
+
+    # Monitoring time
+    stime = time.time()
+    etime = time.time()
+
+    # main loop
     while pending_sites or ongoing_sites:
-        logging.info(time.strftime("Time: " + "%H:%M:%S", time.gmtime()))
-        logging.info("Ongoing_crawlers: " + str(ongoing_crawlers))
-        logging.debug("Pending sites: " + str(pending_sites))
-        logging.debug("Finished sites: " + str(visited_sites))
-        logging.debug("Ignored sites: " + str(ignored_sites))
-        logging.debug("Ongoing sites: " + str(ongoing_sites))
-        throw_crawler()
+
+        # Try to run another site
+        if len(ongoing_sites) <= max_ongoing_spiders:
+            if pending_sites:
+                with db_session:
+                    site = pending_sites.pop()
+                    if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+                        logging.debug("Starting spider for %s.", site)
+                        run_spider(site)
+                    else:
+                        logging.debug("The site %s cannot be crawled.", site)
+                        # The site cannot be crawled
+                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
+
+        # Polling which of the ongoing spiders is still ongoing
         check()
-        total_loop_executions += 1
-        time.sleep(1) # duerme 1 segundo
-        if ((time2 - time1) < 60):
-            time2 = time.time()
+        time.sleep(1)
+        if (etime - stime) < 60:
+            etime = time.time()
         else:
-            time1 = time.time()
-            time2 = time.time()
-            # update_top()
-            # results()
+            stime = time.time()
+            etime = time.time()
+
+        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, UNKNOWN %s", \
+                          len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
+                          len(unknown_sites))
+
+        # Update the status
+        with db_session:
+            pending_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.PENDING)
+            ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
+            error_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
+            unknown_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.UNKNOWN)
+            finished_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.FINISHED)
+
+        # Error sites should be tagged as pending sites.
+        for site in error_sites:
+            if site not in pending_sites:
+                pending_sites.append(site)
+                with db_session:
+                    # sets up the error site to pending siste
+                    dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+
 
 if __name__ == '__main__':
     main()

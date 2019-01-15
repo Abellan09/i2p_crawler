@@ -100,6 +100,26 @@ def set_site_type(s_url, s_type):
     return site
 
 
+def increase_tries(s_url):
+    """
+    Increasing the counter of crawling tries
+
+    :param s_url: str - URL/name of the site
+    :return: Site - The updated site or None if the site does not exists
+    """
+
+    # Gets the site to update
+    site = entities.Site.get(name=s_url)
+
+    # If the site exists
+    if isinstance(site, entities.Site):
+        # increasing the tries
+        site.crawling_tries = site.crawling_tries + 1
+
+    return site
+
+
+
 # NODE LINK STATS - CRUD (Create Read Update Delete)
 def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
     """

@@ -22,13 +22,15 @@ class Status(Enum):
     FINISHED = 2
     PENDING = 3
     ERROR = 4
+    UNKNOWN = 5
 
 
 # {status:description}
 SITE_STATUS_DEFAULT_INFO = {Status.ONGOING.name:'Ongoing: The site is being crawled',
                             Status.FINISHED.name:'Finished: The site has been successfully crawled',
                             Status.PENDING.name:'Pending: The site is waiting to be launched again. May there was a processing error.',
-                            Status.ERROR.name:'Error: The site cannot be crawled'}
+                            Status.ERROR.name:'Error: The site cannot be crawled',
+                            Status.UNKNOWN.name: 'Unknown: Maybe the site crawling tries has been exceeded.'}
 
 # SITE TYPE
 @unique

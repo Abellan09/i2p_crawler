@@ -110,9 +110,11 @@ scrapy crawl i2p -a url=http://eepsite.example.i2p -o output_example.json
 * [Python](https://www.python.org) - Used language.
 * [Scrapy](https://scrapy.org) - Used crawling framework.
 
-## Author
+## Authors
 
 * **Alberto Abellán**
+* **Roberto Magán**
+* **Gabriel Maciá-Fernández**
 
 See also the list of [contributors](https://github.com/Abellan09/i2p_crawler/graphs/contributors) who participated in this project.
 

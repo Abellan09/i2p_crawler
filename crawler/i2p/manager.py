@@ -14,7 +14,7 @@ from database import settings
 from utils import siteutils
 from logging.handlers import RotatingFileHandler
 
-set_sql_debug(debug=True)
+#set_sql_debug(debug=True)
 
 
 def check():
@@ -65,10 +65,11 @@ def process_fail():
             os.remove(eliminar)
 
             # If the crawling process failed, there was an ERROR
+            site = fil.replace(".fail","")
             with db_session:
-                dbutils.set_site_current_processing_status(s_url=fil, s_status=settings.Status.ERROR)
+                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.ERROR)
 
-            logging.debug("Setting the ERROR status to site %s",fil)
+            logging.debug("Setting the ERROR status to site %s",site)
 
     except Exception as e:
         logging.error("There has been some error with the files")
@@ -113,8 +114,10 @@ def process_ok():
             add_to_database(fil_without_extension, crawled_eepsites)
             eliminar = "i2p/spiders/finished/" + fil
             os.remove(eliminar)
-    except:
+    except Exception as e:
         logging.error("There has been some error with the files")
+        print e
+        raise e
     finally:
         for i in files_to_remove:
             ok_files.remove(i)
@@ -163,8 +166,7 @@ def run_spider(site):
     # Try running a spider
     param1 = "url=http://" + site
     param2 = "./i2p/spiders/ongoing/" + site + ".json"
-    p = subprocess.Popen(['%s/bin/scrapy' % os.environ['CONDA_PREFIX'], "crawl", "i2p", "-a", param1, "-o", param2 ], shell=False)
-    p.wait()
+    p = subprocess.Popen(["scrapy", "crawl", "i2p", "-a", param1, "-o", param2], shell=False)
 
     with db_session:
         # Create site if needed.
@@ -234,18 +236,22 @@ def main():
         ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
         # restored error sites
         error_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
-        unknown_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.UNKNOWN) # just for debugging porpuses
-        finished_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.FINISHED)# just for debugging porpuses
 
-    logging.debug("Restoring %s ERROR sites by including then as PENDING sites.", len(error_sites))
+    logging.debug("Restoring %s ERROR sites.", len(error_sites))
 
     # Error sites should be tagged as pending sites.
     for site in error_sites:
-        if site not in pending_sites:
-            pending_sites.append(site)
+        if site not in pending_sites: # they should not be in PENDING status;)
             with db_session:
-                # sets up the error site to pending siste
-                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+                if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+                    logging.debug("The site %s has been restored. New status PENDING.", site)
+                    pending_sites.insert(0, site)
+                    # sets up the error site to pending status
+                    dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+                else:
+                    logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
+                    # The site cannot be crawled
+                    dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
 
     logging.debug("Restoring %s PENDING sites.", len(pending_sites))
     logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))
@@ -276,18 +282,15 @@ def main():
                         # The site cannot be crawled
                         dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
 
-        # Polling which of the ongoing spiders is still ongoing
+        # Polling spiders status
         check()
+
         time.sleep(1)
         if (etime - stime) < 60:
             etime = time.time()
         else:
             stime = time.time()
             etime = time.time()
-
-        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, UNKNOWN %s", \
-                          len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
-                          len(unknown_sites))
 
         # Update the status
         with db_session:
@@ -300,11 +303,21 @@ def main():
         # Error sites should be tagged as pending sites.
         for site in error_sites:
             if site not in pending_sites:
-                pending_sites.append(site)
                 with db_session:
-                    # sets up the error site to pending siste
-                    dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+                    if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+                        logging.debug("The site %s has been restored. New status PENDING.", site)
+                        pending_sites.insert(0, site)
+                        # sets up the error site to pending status
+                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+                    else:
+                        logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.",
+                                      site)
+                        # The site cannot be crawled
+                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
 
+        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, UNKNOWN %s", \
+                      len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
+                      len(unknown_sites))
 
 if __name__ == '__main__':
     main()

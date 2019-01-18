@@ -119,7 +119,6 @@ def increase_tries(s_url):
     return site
 
 
-
 # NODE LINK STATS - CRUD (Create Read Update Delete)
 def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
     """

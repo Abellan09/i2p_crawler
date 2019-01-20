@@ -14,7 +14,13 @@ from database import settings
 from utils import siteutils
 from logging.handlers import RotatingFileHandler
 
-#set_sql_debug(debug=True)
+# Config params
+# Number of simultaneous spiders running
+MAX_ONGOING_SPIDERS = 20
+# Number of tries for error sites
+MAX_CRAWLING_TRIES = 2
+# Set to True to show pony SQL queries
+set_sql_debug(debug=False)
 
 
 def check():
@@ -180,10 +186,7 @@ def run_spider(site):
 
     return p
 
-# Number of simultaneous spiders running
-max_ongoing_spiders = 20
-# Number of tries for error sites
-max_crawling_tries = 2
+
 ok_files = []
 fail_files = []
 
@@ -242,7 +245,7 @@ def main():
     # Error sites should be tagged as pending sites.
     for site in error_sites:
         with db_session:
-            if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+            if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
                 logging.debug("The site %s has been restored. New status PENDING.", site)
                 pending_sites.insert(0, site)
                 # sets up the error site to pending status
@@ -257,7 +260,7 @@ def main():
 
     # restored ONGOING SITES should be launched
     for site in ongoing_sites:
-        if len(ongoing_sites) <= max_ongoing_spiders:
+        if len(ongoing_sites) <= MAX_ONGOING_SPIDERS:
             logging.debug("Starting spider for %s.", site)
             run_spider(site)
 
@@ -269,11 +272,11 @@ def main():
     while pending_sites or ongoing_sites:
 
         # Try to run another site
-        if len(ongoing_sites) <= max_ongoing_spiders:
+        if len(ongoing_sites) <= MAX_ONGOING_SPIDERS:
             if pending_sites:
                 with db_session:
                     site = pending_sites.pop()
-                    if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+                    if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
                         logging.debug("Starting spider for %s.", site)
                         run_spider(site)
                     else:
@@ -303,7 +306,7 @@ def main():
         for site in error_sites:
             if site not in pending_sites:
                 with db_session:
-                    if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+                    if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
                         logging.debug("The site %s has been restored. New status PENDING.", site)
                         pending_sites.insert(0, site)
                         # sets up the error site to pending status

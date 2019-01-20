@@ -250,7 +250,7 @@ def main():
             else:
                 logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
                 # The site cannot be crawled
-                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
+                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
     logging.debug("Restoring %s PENDING sites.", len(pending_sites))
     logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))
@@ -279,7 +279,7 @@ def main():
                     else:
                         logging.debug("The site %s cannot be crawled.", site)
                         # The site cannot be crawled
-                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
+                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
         # Polling spiders status
         check()
@@ -296,7 +296,7 @@ def main():
             pending_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.PENDING)
             ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
             error_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
-            unknown_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.UNKNOWN)
+            discarded_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.DISCARDED)
             finished_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.FINISHED)
 
         # Error sites should be tagged as pending sites.
@@ -312,11 +312,11 @@ def main():
                         logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.",
                                       site)
                         # The site cannot be crawled
-                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
+                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
-        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, UNKNOWN %s", \
+        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCARDED %s", \
                       len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
-                      len(unknown_sites))
+                      len(discarded_sites))
 
 if __name__ == '__main__':
     main()

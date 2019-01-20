@@ -241,17 +241,16 @@ def main():
 
     # Error sites should be tagged as pending sites.
     for site in error_sites:
-        if site not in pending_sites: # they should not be in PENDING status;)
-            with db_session:
-                if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
-                    logging.debug("The site %s has been restored. New status PENDING.", site)
-                    pending_sites.insert(0, site)
-                    # sets up the error site to pending status
-                    dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
-                else:
-                    logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
-                    # The site cannot be crawled
-                    dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
+        with db_session:
+            if dbutils.get_site(s_url=site).crawling_tries <= max_crawling_tries:
+                logging.debug("The site %s has been restored. New status PENDING.", site)
+                pending_sites.insert(0, site)
+                # sets up the error site to pending status
+                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+            else:
+                logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
+                # The site cannot be crawled
+                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.UNKNOWN)
 
     logging.debug("Restoring %s PENDING sites.", len(pending_sites))
     logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))

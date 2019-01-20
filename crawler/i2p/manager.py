@@ -23,32 +23,33 @@ MAX_CRAWLING_TRIES = 2
 set_sql_debug(debug=False)
 
 
-def check():
+def check_spiders_status(ok_spiders, fail_spiders):
     '''
     EN: It checks if in the /finished directory there are ".fail" and/or ".ok" files to process.
     SP: Comprueba si en el directorio /finished hay ficheros ".fail" y/o ".ok" que procesar.
 
-    It adds the names of the ".ok" and ".fail" files to the ok_files and fail_files lists, respectively.
+    It adds the names of the ".ok" and ".fail" files to the ok_spiders and fail_spiders lists, respectively.
     After that, it calls the process_fail() and process_ok() functions.
-    Añade los nombres de los ficheros ".ok" y ".fail" a las listas ok_files y fail_files, respectivamente.
+    Añade los nombres de los ficheros ".ok" y ".fail" a las listas ok_spiders y fail_spiders, respectivamente.
     A continuación, llama a las funciones process_fail() y process_ok().
     '''
     logging.debug("Dentro de check()")
-    global ok_files
-    global fail_files
+
     finished_files = os.listdir("i2p/spiders/finished")
     logging.debug("Finished Files: " + str(finished_files))
     for fil in finished_files:
-        if (fil.endswith(".ok")) and (fil not in ok_files):
-            ok_files.append(fil)
-        elif (fil.endswith(".fail")) and (fil not in fail_files):
-            fail_files.append(fil)
-    # finished_files.remove(fil)
-    process_fail()
-    process_ok()
+        if (fil.endswith(".ok")) and (fil not in ok_spiders):
+            ok_spiders.append(fil)
+        elif (fil.endswith(".fail")) and (fil not in fail_spiders):
+            fail_spiders.append(fil)
+            
+    if fail_spiders:
+        process_fail(fail_spiders)
+    if ok_spiders:
+        process_ok(ok_spiders)
 
 
-def process_fail():
+def process_fail(fail_spiders):
     '''
     EN: It processes the files with ".fail" extension.
     SP: Procesa los ficheros con extensión ".fail".
@@ -59,11 +60,11 @@ def process_fail():
     pending_sites para que se vuelva a crawlear.
     '''
     logging.debug("Dentro de process_fail()")
-    global fail_files
+
     files_to_remove = []
-    logging.debug("Fail_files antes del bucle: " + str(fail_files))
+    logging.debug("fail_spiders antes del bucle: " + str(fail_spiders))
     try:
-        for fil in fail_files:
+        for fil in fail_spiders:
             files_to_remove.append(fil)
             eliminar = "i2p/spiders/ongoing/" + fil.replace(".fail", ".json")
             os.remove(eliminar)
@@ -81,10 +82,10 @@ def process_fail():
         logging.error("There has been some error with the files")
     finally:
         for i in files_to_remove:
-            fail_files.remove(i)
-        logging.debug("Fail_files despues del bucle: " + str(fail_files))
+            fail_spiders.remove(i)
+        logging.debug("fail_spiders despues del bucle: " + str(fail_spiders))
 
-def process_ok():
+def process_ok(ok_spiders):
     '''
     EN: It processes the files with ".ok" extension.
     SP: Procesa los ficheros con extensión ".ok".
@@ -97,12 +98,11 @@ def process_ok():
     base de datos, añade a pending_sites los sites que no se hayan visitado y borra los ficheros ".ok" una vez procesados.
     '''
     logging.debug("Dentro de process_ok()")
-    global ok_files
 
     files_to_remove = []
-    logging.debug("ok_files antes del bucle: " + str(ok_files))
+    logging.debug("ok_spiders antes del bucle: " + str(ok_spiders))
     try:
-        for fil in ok_files:
+        for fil in ok_spiders:
             files_to_remove.append(fil)
             fil_without_extension = fil.replace(".ok", "")
             fil_json_extension = fil.replace(".ok", ".json")
@@ -126,8 +126,8 @@ def process_ok():
         raise e
     finally:
         for i in files_to_remove:
-            ok_files.remove(i)
-        logging.debug("ok_files despues del bucle: " + str(ok_files))
+            ok_spiders.remove(i)
+        logging.debug("ok_spiders despues del bucle: " + str(ok_spiders))
 
 
 def add_to_database(site, targeted_sites):
@@ -187,9 +187,45 @@ def run_spider(site):
     return p
 
 
-ok_files = []
-fail_files = []
+def get_crawling_status():
+    """
+    Gets a snapshot of how the crawling procedure is going
 
+    :return: status: dict - The current crawling status
+    """
+
+    status = {}
+
+    with db_session:
+        status[settings.Status.PENDING.name] = dbutils.get_sites_by_processing_status(s_status=settings.Status.PENDING)
+        status[settings.Status.ONGOING.name] = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
+        status[settings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
+        status[settings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=settings.Status.DISCARDED)
+        status[settings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=settings.Status.FINISHED)
+
+    return status
+
+
+def error_to_pending(error_sites, pending_sites):
+    """
+    ERROR sites are set up to PENDING if the max crawling tries are not exceeded.
+
+    :param error_sites: list - List of current ERROR sites
+    :param pending_sites: list - List of current PENDING sites
+    """
+
+    # Error sites should be tagged as pending sites.
+    with db_session:
+        for site in error_sites:
+            if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
+                logging.debug("The site %s has been restored. New status PENDING.", site)
+                pending_sites.insert(0, site)
+                # sets up the error site to pending status
+                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
+            else:
+                logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
+                # The site cannot be crawled
+                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
 def main():
     '''
@@ -230,30 +266,19 @@ def main():
             if dbutils.create_site(s_url=site):
                 dbutils.set_site_current_processing_status(s_url=site,s_status=settings.Status.PENDING)
 
-    # Restore processing status
-    with db_session:
-        # Restore previous crawling process status
-        # restored pending sites
-        pending_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.PENDING)
-        # restored ongoing sites
-        ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
-        # restored error sites
-        error_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
+    # Restoring the crawling status
+    status = get_crawling_status()
+    # restored pending sites
+    pending_sites = status[settings.Status.PENDING.name]
+    # restored ongoing sites
+    ongoing_sites = status[settings.Status.ONGOING.name]
+    # restored error sites
+    error_sites = status[settings.Status.ERROR.name]
 
     logging.debug("Restoring %s ERROR sites.", len(error_sites))
 
-    # Error sites should be tagged as pending sites.
-    for site in error_sites:
-        with db_session:
-            if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
-                logging.debug("The site %s has been restored. New status PENDING.", site)
-                pending_sites.insert(0, site)
-                # sets up the error site to pending status
-                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
-            else:
-                logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
-                # The site cannot be crawled
-                dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
+    # Getting error sites and setting up them to pending to be crawled again.
+    error_to_pending(error_sites, pending_sites)
 
     logging.debug("Restoring %s PENDING sites.", len(pending_sites))
     logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))
@@ -284,8 +309,8 @@ def main():
                         # The site cannot be crawled
                         dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
-        # Polling spiders status
-        check()
+        # Polling how spiders are going ...
+        check_spiders_status()
 
         time.sleep(1)
         if (etime - stime) < 60:
@@ -294,32 +319,21 @@ def main():
             stime = time.time()
             etime = time.time()
 
-        # Update the status
-        with db_session:
-            pending_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.PENDING)
-            ongoing_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ONGOING)
-            error_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.ERROR)
-            discarded_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.DISCARDED)
-            finished_sites = dbutils.get_sites_by_processing_status(s_status=settings.Status.FINISHED)
+        # Get current status
+        status = get_crawling_status()
+        pending_sites = status[settings.Status.PENDING.name]
+        ongoing_sites = status[settings.Status.ONGOING.name]
+        error_sites = status[settings.Status.ERROR.name]
+        discarded_sites = status[settings.Status.DISCARDED.name]
+        finished_sites = status[settings.Status.FINISHED.name]
 
-        # Error sites should be tagged as pending sites.
-        for site in error_sites:
-            if site not in pending_sites:
-                with db_session:
-                    if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
-                        logging.debug("The site %s has been restored. New status PENDING.", site)
-                        pending_sites.insert(0, site)
-                        # sets up the error site to pending status
-                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.PENDING)
-                    else:
-                        logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.",
-                                      site)
-                        # The site cannot be crawled
-                        dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
+        # Getting error sites and setting up them to pending to be crawled again.
+        error_to_pending(error_sites, pending_sites)
 
         logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCARDED %s", \
                       len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
                       len(discarded_sites))
+
 
 if __name__ == '__main__':
     main()

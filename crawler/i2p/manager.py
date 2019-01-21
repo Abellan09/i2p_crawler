@@ -22,6 +22,9 @@ MAX_CRAWLING_TRIES = 2
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
+ok_spiders = []
+fail_spiders = []
+
 
 def check_spiders_status(ok_spiders, fail_spiders):
     '''
@@ -227,6 +230,7 @@ def error_to_pending(error_sites, pending_sites):
                 # The site cannot be crawled
                 dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
+
 def main():
     '''
     EN: It controls the whole process of the crawling through a loop that is repeated every 2 seconds.
@@ -258,6 +262,7 @@ def main():
 
     # Gets initial seeds
     seed_sites = siteutils.get_initial_seeds("../../data/seed_urls.txt")
+    #seed_sites = []
 
     # Create all sites with PENDING status. Note that if the site exists, it will not be created
     with db_session:
@@ -310,7 +315,7 @@ def main():
                         dbutils.set_site_current_processing_status(s_url=site, s_status=settings.Status.DISCARDED)
 
         # Polling how spiders are going ...
-        check_spiders_status()
+        check_spiders_status(ok_spiders, fail_spiders)
 
         time.sleep(1)
         if (etime - stime) < 60:

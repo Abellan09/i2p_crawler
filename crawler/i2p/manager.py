@@ -36,10 +36,11 @@ def check_spiders_status(ok_spiders, fail_spiders):
     Añade los nombres de los ficheros ".ok" y ".fail" a las listas ok_spiders y fail_spiders, respectivamente.
     A continuación, llama a las funciones process_fail() y process_ok().
     '''
-    logging.debug("Dentro de check()")
+
+    logging.info("Checking spiders status ...")
 
     finished_files = os.listdir("i2p/spiders/finished")
-    logging.debug("Finished Files: " + str(finished_files))
+    logging.debug("Files in finished folder #%s: %s", len(finished_files),str(finished_files))
     for fil in finished_files:
         if (fil.endswith(".ok")) and (fil not in ok_spiders):
             ok_spiders.append(fil)
@@ -62,10 +63,10 @@ def process_fail(fail_spiders):
     Elimina los ficheros con extensión ".fail" del directorio /finished y añade el site fallido a la lista
     pending_sites para que se vuelva a crawlear.
     '''
-    logging.debug("Dentro de process_fail()")
+    logging.info("Processing FAILED spiders ... ")
 
     files_to_remove = []
-    logging.debug("fail_spiders antes del bucle: " + str(fail_spiders))
+    logging.debug("Starting to process FAILED spiders #%s: %s", len(fail_spiders), str(fail_spiders))
     try:
         for fil in fail_spiders:
             files_to_remove.append(fil)
@@ -82,11 +83,14 @@ def process_fail(fail_spiders):
             logging.debug("Setting the ERROR status to site %s",site)
 
     except Exception as e:
-        logging.error("There has been some error with the files")
+        logging.error("ERROR processing FAILED files ")
+        print e
+        raise e
     finally:
         for i in files_to_remove:
             fail_spiders.remove(i)
-        logging.debug("fail_spiders despues del bucle: " + str(fail_spiders))
+        logging.debug("Ending to process FAILED spiders #%s: %s", len(fail_spiders), str(fail_spiders))
+
 
 def process_ok(ok_spiders):
     '''
@@ -94,16 +98,17 @@ def process_ok(ok_spiders):
     SP: Procesa los ficheros con extensión ".ok".
 
     It moves the ".json" files of the sites that have been crawled correctly (.ok) from the /ongoing directory to the /finished
-    directory, opens said ".json" files, calls the add_to_database() function in order to add the pertinent data to database,
+    directory, opens said ".json" files, calls the link_eepsites() function in order to add the pertinent data to database,
     adds the sites that haven't been visited yet to the pending_sites and deletes the ".ok" files once processed.
     Mueve los ficheros ".json" de los sites que han sido crawleados correctamente (.ok) del directorio /ongoing	al directorio
-    /finished, abre dichos ficheros ".json", llama a la función add_to_database() para añadir los datos pertinentes a la
+    /finished, abre dichos ficheros ".json", llama a la función link_eepsites() para añadir los datos pertinentes a la
     base de datos, añade a pending_sites los sites que no se hayan visitado y borra los ficheros ".ok" una vez procesados.
     '''
-    logging.debug("Dentro de process_ok()")
+    logging.info("Processing OK spiders ...")
 
     files_to_remove = []
-    logging.debug("ok_spiders antes del bucle: " + str(ok_spiders))
+    logging.debug("Starting to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
+
     try:
         for fil in ok_spiders:
             files_to_remove.append(fil)
@@ -120,20 +125,20 @@ def process_ok(ok_spiders):
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
 
             # moved here to handle the status of crawled eepsites
-            add_to_database(fil_without_extension, crawled_eepsites)
+            link_eepsites(fil_without_extension, crawled_eepsites)
             eliminar = "i2p/spiders/finished/" + fil
             os.remove(eliminar)
     except Exception as e:
-        logging.error("There has been some error with the files")
+        logging.error("ERROR processing OK files ")
         print e
         raise e
     finally:
         for i in files_to_remove:
             ok_spiders.remove(i)
-        logging.debug("ok_spiders despues del bucle: " + str(ok_spiders))
+        logging.debug("Ending to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
 
 
-def add_to_database(site, targeted_sites):
+def link_eepsites(site, targeted_sites):
     '''
     EN: It adds the extracted data by the crawler to the database.
     SP: Añade los datos extraídos por el crawler a la base de datos.
@@ -141,10 +146,12 @@ def add_to_database(site, targeted_sites):
     :param site: site in question to add to the database / site en cuestión a añadir a la base de datos
     :param targeted_sites: sites to which the site points at / sitios a los que el site apunta
     '''
-    logging.debug("Dentro de add_to_database()")
+    logging.info("Linking eepsites ...")
 
     try:
         with db_session:
+
+            logging.debug("Linking %s to %s ", site, targeted_sites)
 
             # Creates the src site, if needed
             dbutils.create_site(site)
@@ -159,9 +166,12 @@ def add_to_database(site, targeted_sites):
                 # Linking
                 dbutils.create_link(site, eepsite)
 
+                logging.debug("New link: %s --> %s",site,eepsite)
+
     except Exception as e:
-        logging.error("Something was wrong with the database")
+        logging.error("Something was wrong in linking eepsites")
         raise e
+        print e
 
 
 def run_spider(site):
@@ -171,6 +181,8 @@ def run_spider(site):
     :param site: str - the name of the site to be crawled
     :return: p: Popen - The subprocess status
     """
+
+    # TODO each spider process should be better monitored. Maybe launching them in separated threads.
 
     # Try running a spider
     param1 = "url=http://" + site
@@ -324,6 +336,9 @@ def main():
             stime = time.time()
             etime = time.time()
 
+        # Getting error sites and setting up them to pending to be crawled again.
+        error_to_pending(error_sites, pending_sites)
+
         # Get current status
         status = get_crawling_status()
         pending_sites = status[settings.Status.PENDING.name]
@@ -331,9 +346,6 @@ def main():
         error_sites = status[settings.Status.ERROR.name]
         discarded_sites = status[settings.Status.DISCARDED.name]
         finished_sites = status[settings.Status.FINISHED.name]
-
-        # Getting error sites and setting up them to pending to be crawled again.
-        error_to_pending(error_sites, pending_sites)
 
         logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCARDED %s", \
                       len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),

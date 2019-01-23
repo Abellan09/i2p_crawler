@@ -128,8 +128,7 @@ def process_ok(ok_spiders):
 
             # moved here to handle the status of crawled eepsites
             link_eepsites(current_site_name, crawled_eepsites)
-            eliminar = "i2p/spiders/finished/" + fil
-            os.remove(eliminar)
+
     except Exception as e:
         logging.error("ERROR processing file %s",current_site_name)
         logging.error("ERROR: %s",e)
@@ -139,7 +138,8 @@ def process_ok(ok_spiders):
     finally:
         for i in files_to_remove:
             ok_spiders.remove(i)
-            os.remove(i)
+        eliminar = "i2p/spiders/finished/" + fil
+        os.remove(eliminar)
         logging.debug("Ending to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
 
 

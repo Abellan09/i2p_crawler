@@ -266,7 +266,7 @@ def main():
     ch.setFormatter(format)
     log.addHandler(ch)
 
-    fh = RotatingFileHandler("registro.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+    fh = RotatingFileHandler("../../logs/i2pcrawler.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
     fh.setFormatter(format)
     log.addHandler(fh)
 

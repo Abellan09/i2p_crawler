@@ -16,7 +16,7 @@ from logging.handlers import RotatingFileHandler
 
 # Config params
 # Number of simultaneous spiders running
-MAX_ONGOING_SPIDERS = 20
+MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
 MAX_CRAWLING_TRIES = 2
 # Set to True to show pony SQL queries
@@ -340,9 +340,6 @@ def main():
             stime = time.time()
             etime = time.time()
 
-        # Getting error sites and setting up them to pending to be crawled again.
-        error_to_pending(error_sites, pending_sites)
-
         # Get current status
         status = get_crawling_status()
         pending_sites = status[settings.Status.PENDING.name]
@@ -350,6 +347,9 @@ def main():
         error_sites = status[settings.Status.ERROR.name]
         discarded_sites = status[settings.Status.DISCARDED.name]
         finished_sites = status[settings.Status.FINISHED.name]
+
+        # Getting error sites and setting up them to pending to be crawled again.
+        error_to_pending(error_sites, pending_sites)
 
         logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCARDED %s", \
                       len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),

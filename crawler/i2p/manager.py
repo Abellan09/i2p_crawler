@@ -109,13 +109,12 @@ def process_ok(ok_spiders):
     logging.debug("Starting to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
 
     # Used in case of error to setup in BBDD as ERROR
-    current_site = None
+    current_site_name = None
 
     try:
         for fil in ok_spiders:
             files_to_remove.append(fil)
-            fil_without_extension = fil.replace(".ok", "")
-            current_site = fil_without_extension
+            current_site_name = fil.replace(".ok", "")
             fil_json_extension = fil.replace(".ok", ".json")
             source = "i2p/spiders/ongoing/" + fil_json_extension
             target = "i2p/spiders/finished/" + fil_json_extension
@@ -128,18 +127,19 @@ def process_ok(ok_spiders):
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
 
             # moved here to handle the status of crawled eepsites
-            link_eepsites(fil_without_extension, crawled_eepsites)
+            link_eepsites(current_site_name, crawled_eepsites)
             eliminar = "i2p/spiders/finished/" + fil
             os.remove(eliminar)
     except Exception as e:
-        logging.error("ERROR processing file %s",current_site)
+        logging.error("ERROR processing file %s",current_site_name)
         logging.error("ERROR: %s",e)
         # If an error is raised, this site should be tagged as ERROR
         with db_session:
-            dbutils.set_site_current_processing_status(s_url=current_site, s_status=settings.Status.ERROR)
+            dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=settings.Status.ERROR)
     finally:
         for i in files_to_remove:
             ok_spiders.remove(i)
+            os.remove(i)
         logging.debug("Ending to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
 
 

@@ -81,7 +81,7 @@ DEPTH_LIMIT = 3
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-FEED_STORAGES_BASE = {
-    '': 'i2p.exportutils.CustomFileFeedStorage',
-    'file': 'i2p.exportutils.CustomFileFeedStorage',
-}
+#FEED_STORAGES_BASE = {
+#    '': 'i2p.exportutils.CustomFileFeedStorage',
+#    'file': 'i2p.exportutils.CustomFileFeedStorage',
+#}

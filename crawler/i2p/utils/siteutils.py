@@ -12,6 +12,8 @@
     :since: 0.0.1
 """
 
+import os
+
 
 def get_initial_seeds(path_to_file):
     """
@@ -35,3 +37,16 @@ def get_initial_seeds(path_to_file):
         new_list.append(seed)
 
     return new_list
+
+
+def tail(path_to_file, n=1):
+    """
+    Executes tail on unix based systems
+
+    :param path_to_file: str - Path to the file
+    :param n: int - Number of lines
+    :return: lines_str: str - Last n lines concatenated
+    """
+
+    lines_str = os.popen('tail -n ' + str(n) + ' ' + path_to_file).read()
+    return lines_str

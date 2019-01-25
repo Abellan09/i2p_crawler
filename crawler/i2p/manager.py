@@ -18,7 +18,7 @@ from logging.handlers import RotatingFileHandler
 # Number of simultaneous spiders running
 MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
-MAX_CRAWLING_TRIES = 2
+MAX_CRAWLING_TRIES = 1
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
@@ -120,10 +120,14 @@ def process_ok(ok_spiders):
             target = "i2p/spiders/finished/" + fil_json_extension
             shutil.move(source, target)
 
-            with open(target) as f:
-                crawled_items = json.load(f)
 
-            crawled_eepsites = crawled_items[len(crawled_items) - 1]["extracted_eepsites"]
+            # Once a site has been crawled, what we only need is the extracted eepsite which are at the end of the
+            # json file
+            last_lines = siteutils.tail(target, n=2)
+            last_lines = last_lines.replace('\n]','')
+            crawled_items = json.loads(last_lines)
+
+            crawled_eepsites = crawled_items["extracted_eepsites"]
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
 
             # moved here to handle the status of crawled eepsites

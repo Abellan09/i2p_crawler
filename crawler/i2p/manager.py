@@ -275,7 +275,7 @@ def main():
     fh.setFormatter(format)
     log.addHandler(fh)
 
-    logging.INFO("Starting I2P Darknet crawling ... ")
+    logging.info("Starting I2P Darknet crawling ... ")
 
     # run_spider("stats.i2p")
     # time.sleep(60)

@@ -66,9 +66,9 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'i2p.pipelines.I2PPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'i2p.pipelines.I2PPipeline': 300,
+}
 
 # The maximum depth that will be allowed to crawl for any site:
 DEPTH_LIMIT = 3
@@ -83,5 +83,5 @@ DEPTH_LIMIT = 3
 
 #FEED_STORAGES_BASE = {
 #    '': 'i2p.exportutils.CustomFileFeedStorage',
-#    'file': 'i2p.exportutils.CustomFileFeedStorage',
+#    'file': 'i2p.exportutils.CustomFileFeedStorage'
 #}

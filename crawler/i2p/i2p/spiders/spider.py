@@ -63,7 +63,7 @@ class I2P_Spider(scrapy.Spider):
 					self.LANGUAGES_NLTK.append(line)
 					line = g.readline()
 
-			print(self.LANGUAGES_NLTK)
+			#print(self.LANGUAGES_NLTK)
 			self.parse_eepsite = urlparse.urlparse(url)
 			self.state_item["eepsite"]=self.parse_eepsite.netloc
 			spider_file = "i2p/spiders/ongoing" + self.state_item["eepsite"] + ".json"
@@ -183,9 +183,8 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param response: response returned by an eepsite / respuesta devuelta por un eepsite.
 		'''
-		self.logger.debug("Dentro de parse()")
 		self.error = False
-		self.logger.info("Recieved response from {}".format(response.url))
+		self.logger.debug("Received response from {}".format(response.url))
 		if(self.main_page):
 			self.detect_language(response)
 			self.main_page=False
@@ -217,7 +216,7 @@ class I2P_Spider(scrapy.Spider):
 		:param response: response returned by an eepsite / respuesta devuelta por un eepsite
 		:return: list that contains the extracted links / lista que contiene los links extraídos
 		'''
-		self.logger.debug("Dentro de get_links()")
+		self.logger.info("Extracting links ...")
 		links = self.extractor_i2p.extract_links(response)
 		return links
 	

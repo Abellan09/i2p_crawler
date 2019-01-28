@@ -1,9 +1,10 @@
-scrapy
-pony
-PyMySQL
-nltk
-py_translator
-beautifulsoup4
-langdetect
-html
-slugify
+scrapy >= 1.5.1
+pony >= 0.7.6
+PyMySQL >= 0.9.3
+nltk >= 3.4
+py-translator >= 2.1.8
+beautifulsoup4 >= 4.7.1
+request >= 2.21.0
+langdetect >= 1.0.7
+html >= 1.16
+slugify >= 0.0.1

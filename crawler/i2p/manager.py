@@ -123,9 +123,10 @@ def process_ok(ok_spiders):
 
             # Once a site has been crawled, what we only need is the extracted eepsite which are at the end of the
             # json file
-            last_lines = siteutils.tail(target, n=2)
-            last_lines = last_lines.replace('\n]','')
-            crawled_items = json.loads(last_lines)
+            #last_lines = siteutils.tail(target, n=2)
+            #last_lines = last_lines.replace('\n]','')
+            with open(target,'r') as f:
+                crawled_items = json.loads(f.readline())
 
             crawled_eepsites = crawled_items["extracted_eepsites"]
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
@@ -193,9 +194,9 @@ def run_spider(site):
     # TODO each spider process should be better monitored. Maybe launching them in separated threads.
 
     # Try running a spider
-    param1 = "url=http://" + site
-    param2 = "./i2p/spiders/ongoing/" + site + ".json"
-    p = subprocess.Popen(["scrapy", "crawl", "i2p", "-a", param1, "-o", param2], shell=False)
+    url_to_crawl = "url=http://" + site
+    #param2 = "./i2p/spiders/ongoing/" + site + ".json"
+    p = subprocess.Popen(["scrapy", "crawl", "i2p", "-a", url_to_crawl], shell=False)
 
     with db_session:
         # Create site if needed.
@@ -274,7 +275,7 @@ def main():
     fh.setFormatter(format)
     log.addHandler(fh)
 
-    logging.debug("Dentro de main()")
+    logging.INFO("Starting I2P Darknet crawling ... ")
 
     # run_spider("stats.i2p")
     # time.sleep(60)

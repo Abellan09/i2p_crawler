@@ -7,6 +7,12 @@
 
 import json
 
+# Scrapped items
+NO_VISITED = "non_visited_links"
+VISITED = "visited_links"
+EEPSITE = "eepsite"
+LANGUAGE = "language"
+EEPSITE_LINKS = "extracted_eepsites"
 
 class I2PPipeline(object):
     """
@@ -29,7 +35,14 @@ class I2PPipeline(object):
         :param spider: Spider - The instance of the launched spider.
         :return: item - The previously defined items
         """
-        line = json.dumps(dict(item)) + "\n"
+
+        # Preprocessing just for keepping just the needed info.
+        to_save = {}
+        to_save[EEPSITE] = item[EEPSITE]
+        to_save[LANGUAGE] = item[LANGUAGE]
+        to_save[EEPSITE_LINKS] = item[EEPSITE_LINKS]
+
+        line = json.dumps(dict(to_save)) + "\n"
         self.file.seek(0)
         self.file.write(line)
         return item

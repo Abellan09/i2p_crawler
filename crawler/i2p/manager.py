@@ -131,6 +131,9 @@ def process_ok(ok_spiders):
             crawled_eepsites = crawled_items["extracted_eepsites"]
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
 
+            # setting up the language
+            set_site_language(current_site_name, crawled_items["language"])
+
             # moved here to handle the status of crawled eepsites
             link_eepsites(current_site_name, crawled_eepsites)
 
@@ -181,6 +184,23 @@ def link_eepsites(site, targeted_sites):
     except Exception as e:
         logging.error("ERROR linking eepsites")
         logging.error("ERROR: %s", e)
+
+
+def set_site_language(site, languages):
+    """
+
+    Keeps the site language/s considering all the available language engines.
+
+    :param site: str - Site url
+    :param languages: dict - {engine_n:lang_inferred} For each engine, the inferred language
+    """
+
+    logging.info("Setting languages ...")
+
+    with db_session:
+        for engine in languages.keys():
+            logging.debug("Adding language to %s: %s,%s ", site, engine, languages[engine])
+            dbutils.set_site_language(s_url=site,s_language=languages[engine],l_engine=engine)
 
 
 def run_spider(site):

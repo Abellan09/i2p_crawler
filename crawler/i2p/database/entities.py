@@ -81,10 +81,9 @@ class SiteCategory(db.Entity):
 
 class SiteLanguage(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Required(str)
-    description = Optional(str)
-    sites = Set('Site')
-    variant = Optional(str)
+    language = Optional(str)
+    engine = Optional(str)
+    site = Required('Site')
 
 
 class SiteQoS(db.Entity):

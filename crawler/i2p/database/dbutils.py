@@ -320,3 +320,18 @@ def set_qos(s_url, s_qos):
         qos = entities.SiteQoS(timestamp=datetime.today(), delay=s_qos)
         site.qos = qos
     return site
+
+
+# NODE language - CRUD
+def set_site_language(s_url, s_language, l_engine):
+    """
+    Creates a new crawler processing status. Default status PENDING
+
+    :param s_url: str - URL/name of the site
+    :param s_language: str - The inferred language
+    :param l_engine: str - Engine used to inferred the site's language.
+    :return: SiteLanguage - The new language for the site
+    """
+
+    # Creates the new language
+    return entities.SiteLanguage(site=get_site(s_url=s_url), language=s_language, engine=l_engine)

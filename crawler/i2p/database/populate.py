@@ -45,6 +45,10 @@ def add_default_site_types():
     for type in settings.SITE_TYPE_DEFAULT_INFO.keys():
         entities.SiteType(type=type, description=settings.SITE_TYPE_DEFAULT_INFO[type])
 
+def add_default_languages():
+    #TODO populate all languages
+    pass
+
 def main():
     """
     Creates the schema and adds initial default info.

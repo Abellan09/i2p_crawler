@@ -37,7 +37,7 @@ class I2P_Spider(scrapy.Spider):
 	state_item["eepsite"] = "none"
 	state_item["visited_links"] = []
 	state_item["non_visited_links"] = []
-	state_item["language"] = []
+	state_item["language"] = {}
 	state_item["extracted_eepsites"] = []
 	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
 	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
@@ -168,8 +168,8 @@ class I2P_Spider(scrapy.Spider):
 		# Con nltk:
 		language_nltk=self.detect_language_nltk(sample)
 		# Añadiendo al item:
-		self.state_item["language"].append(language_google)
-		self.state_item["language"].append(language_nltk)
+		self.state_item["language"]['GOOGLE'] = language_google
+		self.state_item["language"]['NLTK'] = language_nltk
 
 	def parse(self, response):
 		'''

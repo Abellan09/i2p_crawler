@@ -70,5 +70,6 @@ def get_crawling_status():
         status[dbsettings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR)
         status[dbsettings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED)
         status[dbsettings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED)
+        status[dbsettings.Status.DISCOVERING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCOVERING)
 
     return status

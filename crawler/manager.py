@@ -20,7 +20,7 @@ from i2p import i2psettings
 # Number of simultaneous spiders running
 MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
-MAX_CRAWLING_TRIES = 1
+MAX_CRAWLING_TRIES_ON_ERROR = 1
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
@@ -229,7 +229,7 @@ def run_spider(site):
         # Increasing tries
         siteEntity = dbutils.increase_tries(s_url=site)
 
-        logging.debug("Process launched for %s with PID=%s, tries=%s",site,p.pid,siteEntity.crawling_tries)
+        logging.debug("Process launched for %s with PID=%s, tries=%s",site,p.pid,siteEntity.error_tries)
 
     return p
 
@@ -245,15 +245,16 @@ def error_to_pending(error_sites, pending_sites):
     # Error sites should be tagged as pending sites.
     with db_session:
         for site in error_sites:
-            if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
+            if dbutils.get_site(s_url=site).error_tries <= MAX_CRAWLING_TRIES_ON_ERROR:
                 logging.debug("The site %s has been restored. New status PENDING.", site)
                 pending_sites.insert(0, site)
                 # sets up the error site to pending status
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.PENDING)
             else:
-                logging.debug("The site %s cannot be crawled because the number of max_tries has been reached.", site)
+                logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.", site)
+                logging.debug("Setting up the DISCOVERING status to %s",site)
                 # The site cannot be crawled
-                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCARDED)
+                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
 
 def main():
     '''
@@ -288,12 +289,12 @@ def main():
     seed_sites = siteutils.get_initial_seeds(i2psettings.PATH_DATA + "seed_urls_200.txt")
     #seed_sites = []
 
-    # Create all sites with PENDING status. Note that if the site exists, it will not be created
+    # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
     with db_session:
         for site in seed_sites:
             # is it a new site? Create it and set up the status to pending.
             if dbutils.create_site(s_url=site):
-                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.PENDING)
+                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
 
     # Restoring the crawling status
     status = siteutils.get_crawling_status()
@@ -303,6 +304,8 @@ def main():
     ongoing_sites = status[dbsettings.Status.ONGOING.name]
     # restored error sites
     error_sites = status[dbsettings.Status.ERROR.name]
+    # restored discovering sites
+    discovering_sites = status[dbsettings.Status.DISCOVERING.name]
 
     logging.debug("Restoring %s ERROR sites.", len(error_sites))
 
@@ -323,21 +326,21 @@ def main():
     etime = time.time()
 
     # main loop
-    # Mientras haya elementos en discovery
-    while pending_sites or ongoing_sites:
+    while pending_sites or ongoing_sites or discovering_sites:
 
         # Try to run another site
         if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
             if pending_sites:
                 with db_session:
                     site = pending_sites.pop()
-                    if dbutils.get_site(s_url=site).crawling_tries <= MAX_CRAWLING_TRIES:
+                    if dbutils.get_site(s_url=site).error_tries <= MAX_CRAWLING_TRIES_ON_ERROR:
                         logging.debug("Starting spider for %s.", site)
                         run_spider(site)
                     else:
-                        logging.debug("The site %s cannot be crawled.", site)
-                        # The site cannot be crawled
-                        dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCARDED)
+                        logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.",site)
+                        logging.debug("Setting up the DISCOVERING status to %s", site)
+                        # The site
+                        dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
 
         # Polling how spiders are going ...
         check_spiders_status(ok_spiders, fail_spiders)
@@ -356,12 +359,13 @@ def main():
         error_sites = status[dbsettings.Status.ERROR.name]
         discarded_sites = status[dbsettings.Status.DISCARDED.name]
         finished_sites = status[dbsettings.Status.FINISHED.name]
+        discovering_sites = status[dbsettings.Status.DISCOVERING.name]
 
         # Getting error sites and setting up them to pending to be crawled again.
         error_to_pending(error_sites, pending_sites)
 
-        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCARDED %s", \
-                      len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
+        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCOVERING %s, DISCARDED %s", \
+                      len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites), len(discovering_sites),
                       len(discarded_sites))
 
 

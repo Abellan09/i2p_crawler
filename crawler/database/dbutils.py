@@ -39,7 +39,7 @@ def create_site(s_url, s_type=dbsettings.Type.I2P):
         new_type = entities.SiteType.get(type=s_type.name)
 
         # Creates the new site
-        site = entities.Site(name=s_url, type=new_type)
+        site = entities.Site(name=s_url, type=new_type, timestamp=datetime.today())
 
     return site
 
@@ -114,7 +114,7 @@ def increase_tries(s_url):
     # If the site exists
     if isinstance(site, entities.Site):
         # increasing the tries
-        site.crawling_tries = site.crawling_tries + 1
+        site.error_tries = site.error_tries + 1
 
     return site
 
@@ -231,12 +231,13 @@ def delete_links(s_url):
 
 
 # NODE PROCESSING LOG - CRUD
-def create_processing_log(s_url, s_status=dbsettings.Status.PENDING):
+def create_processing_log(s_url, s_status=dbsettings.Status.PENDING, s_http_status=000):
     """
     Creates a new crawler processing status. Default status PENDING
 
     :param s_url: str - URL/name of the site
     :param s_status: str - The chosen processing status
+    :param s_http_status: int - The HTTP response status returned by the discovery process
     :return: SiteProcessingLog - The new processing status log
     """
 
@@ -247,7 +248,7 @@ def create_processing_log(s_url, s_status=dbsettings.Status.PENDING):
     new_status = entities.SiteStatus.get(type=s_status.name)
 
     # Creates the new processing status
-    return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today())
+    return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today(), http_status=s_http_status)
 
 
 def get_all_processing_log():
@@ -272,17 +273,18 @@ def get_sites_by_processing_status(s_status):
     """
     assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
 
-    sites = select(site.name for site in entities.Site if site.current_processing_status.type is s_status.name)[:].to_list()
+    sites = select(site.name for site in entities.Site if site.current_status.type is s_status.name)[:].to_list()
 
     return sites
 
 
-def set_site_current_processing_status(s_url, s_status, add_processing_log=True):
+def set_site_current_processing_status(s_url, s_status, s_http_status=000, add_processing_log=True):
     """
     Creates and sets a new processing status to a site.
 
     :param s_url: str - URL/name of the site
     :param s_status: str - The chosen processing status
+    :param s_http_status: int - The HTTP response status returned by the discovery process
     :param add_processing_log: bool - When True a new procession log is added.
     :return: site: Site - The updated Site with the updated corresponding processing status.
     """
@@ -292,11 +294,11 @@ def set_site_current_processing_status(s_url, s_status, add_processing_log=True)
     # If the site exists
     if isinstance(site, entities.Site):
         # Creates and set the new processing status
-        site.current_processing_status = entities.SiteStatus.get(type=s_status.name)
+        site.current_status = entities.SiteStatus.get(type=s_status.name)
 
         if add_processing_log:
             # Adds a new processing log
-            create_processing_log(s_url,s_status)
+            create_processing_log(s_url,s_status, s_http_status)
 
     return site
 

@@ -23,10 +23,13 @@ db.bind(provider='mysql', host='localhost', user='i2p', passwd='4=XoG!*L', db='i
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
-    crawling_tries = Required(int, default=0)
+    error_tries = Required(int, default=0)
+    discovering_tries = Required(int,default=0)
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
-    current_processing_status = Optional('SiteStatus')
+    current_status = Optional('SiteStatus')
+    http_status = Optional(int, default=000)
+    timestamp = Required(datetime)
     connectivity_summary = Optional('SiteConnectivitySummary')
     footprint = Optional('SiteFootprint')
     src_link = Set('Link', reverse='src_site')
@@ -56,6 +59,7 @@ class SiteProcessingLog(db.Entity):
     status = Required('SiteStatus')
     site = Required('Site')
     timestamp = Required(datetime)
+    http_status = Optional(int,default=000)
 
 
 class SiteConnectivitySummary(db.Entity):

@@ -1,49 +1,28 @@
 # I2P CRAWLER
 
-This tool enables crawling on the I2P Darknet.
+HTTP crawling tool for the I2P Darknet sites.
+
+Although it was originally conceived to be used for the I2P anonymous network, 
+this tool can also be used for crawling some others HTTP based web sites 
+like those found in TOR, Freenet and/or the surface web. 
+
+The crawler automatically extracts links to other i2p site thus getting an overall 
+view of the i2p darknet inter-connections.
 
 ## How to install
 
-You can launch the crawler on Windows 10 and Ubuntu Linux (from 16.04 version) systems.
+#### Requirements
 
-In both systems, just download or clone this repository:
+The crawler relies on the use of an adequate environment to run it. Mandatory elements
+for that are:
 
-```
-git clone https://github.com/Abellan09/i2p_crawler
-```
+- Linux **Unbuntu 16.04** and above (it can bee run in older version)
+- **I2P router** (latest version)
+- **Mysql 5.7**, though some other DBMS can be used like SQLite.
+- **Python 2.7** environment
 
-Then, you have to install/configure some things:
-
-First of all, it is neccesary to install an instance of I2P.
-In second place, you need Python 2.7 and Scrapy.
-It is recommended to install DB Browser for SQLite to manage the database easily.
-Last, you have to create the "ongoing" and "finished" directories.
-
-### Windows
-
-1) I2P.
-
-Download (and execute) the installer from [I2P](https://geti2p.net/es/download).
-
-2) Python and Scrapy
-
-Download (and execute) the installer from [Python](https://www.python.org/downloads).
-Then, to install scrapy: ```pip install scrapy```
-
-3) DB Browser for SQLite.
-
-Download (and execute) the installer from [SQLite Browser](https://sqlitebrowser.org).
-
-4) Ongoing and finished directories.
-
-Go to the root of the cloned project.
-Change directory to ~/spiders and create the directories inside it.
-
-```
-cd /i2p_crawler/crawler/i2p/i2p/spiders
-mkdir ongoing
-mkdir finished
-```
+#### Installation steps
+TODO
 
 ### Linux
 

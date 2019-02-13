@@ -23,6 +23,7 @@ class Status(Enum):
     PENDING = 3
     ERROR = 4
     DISCARDED = 5
+    DISCOVERING = 6
 
 
 # {status:description}
@@ -30,7 +31,8 @@ SITE_STATUS_DEFAULT_INFO = {Status.ONGOING.name:'Ongoing: The site is being craw
                             Status.FINISHED.name:'Finished: The site has been successfully crawled',
                             Status.PENDING.name:'Pending: The site is waiting to be launched again. May there was a processing error.',
                             Status.ERROR.name:'Error: The site cannot be crawled',
-                            Status.DISCARDED.name: 'Discarded: The site is discarded because the number of tries has been reached.'}
+                            Status.DISCARDED.name: 'Discarded: The site  has been discarded because the number of maximum tries or the temporal window is expired.',
+                            Status.DISCOVERING.name: 'Discovering: The site is being discovered.'}
 
 # SITE TYPE
 @unique

@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from i2pthread import thread
-import threading
+from crawler.i2pthread import sitethread
 import time
-import pandas as pd
-from utils import siteutils
+from crawler.utils import siteutils
 
 list_seeds = siteutils.get_initial_seeds('../../data/extracted_eepsites.txt')
 
@@ -17,9 +15,9 @@ list_seeds = siteutils.get_initial_seeds('../../data/extracted_eepsites.txt')
 #list_seeds = ["rmagan.i2p"]
 
 # Setting up experiment test
-max_rounds = 10
+max_rounds = 1
 rounds = 0
-site_tries = 5
+site_tries = 1
 while rounds < max_rounds:
     for seed in list_seeds:
 
@@ -28,7 +26,7 @@ while rounds < max_rounds:
         #print(seed)
         for i in range(site_tries):
 	    time.sleep(0.15)
-            i2pt = thread.I2PThread(seed,rounds,i)
+            i2pt = sitethread.I2PThread(seed, rounds, i)
             i2pt.start()
 
         time.sleep(0.3)

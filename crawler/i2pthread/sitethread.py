@@ -4,9 +4,12 @@ Created on 9 sept. 2016
 @author: roberto
 '''
 import threading
-from qos import connection, request_conn
+
+from qos import request_conn
+
 # import time
 # import numpy as np
+
 
 class I2PThread(threading.Thread, object):
         
@@ -22,13 +25,10 @@ class I2PThread(threading.Thread, object):
         # To be overridden
         #response, start_time, end_time, elapsed_time = connection.connectThroughProxy(self._eepsite_url)
         response = request_conn.connectThroughProxy(self._eepsite_url)
-        #print(response.text)
-        # response = response.split('\r\n')
-        # print(response)
-        # protocol = response[0].split(' ')[0]
-        # responseCode = response[0].split(' ')[1]
-        #
-        # # Print CSV Line
+
+
+
+        # Print CSV Line
         csv_line = ""
 
         #print(self._eepsite_url)

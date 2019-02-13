@@ -12,6 +12,8 @@
     :since: 0.0.1
 """
 
+from pony.orm import db_session
+
 import os
 
 

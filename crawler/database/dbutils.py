@@ -14,11 +14,11 @@
 from pony.orm import select
 from datetime import datetime
 import entities
-import settings
+import dbsettings
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_type=settings.Type.I2P):
+def create_site(s_url, s_type=dbsettings.Type.I2P):
     """
     Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
 
@@ -29,7 +29,7 @@ def create_site(s_url, s_type=settings.Type.I2P):
     """
 
     # TODO: create Exception hierarchy.
-    assert isinstance(s_type, settings.Type), 'Not valid type of site'
+    assert isinstance(s_type, dbsettings.Type), 'Not valid type of site'
 
     # The new Site
     site = None
@@ -89,7 +89,7 @@ def set_site_type(s_url, s_type):
     """
 
     # TODO: create Exception hierarchy.
-    assert isinstance(s_type, settings.Type), 'Not valid type of site'
+    assert isinstance(s_type, dbsettings.Type), 'Not valid type of site'
 
     # Gets the site to update
     site = entities.Site.get(name=s_url)
@@ -231,7 +231,7 @@ def delete_links(s_url):
 
 
 # NODE PROCESSING LOG - CRUD
-def create_processing_log(s_url,s_status=settings.Status.PENDING):
+def create_processing_log(s_url, s_status=dbsettings.Status.PENDING):
     """
     Creates a new crawler processing status. Default status PENDING
 
@@ -241,7 +241,7 @@ def create_processing_log(s_url,s_status=settings.Status.PENDING):
     """
 
     # is the status valid?
-    assert isinstance(s_status, settings.Status), 'Not valid type of status'
+    assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
 
     # Gets the chosen status
     new_status = entities.SiteStatus.get(type=s_status.name)
@@ -270,7 +270,7 @@ def get_sites_by_processing_status(s_status):
     :param s_status: str - The chosen processing status
     :return: sites: list of str - The url of the sites in status ``s_status``
     """
-    assert isinstance(s_status, settings.Status), 'Not valid type of status'
+    assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
 
     sites = select(site.name for site in entities.Site if site.current_processing_status.type is s_status.name)[:].to_list()
 

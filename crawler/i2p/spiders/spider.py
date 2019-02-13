@@ -14,6 +14,7 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError 
 from twisted.internet.error import TimeoutError, TCPTimedOutError
+import i2p.i2psettings as i2psettings
 
 class I2P_Spider(scrapy.Spider):
 	
@@ -54,10 +55,10 @@ class I2P_Spider(scrapy.Spider):
 		super(I2P_Spider, self).__init__(*args, **kwargs)
 		self.logger.debug("Dentro de __init__()")
 		if url is not None:
-			with open("../../data/languages_google.json") as f:
+			with open(i2psettings.PATH_DATA + "languages_google.json") as f:
 				self.LANGUAGES_GOOGLE = json.load(f)
-			with open("../../data/languages_nltk.txt") as g:
-				line = g.readline()
+			with open(i2psettings.PATH_DATA + "languages_nltk.txt") as g:
+				line = g.readline() 
 				while line != "":
 					line = line.replace("\n", "")
 					self.LANGUAGES_NLTK.append(line)
@@ -66,12 +67,12 @@ class I2P_Spider(scrapy.Spider):
 			#print(self.LANGUAGES_NLTK)
 			self.parse_eepsite = urlparse.urlparse(url)
 			self.state_item["eepsite"]=self.parse_eepsite.netloc
-			spider_file = "i2p/spiders/ongoing" + self.state_item["eepsite"] + ".json"
+			spider_file = i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
 			ongoing_spider = os.path.exists(spider_file)
 			if(ongoing_spider):
 				self.logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
 				# Leemos la última línea y cargamos el estado.
-				target = "i2p/spiders/ongoing/" + self.parse_eepsite
+				target = i2psettings.PATH_ONGOING_SPIDERS + self.parse_eepsite
 				with open(target) as f:
 					state = json.load(f)
 					self.state_item["visited_links"] = state[len(state) - 1]["visited_links"]
@@ -236,17 +237,17 @@ class I2P_Spider(scrapy.Spider):
 		self.logger.info("SPIDER FINALIZADO")
 		self.logger.info("ERROR = " + str(self.error))
 		site = self.parse_eepsite.netloc
-		ok = "./i2p/spiders/finished/" + site + ".ok"
-		fail = "./i2p/spiders/finished/" + site + ".fail"
+		ok = i2psettings.PATH_FINISHED_SPIDERS + site + ".ok"
+		fail = i2psettings.PATH_FINISHED_SPIDERS + site + ".fail"
 		if self.error:
 			f = open(fail, "w")
 			f.close()
-			self.logger.info(site + ".fail has been created at /i2p/spiders/finished")
+			self.logger.debug(".fail has been created at %s",fail)
 		else:
 			f = open(ok, "w")
 			f.close()
-			self.logger.info(site + ".ok has been created at /i2p/spiders/finished")
-			self.logger.info("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
+			self.logger.debug(".ok has been created at %s",ok)
+			self.logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
 		
 	def err(self, failure):
 		'''

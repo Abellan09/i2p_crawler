@@ -6,6 +6,7 @@
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
+import i2psettings
 
 # Scrapped items
 NO_VISITED = "non_visited_links"
@@ -21,7 +22,7 @@ class I2PPipeline(object):
     """
 
     def open_spider(self, spider):
-        self.file = open('i2p/spiders/ongoing/' + spider.state_item["eepsite"] + '.json', 'w')
+        self.file = open(i2psettings.PATH_ONGOING_SPIDERS + spider.state_item["eepsite"] + '.json', 'w')
 
     def close_spider(self, spider):
         self.file.close()

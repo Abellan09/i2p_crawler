@@ -85,3 +85,9 @@ DEPTH_LIMIT = 3
 #    '': 'i2p.exportutils.CustomFileFeedStorage',
 #    'file': 'i2p.exportutils.CustomFileFeedStorage'
 #}
+
+# CUSTOM CONFIGURATION
+PATH_ONGOING_SPIDERS="i2p/spiders/ongoing/"
+PATH_FINISHED_SPIDERS="i2p/spiders/finished/"
+PATH_LOG='../logs/'
+PATH_DATA='../data/'

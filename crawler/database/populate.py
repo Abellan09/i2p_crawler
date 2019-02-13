@@ -13,7 +13,7 @@
 
 from pony.orm import sql_debug, db_session
 import entities
-import settings
+import dbsettings
 
 sql_debug(True)
 
@@ -33,8 +33,8 @@ def add_default_site_status():
     Adds default status for site crawling. (See NS_DEFAULT_INFO at settings.py)
 
     """
-    for status in settings.SITE_STATUS_DEFAULT_INFO.keys():
-        entities.SiteStatus(type=status, description=settings.SITE_STATUS_DEFAULT_INFO[status])
+    for status in dbsettings.SITE_STATUS_DEFAULT_INFO.keys():
+        entities.SiteStatus(type=status, description=dbsettings.SITE_STATUS_DEFAULT_INFO[status])
 
 
 def add_default_site_types():
@@ -42,8 +42,8 @@ def add_default_site_types():
     Adds default types of sites found. (See NT_DEFAULT_INFO at settings.py)
 
     """
-    for type in settings.SITE_TYPE_DEFAULT_INFO.keys():
-        entities.SiteType(type=type, description=settings.SITE_TYPE_DEFAULT_INFO[type])
+    for type in dbsettings.SITE_TYPE_DEFAULT_INFO.keys():
+        entities.SiteType(type=type, description=dbsettings.SITE_TYPE_DEFAULT_INFO[type])
 
 def add_default_languages():
     #TODO populate all languages

@@ -255,25 +255,6 @@ def error_to_pending(error_sites, pending_sites):
                 # The site cannot be crawled
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCARDED)
 
-def get_crawling_status():
-    """
-    Gets a snapshot of how the crawling procedure is going
-
-    :return: status: dict - The current crawling status
-    """
-
-    status = {}
-
-    with db_session:
-        status[dbsettings.Status.PENDING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING)
-        status[dbsettings.Status.ONGOING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING)
-        status[dbsettings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR)
-        status[dbsettings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED)
-        status[dbsettings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED)
-
-    return status
-
-
 def main():
     '''
     EN: It controls the whole process of the crawling through a loop that is repeated every 2 seconds.
@@ -315,7 +296,7 @@ def main():
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.PENDING)
 
     # Restoring the crawling status
-    status = get_crawling_status()
+    status = siteutils.get_crawling_status()
     # restored pending sites
     pending_sites = status[dbsettings.Status.PENDING.name]
     # restored ongoing sites
@@ -369,7 +350,7 @@ def main():
             etime = time.time()
 
         # Get current status
-        status = get_crawling_status()
+        status = siteutils.get_crawling_status()
         pending_sites = status[dbsettings.Status.PENDING.name]
         ongoing_sites = status[dbsettings.Status.ONGOING.name]
         error_sites = status[dbsettings.Status.ERROR.name]

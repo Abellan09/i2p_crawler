@@ -14,6 +14,8 @@
 
 from pony.orm import db_session
 
+from database import dbutils,dbsettings
+
 import os
 
 
@@ -52,3 +54,21 @@ def tail(path_to_file, n=1):
 
     lines_str = os.popen('tail -n ' + str(n) + ' ' + path_to_file).read()
     return lines_str
+
+def get_crawling_status():
+    """
+    Gets a snapshot of how the crawling procedure is going
+
+    :return: status: dict - The current crawling status
+    """
+
+    status = {}
+
+    with db_session:
+        status[dbsettings.Status.PENDING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING)
+        status[dbsettings.Status.ONGOING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING)
+        status[dbsettings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR)
+        status[dbsettings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED)
+        status[dbsettings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED)
+
+    return status

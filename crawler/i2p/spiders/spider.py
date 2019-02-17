@@ -8,6 +8,7 @@ import copy			# https://docs.python.org/2/library/copy.html
 import time			# https://docs.python.org/2/library/time.html
 import json			# https://docs.python.org/2/library/json.html
 import nltk			# https://www.nltk.org
+import random 		# https://docs.python.org/2/library/random.html
 from i2p.items import I2P_spider_state
 from py_translator import Translator
 from scrapy.linkextractors import LinkExtractor
@@ -30,13 +31,15 @@ class I2P_Spider(scrapy.Spider):
 	end_time = 0
 	start_time = 0
 	start_urls = []
-	visited_links = []
+	MAX_VISITED_LINKS = 10000
+	overflow_visited_links = 0
+	visited_links = {}
 	non_visited_links = []
 	parse_eepsite = None
 	error = True
 	state_item = I2P_spider_state()
 	state_item["eepsite"] = "none"
-	state_item["visited_links"] = []
+	state_item["visited_links"] = {}
 	state_item["non_visited_links"] = []
 	state_item["language"] = {}
 	state_item["extracted_eepsites"] = []
@@ -64,7 +67,6 @@ class I2P_Spider(scrapy.Spider):
 					self.LANGUAGES_NLTK.append(line)
 					line = g.readline()
 
-			#print(self.LANGUAGES_NLTK)
 			self.parse_eepsite = urlparse.urlparse(url)
 			self.state_item["eepsite"]=self.parse_eepsite.netloc
 			spider_file = i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
@@ -72,7 +74,7 @@ class I2P_Spider(scrapy.Spider):
 			if(ongoing_spider):
 				self.logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
 				# Leemos la última línea y cargamos el estado.
-				target = i2psettings.PATH_ONGOING_SPIDERS + self.parse_eepsite
+				target = spider_file
 				with open(target) as f:
 					state = json.load(f)
 					self.state_item["visited_links"] = state[len(state) - 1]["visited_links"]
@@ -81,7 +83,7 @@ class I2P_Spider(scrapy.Spider):
 					self.state_item["extracted_eepsites"] = state[len(state) - 1]["extracted_eepsites"]
 				self.start_urls = copy.deepcopy(self.state_item["non_visited_links"])
 				self.non_visited_links = copy.deepcopy(self.state_item["non_visited_links"])
-				self.visited_links = copy.deepcopy(self.state_item["visited_links"])
+				self.visited_links = self.state_item["visited_links"].copy()
 				self.main_page = False
 			else:
 				self.start_urls.append(url)
@@ -172,6 +174,28 @@ class I2P_Spider(scrapy.Spider):
 		self.state_item["language"]['GOOGLE'] = language_google
 		self.state_item["language"]['NLTK'] = language_nltk
 
+	def add_visited_links(self, link):
+		'''
+		EN: It controls the process of adding a new link to the visited_links dictionary 
+		SP: Controla el proceso de adición de un nuevo link al diccionario visited_links.
+		
+		:param link: link to process / link a procesar.
+		'''
+		if link in self.visited_links:
+			count = self.visited_links.get(link) + 1
+			self.visited_links.update({link:count})
+		else:
+			if len(self.visited_links)>self.MAX_VISITED_LINKS:
+				self.overflow_visited_links = self.overflow_visited_links + 1
+				min_val = min(self.visited_links.itervalues())
+				urls_min_value=[]
+				for url, value in self.visited_links.iteritems():
+					if value==min_val:
+						urls_min_value.append(url)
+				key = random.sample(urls_min_value, 1)[0]
+				del self.visited_links[key]
+			self.visited_links[link]=1
+
 	def parse(self, response):
 		'''
 		EN: It handles the downloaded response for each of the made requests.
@@ -189,10 +213,10 @@ class I2P_Spider(scrapy.Spider):
 		if(self.main_page):
 			self.detect_language(response)
 			self.main_page=False
-		self.visited_links.append(response.url)
+		self.add_visited_links(response.url)
 		if response.url in self.non_visited_links:
 			self.non_visited_links.remove(response.url)
-		self.state_item["visited_links"]=copy.deepcopy(self.visited_links)
+		self.state_item["visited_links"]=self.visited_links.copy()
 		self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
 		links = self.get_links(response)
 		for link in links:

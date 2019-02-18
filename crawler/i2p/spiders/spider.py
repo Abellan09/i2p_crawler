@@ -43,6 +43,7 @@ class I2P_Spider(scrapy.Spider):
 	state_item["non_visited_links"] = []
 	state_item["language"] = {}
 	state_item["extracted_eepsites"] = []
+	state_item["total_eepsite_pages"] = 0
 	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
 	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
 	main_page = True
@@ -214,6 +215,7 @@ class I2P_Spider(scrapy.Spider):
 			self.detect_language(response)
 			self.main_page=False
 		self.add_visited_links(response.url)
+		self.state_item["total_eepsite_pages"]=len(self.visited_links)+self.overflow_visited_links
 		if response.url in self.non_visited_links:
 			self.non_visited_links.remove(response.url)
 		self.state_item["visited_links"]=self.visited_links.copy()

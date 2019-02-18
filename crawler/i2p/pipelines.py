@@ -14,6 +14,7 @@ VISITED = "visited_links"
 EEPSITE = "eepsite"
 LANGUAGE = "language"
 EEPSITE_LINKS = "extracted_eepsites"
+TOTAL_PAGES = "total_eepsite_pages"
 
 class I2PPipeline(object):
     """
@@ -42,6 +43,7 @@ class I2PPipeline(object):
         to_save[EEPSITE] = item[EEPSITE]
         to_save[LANGUAGE] = item[LANGUAGE]
         to_save[EEPSITE_LINKS] = item[EEPSITE_LINKS]
+        to_save[TOTAL_PAGES] = item[TOTAL_PAGES]
 
         line = json.dumps(dict(to_save)) + "\n"
         self.file.seek(0)

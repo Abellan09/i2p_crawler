@@ -9,6 +9,7 @@ import time			# https://docs.python.org/2/library/time.html
 import json			# https://docs.python.org/2/library/json.html
 import nltk			# https://www.nltk.org
 import random 		# https://docs.python.org/2/library/random.html
+from w3lib.html import remove_tags
 from i2p.items import I2P_spider_state
 from py_translator import Translator
 from scrapy.linkextractors import LinkExtractor
@@ -44,6 +45,8 @@ class I2P_Spider(scrapy.Spider):
 	state_item["language"] = {}
 	state_item["extracted_eepsites"] = []
 	state_item["total_eepsite_pages"] = 0
+	state_item["title"] = "none"
+	state_item["size_main_page"] = {}
 	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
 	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
 	main_page = True
@@ -110,6 +113,7 @@ class I2P_Spider(scrapy.Spider):
 		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
 		:return: the detected language / el idioma detectado
 		'''
+		self.logger.debug("Dentro de detect_language_nltk()")
 		# Dividimos el texto de entrada en tokens o palabras únicas
 		tokens = nltk.tokenize.word_tokenize(sample)
 		tokens = [t.strip().lower() for t in tokens] # Convierte todos los textos a minúsculas para su posterior comparación
@@ -144,36 +148,11 @@ class I2P_Spider(scrapy.Spider):
 		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
 		:return: the detected language / el idioma detectado
 		'''
+		self.logger.debug("Dentro de detect_language_google()")
 		translator = Translator()
 		det = translator.detect(sample)
 		language_google = self.LANGUAGES_GOOGLE[det.lang]
 		return language_google
-
-	def detect_language(self, response):
-		'''
-		EN: It detects the language of the main page.
-		SP: Detecta el idioma de la página principal.
-		
-		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite.
-		'''
-		source_url = urlparse.urlparse(response.url)
-		title = response.xpath('normalize-space(//title/text())').extract()
-		paragraphs = response.xpath('normalize-space(//p)').extract()
-		h1 = response.xpath('//h1/text()').extract()
-		h2 = response.xpath('//h2/text()').extract()
-		h3 = response.xpath('//h3/text()').extract()
-		h4 = response.xpath('//h4/text()').extract()
-		sample = title + paragraphs + h1 + h2 + h3 + h4
-		sample = ' '.join(sample)
-		if len(sample)>500:
-			sample = sample[0:500]
-		# Con API de GOOGLE:
-		language_google=self.detect_language_google(sample)
-		# Con nltk:
-		language_nltk=self.detect_language_nltk(sample)
-		# Añadiendo al item:
-		self.state_item["language"]['GOOGLE'] = language_google
-		self.state_item["language"]['NLTK'] = language_nltk
 
 	def add_visited_links(self, link):
 		'''
@@ -182,6 +161,7 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param link: link to process / link a procesar.
 		'''
+		self.logger.debug("Dentro de add_visited_links()")
 		if link in self.visited_links:
 			count = self.visited_links.get(link) + 1
 			self.visited_links.update({link:count})
@@ -196,6 +176,37 @@ class I2P_Spider(scrapy.Spider):
 				key = random.sample(urls_min_value, 1)[0]
 				del self.visited_links[key]
 			self.visited_links[link]=1
+
+	def main_page_analysis(self, response):
+		'''
+		EN: It analyzes and extracts information from the main page of an eepsite.
+		SP: Analiza y extrae información de la página principal de un eepsite.
+		
+		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite.
+		'''
+		self.logger.debug("Dentro de main_page_analysis()")
+		main_page_code = response.body
+		main_page_without_tags = remove_tags(main_page_code)
+		title = response.xpath('normalize-space(//title/text())').extract()
+		sample = main_page_without_tags
+		words=sample.replace("\n","")
+		words=words.split(" ")
+		num_words=len(words)
+		self.logger.info("Total words in main page: " + str(num_words))
+		num_letters=0
+		for word in words:
+			num_letters = num_letters + len(word)
+		self.logger.info("Total letters in main page: " + str(num_letters))
+		# Lenguaje con API de GOOGLE:
+		language_google=self.detect_language_google(sample)
+		# Lenguaje con nltk:
+		language_nltk=self.detect_language_nltk(sample)
+		# Añadiendo al item:
+		self.state_item["title"] = title
+		self.state_item["size_main_page"]['WORDS'] = num_words
+		self.state_item["size_main_page"]['LETTERS'] = num_letters
+		self.state_item["language"]['GOOGLE'] = language_google
+		self.state_item["language"]['NLTK'] = language_nltk
 
 	def parse(self, response):
 		'''
@@ -212,7 +223,7 @@ class I2P_Spider(scrapy.Spider):
 		self.error = False
 		self.logger.debug("Received response from {}".format(response.url))
 		if(self.main_page):
-			self.detect_language(response)
+			self.main_page_analysis(response)
 			self.main_page=False
 		self.add_visited_links(response.url)
 		self.state_item["total_eepsite_pages"]=len(self.visited_links)+self.overflow_visited_links

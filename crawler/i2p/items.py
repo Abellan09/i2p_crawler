@@ -20,3 +20,5 @@ class I2P_spider_state(scrapy.Item):
 	language = scrapy.Field()
 	extracted_eepsites = scrapy.Field()
 	total_eepsite_pages = scrapy.Field()
+	title = scrapy.Field()
+	size_main_page = scrapy.Field()

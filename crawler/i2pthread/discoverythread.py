@@ -109,13 +109,12 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                              dbutils.get_processing_logs_by_site_status(s_url=self._eepsite,
                                                                         s_status=dbsettings.Status.DISCOVERING)[
                                  0].timestamp
-
+                discovering_tries = dbutils.get_site(s_url=self._eepsite).discovering_tries
                 logging.debug("Time spent for site %s: %s ", self._eepsite, time_spent)
-                logging.debug("Current tries for site %s: %s ", self._eepsite,
-                              dbutils.get_site(s_url=self._eepsite).discovering_tries)
+                logging.debug("Current tries for site %s: %s ", self._eepsite, discovering_tries)
 
                 # Checking maximum discovering tries and period of time for trying
-                if dbutils.get_site(s_url=self._eepsite).discovering_tries < self._max_tries \
+                if discovering_tries < self._max_tries \
                         and time_spent <= timedelta(minutes=self._duration):
 
                     eepsite_http = "http://" + self._eepsite
@@ -126,7 +125,7 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                     # Print CSV Line
                     csv_line = ""
                     csv_line += self._eepsite + "|" + response_code + "|"
-                    csv_line += str(response.elapsed.total_seconds())
+                    csv_line += str(response.elapsed.total_seconds()) + "|" + str(discovering_tries)
                     logging.debug("RESPONSE: %s", csv_line)
 
                     logging.debug("Increasing discovering tries to site %s.", self._eepsite)

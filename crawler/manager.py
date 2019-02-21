@@ -24,11 +24,13 @@ from i2p import i2psettings
 # Number of simultaneous spiders running
 MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
-MAX_CRAWLING_TRIES_ON_ERROR = 1
+MAX_CRAWLING_TRIES_ON_ERROR = 2
 # Number of tries for error sites
-MAX_CRAWLING_TRIES_ON_DISCOVERING = 1
+MAX_CRAWLING_TRIES_ON_DISCOVERING = 2
 # Number of tries for error sites
-MAX_DURATION_ON_DISCOVERING = 1 # Minutes
+MAX_DURATION_ON_DISCOVERING = 2 # Minutes
+# Number of parallel single threads running
+MAX_SINGLE_THREADS_ON_DISCOVERING = 2
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
@@ -334,8 +336,9 @@ def main():
 
         # discoverying thread
         logging.debug("Running discovering process ...")
-        dThread = discoverythread.DiscoveringThread(MAX_CRAWLING_TRIES_ON_DISCOVERING, \
-                                                    MAX_DURATION_ON_DISCOVERING)
+        dThread = discoverythread.DiscoveringThread(MAX_CRAWLING_TRIES_ON_DISCOVERING,
+                                                    MAX_DURATION_ON_DISCOVERING,
+                                                    MAX_SINGLE_THREADS_ON_DISCOVERING)
         dThread.setName('DiscoveryThread')
         dThread.start()
 

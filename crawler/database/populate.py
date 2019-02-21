@@ -53,23 +53,31 @@ def add_fake_discovery_info():
     """
 
     valid_site = 'no.i2p'
-    dbutils.create_site(valid_site)
-    dbutils.set_site_current_processing_status(s_url=valid_site, s_status=dbsettings.Status.DISCOVERING)
+    #dbutils.create_site(valid_site)
+    #dbutils.set_site_current_processing_status(s_url=valid_site, s_status=dbsettings.Status.DISCOVERING)
 
     not_valid_site = 'fake.i2p'
     dbutils.create_site(not_valid_site)
     dbutils.set_site_current_processing_status(s_url=not_valid_site, s_status=dbsettings.Status.DISCOVERING)
 
+    not_valid_site_2 = 'fake_2.i2p'
+    dbutils.create_site(not_valid_site_2)
+    dbutils.set_site_current_processing_status(s_url=not_valid_site_2, s_status=dbsettings.Status.DISCOVERING)
+
+    not_valid_site_3 = 'fake_3.i2p'
+    dbutils.create_site(not_valid_site_3)
+    dbutils.set_site_current_processing_status(s_url=not_valid_site_3, s_status=dbsettings.Status.DISCOVERING)
+
     # Simulates the discovering process
     # Valid site
     # Discovering process of valid site got 2xx o 3xx http status
-    dbutils.set_site_current_processing_status(s_url=valid_site, s_status=dbsettings.Status.PENDING,
-                                               s_http_status='200')
+    #dbutils.set_site_current_processing_status(s_url=valid_site, s_status=dbsettings.Status.DISCOVERING,
+    #                                           s_http_status='200')
 
     # Fake site
     # Discovering process of fake site got 4xx o 5xx http status
-    dbutils.set_site_current_processing_status(s_url=not_valid_site, s_status=dbsettings.Status.DISCOVERING,
-                                               s_http_status='500')
+    #dbutils.set_site_current_processing_status(s_url=not_valid_site, s_status=dbsettings.Status.DISCOVERING,
+    #                                           s_http_status='500')
 
 
 def add_default_languages():

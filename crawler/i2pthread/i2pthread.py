@@ -1,3 +1,16 @@
+# -*- coding: utf-8 -*-
+
+"""
+    :mod:`i2pthread`
+    ===========================================================================
+    :synopsis: Parent methods to manage threads
+    :author: Roberto Magán Carrión
+    :contact: roberto.magan@uca.es, rmagan@ugr.es, robertomagan@gmail.com
+    :organization: University of Cádiz, University of Granada
+    :project: I2P Crawler
+    :since: 0.0.1
+"""
+
 import threading
 
 class I2PThread(threading.Thread, object):

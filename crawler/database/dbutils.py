@@ -12,6 +12,7 @@
     :since: 0.0.1
 """
 from pony.orm import select
+from pony.orm import desc
 from datetime import datetime
 import entities
 import dbsettings
@@ -100,9 +101,9 @@ def set_site_type(s_url, s_type):
     return site
 
 
-def increase_tries(s_url):
+def increase_tries_on_error(s_url):
     """
-    Increasing the counter of crawling tries
+    Increasing the counter of crawling tries on error status
 
     :param s_url: str - URL/name of the site
     :return: Site - The updated site or None if the site does not exists
@@ -118,6 +119,24 @@ def increase_tries(s_url):
 
     return site
 
+
+def increase_tries_on_discovering(s_url):
+    """
+    Increasing the counter of crawling tries on discovering status
+
+    :param s_url: str - URL/name of the site
+    :return: Site - The updated site or None if the site does not exists
+    """
+
+    # Gets the site to update
+    site = entities.Site.get(name=s_url)
+
+    # If the site exists
+    if isinstance(site, entities.Site):
+        # increasing the tries
+        site.discovering_tries = site.discovering_tries + 1
+
+    return site
 
 # NODE LINK STATS - CRUD (Create Read Update Delete)
 def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
@@ -231,7 +250,7 @@ def delete_links(s_url):
 
 
 # NODE PROCESSING LOG - CRUD
-def create_processing_log(s_url, s_status=dbsettings.Status.PENDING, s_http_status=000):
+def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_status=000):
     """
     Creates a new crawler processing status. Default status PENDING
 
@@ -250,6 +269,33 @@ def create_processing_log(s_url, s_status=dbsettings.Status.PENDING, s_http_stat
     # Creates the new processing status
     return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today(), http_status=s_http_status)
 
+
+def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVERING, sorting_desc=True):
+    """
+    Gets the processing logs for a specific site and status
+
+    :param s_url: str - URL/name of the site
+    :param s_status: str - The chosen processing status
+    :param sorting_desc: bool - Sorting order: True (desc), False (asc)
+    :return: list - list of SiteProcessinglog
+    """
+
+    # is the status valid?
+    assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
+
+    # Gets the site
+    site = entities.Site.get(name=s_url)
+
+    # If the site exists
+    if isinstance(site, entities.Site):
+
+        # Get the site status
+        new_status = entities.SiteStatus.get(type=s_status.name)
+
+        site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status).\
+            order_by(entities.SiteProcessingLog.timestamp)[:].to_list()
+
+    return site_logs
 
 def get_all_processing_log():
 
@@ -278,7 +324,7 @@ def get_sites_by_processing_status(s_status):
     return sites
 
 
-def set_site_current_processing_status(s_url, s_status, s_http_status=000, add_processing_log=True):
+def set_site_current_processing_status(s_url, s_status, s_http_status='', add_processing_log=True):
     """
     Creates and sets a new processing status to a site.
 

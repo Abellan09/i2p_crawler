@@ -8,11 +8,15 @@ import json			# https://docs.python.org/2/library/json.html
 import logging		# https://docs.python.org/2/library/logging.html
 import sys
 import shlex
+import signal
+import traceback
+import threading
 
 from pony.orm import db_session, set_sql_debug
 from database import dbutils
 from database import dbsettings
 from utils import siteutils
+from i2pthread import discoverythread
 from logging.handlers import RotatingFileHandler
 from i2p import i2psettings
 
@@ -21,6 +25,10 @@ from i2p import i2psettings
 MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
 MAX_CRAWLING_TRIES_ON_ERROR = 1
+# Number of tries for error sites
+MAX_CRAWLING_TRIES_ON_DISCOVERING = 1
+# Number of tries for error sites
+MAX_DURATION_ON_DISCOVERING = 1 # Minutes
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
@@ -176,7 +184,7 @@ def link_eepsites(site, targeted_sites):
 
                 # is it a new site? Create it and set up the status to pending.
                 if dbutils.create_site(s_url=eepsite):
-                    dbutils.set_site_current_processing_status(s_url=eepsite, s_status=dbsettings.Status.PENDING)
+                    dbutils.set_site_current_processing_status(s_url=eepsite, s_status=dbsettings.Status.DISCOVERING)
 
                 # Linking
                 dbutils.create_link(site, eepsite)
@@ -227,7 +235,7 @@ def run_spider(site):
         # Setting up the correct status
         dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ONGOING)
         # Increasing tries
-        siteEntity = dbutils.increase_tries(s_url=site)
+        siteEntity = dbutils.increase_tries_on_error(s_url=site)
 
         logging.debug("Process launched for %s with PID=%s, tries=%s",site,p.pid,siteEntity.error_tries)
 
@@ -281,93 +289,135 @@ def main():
 
     logging.info("Starting I2P Darknet crawling ... ")
 
-    # run_spider("stats.i2p")
-    # time.sleep(60)
-    # exit()
+    try:
 
-    # Gets initial seeds
-    seed_sites = siteutils.get_initial_seeds(i2psettings.PATH_DATA + "seed_urls_200.txt")
-    #seed_sites = []
+        # Gets initial seeds
+        seed_sites = siteutils.get_initial_seeds(i2psettings.PATH_DATA + "seed_urls_200.txt")
+        #seed_sites = []
 
-    # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
-    with db_session:
-        for site in seed_sites:
-            # is it a new site? Create it and set up the status to pending.
-            if dbutils.create_site(s_url=site):
-                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+        # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
+        with db_session:
+            for site in seed_sites:
+                # is it a new site? Create it and set up the status to pending.
+                if dbutils.create_site(s_url=site):
+                    dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
 
-    # Restoring the crawling status
-    status = siteutils.get_crawling_status()
-    # restored pending sites
-    pending_sites = status[dbsettings.Status.PENDING.name]
-    # restored ongoing sites
-    ongoing_sites = status[dbsettings.Status.ONGOING.name]
-    # restored error sites
-    error_sites = status[dbsettings.Status.ERROR.name]
-    # restored discovering sites
-    discovering_sites = status[dbsettings.Status.DISCOVERING.name]
-
-    logging.debug("Restoring %s ERROR sites.", len(error_sites))
-
-    # Getting error sites and setting up them to pending to be crawled again.
-    error_to_pending(error_sites, pending_sites)
-
-    logging.debug("Restoring %s PENDING sites.", len(pending_sites))
-    logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))
-
-    # restored ONGOING SITES should be launched
-    for site in ongoing_sites:
-        if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
-            logging.debug("Starting spider for %s.", site)
-            run_spider(site)
-
-    # Monitoring time
-    stime = time.time()
-    etime = time.time()
-
-    # main loop
-    while pending_sites or ongoing_sites or discovering_sites:
-
-        # Try to run another site
-        if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
-            if pending_sites:
-                with db_session:
-                    site = pending_sites.pop()
-                    if dbutils.get_site(s_url=site).error_tries <= MAX_CRAWLING_TRIES_ON_ERROR:
-                        logging.debug("Starting spider for %s.", site)
-                        run_spider(site)
-                    else:
-                        logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.",site)
-                        logging.debug("Setting up the DISCOVERING status to %s", site)
-                        # The site
-                        dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
-
-        # Polling how spiders are going ...
-        check_spiders_status(ok_spiders, fail_spiders)
-
-        time.sleep(1)
-        if (etime - stime) < 60:
-            etime = time.time()
-        else:
-            stime = time.time()
-            etime = time.time()
-
-        # Get current status
+        # Restoring the crawling status
         status = siteutils.get_crawling_status()
+        # restored pending sites
         pending_sites = status[dbsettings.Status.PENDING.name]
+        # restored ongoing sites
         ongoing_sites = status[dbsettings.Status.ONGOING.name]
+        # restored error sites
         error_sites = status[dbsettings.Status.ERROR.name]
-        discarded_sites = status[dbsettings.Status.DISCARDED.name]
-        finished_sites = status[dbsettings.Status.FINISHED.name]
+        # restored discovering sites
         discovering_sites = status[dbsettings.Status.DISCOVERING.name]
+
+        logging.debug("Restoring %s ERROR sites.", len(error_sites))
 
         # Getting error sites and setting up them to pending to be crawled again.
         error_to_pending(error_sites, pending_sites)
 
-        logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCOVERING %s, DISCARDED %s", \
-                      len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites), len(discovering_sites),
-                      len(discarded_sites))
+        logging.debug("Restoring %s PENDING sites.", len(pending_sites))
+        logging.debug("Restoring %s ONGOING sites.", len(ongoing_sites))
+        logging.debug("Restoring %s DISCOVERING sites.", len(discovering_sites))
+
+        # restored ONGOING SITES should be launched
+        for site in ongoing_sites:
+            if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
+                logging.debug("Starting spider for %s.", site)
+                run_spider(site)
+
+        # Discovering time
+        stime = time.time()
+        etime = time.time()
+
+        # discoverying thread
+        logging.debug("Running discovering process ...")
+        dThread = discoverythread.DiscoveringThread(MAX_CRAWLING_TRIES_ON_DISCOVERING, \
+                                                    MAX_DURATION_ON_DISCOVERING)
+        dThread.setName('DiscoveryThread')
+        dThread.start()
+
+        # main loop
+        while pending_sites or ongoing_sites or discovering_sites:
+
+            # Try to run another site
+            if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
+                if pending_sites:
+                    with db_session:
+                        site = pending_sites.pop()
+                        if dbutils.get_site(s_url=site).error_tries < MAX_CRAWLING_TRIES_ON_ERROR:
+                            logging.debug("Starting spider for %s.", site)
+                            run_spider(site)
+                        else:
+                            logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.",site)
+                            logging.debug("Setting up the DISCOVERING status to %s", site)
+                            # The site
+                            dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+
+            # Polling how spiders are going ...
+            check_spiders_status(ok_spiders, fail_spiders)
+
+            # Get current status
+            status = siteutils.get_crawling_status()
+            pending_sites = status[dbsettings.Status.PENDING.name]
+            ongoing_sites = status[dbsettings.Status.ONGOING.name]
+            error_sites = status[dbsettings.Status.ERROR.name]
+            discarded_sites = status[dbsettings.Status.DISCARDED.name]
+            finished_sites = status[dbsettings.Status.FINISHED.name]
+            discovering_sites = status[dbsettings.Status.DISCOVERING.name]
+
+            # Getting error sites and setting up them to pending to be crawled again.
+            error_to_pending(error_sites, pending_sites)
+
+            logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCOVERING %s, DISCARDED %s", \
+                          len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites), len(discovering_sites),
+                          len(discarded_sites))
+
+            time.sleep(1)
+            if (etime - stime) < 2:
+                etime = time.time()
+            else:
+                stime = time.time()
+                etime = time.time()
+
+    except KeyboardInterrupt:
+        logging.info("KeyboardInterrupt received ...")
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5, file=sys.stdout)
+    finally:
+        logging.info("Stopping all services ...")
+
+        try:
+            if isinstance(dThread, discoverythread.DiscoveringThread): dThread.stop()
+        except UnboundLocalError:
+            logging.warning("DiscoveringThread is not running, so it will not stopped.")
+
+        for i in threading.enumerate():
+            if i is not threading.currentThread():
+                logging.debug("Waiting for %s thread ...", i.name)
+                i.join()
+        logging.info("Exiting ...")
+        exit(1)
+
+
+def signal_handler(signum, frame):
+    """
+    Manages Ctrl+C interruption signal
+
+    :param signum: signal
+    :param frame:
+    """
+    if signum == signal.SIGINT:
+        raise KeyboardInterrupt, "Signal Interrupt"
+    else:
+        logging.debug("Signal handler do not recognize signal number %s", signum)
 
 
 if __name__ == '__main__':
+    # SIGINT registration to manage them outside
+    signal.signal(signal.SIGINT, signal_handler)
+
     main()

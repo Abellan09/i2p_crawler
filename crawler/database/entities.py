@@ -24,11 +24,10 @@ class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
     error_tries = Required(int, default=0)
-    discovering_tries = Required(int,default=0)
+    discovering_tries = Required(int, default=0)
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
     current_status = Optional('SiteStatus')
-    http_status = Optional(int, default=000)
     timestamp = Required(datetime)
     connectivity_summary = Optional('SiteConnectivitySummary')
     footprint = Optional('SiteFootprint')
@@ -59,7 +58,7 @@ class SiteProcessingLog(db.Entity):
     status = Required('SiteStatus')
     site = Required('Site')
     timestamp = Required(datetime)
-    http_status = Optional(int,default=000)
+    http_status = Optional(str)
 
 
 class SiteConnectivitySummary(db.Entity):

@@ -64,12 +64,12 @@ def add_fake_discovery_info():
     # Valid site
     # Discovering process of valid site got 2xx o 3xx http status
     dbutils.set_site_current_processing_status(s_url=valid_site, s_status=dbsettings.Status.PENDING,
-                                               s_http_status=200)
+                                               s_http_status='200')
 
     # Fake site
     # Discovering process of fake site got 4xx o 5xx http status
-    dbutils.set_site_current_processing_status(s_url=not_valid_site, s_status=dbsettings.Status.PENDING,
-                                               s_http_status=500)
+    dbutils.set_site_current_processing_status(s_url=not_valid_site, s_status=dbsettings.Status.DISCOVERING,
+                                               s_http_status='500')
 
 
 def add_default_languages():
@@ -83,7 +83,7 @@ def main():
     """
     with db_session:
         add_default_info()
-        #add_fake_discovery_info()
+        add_fake_discovery_info()
 
 if __name__ == '__main__':
     main()

@@ -255,7 +255,7 @@ def error_to_pending(error_sites, pending_sites):
     # Error sites should be tagged as pending sites.
     with db_session:
         for site in error_sites:
-            if dbutils.get_site(s_url=site).error_tries <= MAX_CRAWLING_TRIES_ON_ERROR:
+            if dbutils.get_site(s_url=site).error_tries < MAX_CRAWLING_TRIES_ON_ERROR:
                 logging.debug("The site %s has been restored. New status PENDING.", site)
                 pending_sites.insert(0, site)
                 # sets up the error site to pending status
@@ -265,6 +265,7 @@ def error_to_pending(error_sites, pending_sites):
                 logging.debug("Setting up the DISCOVERING status to %s",site)
                 # The site cannot be crawled
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+                dbutils.reset_tries_on_error(s_url=site)
 
 def main():
     '''
@@ -358,6 +359,7 @@ def main():
                             logging.debug("Setting up the DISCOVERING status to %s", site)
                             # The site
                             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+                            dbutils.reset_tries_on_error(s_url=site)
 
             # Polling how spiders are going ...
             check_spiders_status(ok_spiders, fail_spiders)

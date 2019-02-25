@@ -58,7 +58,7 @@ class DiscoveringThread(I2PThread, object):
             # While
             while self._sites_to_discover or running_threads:
 
-                # How many single threads are allowed to be running?
+                # How many simultaneous single threads are allowed to be running?
                 for i in range(self._max_single_threads - len(running_threads)):
                     if self._sites_to_discover:
                         eepsite = self._sites_to_discover.pop()
@@ -142,11 +142,11 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                         dbutils.set_site_current_processing_status(s_url=self._eepsite,
                                                                    s_http_status=response_code,
                                                                    s_status=dbsettings.Status.DISCOVERING)
-                        logging.debug("Site %s was set up to DISCOVERING.", self._eepsite)
+                        logging.debug("Site %s was set up to DISCOVERING the response code %s received.", self._eepsite, response_code)
                 else:
                     dbutils.set_site_current_processing_status(s_url=self._eepsite,
                                                                s_status=dbsettings.Status.DISCARDED)
-                    logging.debug("Site %s was set up to DISCARDED.", self._eepsite)
+                    logging.debug("Site %s was set up to DISCARDED due to the maximum time window (%s mins) to be discovered has been exceeded.", self._eepsite, self._duration)
 
             except Exception as e:
                 logging.error("ERROR on discovering %s: %s", self._eepsite, e)

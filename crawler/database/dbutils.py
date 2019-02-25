@@ -120,6 +120,25 @@ def increase_tries_on_error(s_url):
     return site
 
 
+def reset_tries_on_error(s_url):
+    """
+    Initialize the counter of crawling tries on error status
+
+    :param s_url: str - URL/name of the site
+    :return: Site - The updated site or None if the site does not exists
+    """
+
+    # Gets the site to update
+    site = entities.Site.get(name=s_url)
+
+    # If the site exists
+    if isinstance(site, entities.Site):
+        # increasing the tries
+        site.error_tries = 0
+
+    return site
+
+
 def increase_tries_on_discovering(s_url):
     """
     Increasing the counter of crawling tries on discovering status

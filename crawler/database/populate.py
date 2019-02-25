@@ -91,7 +91,7 @@ def main():
     """
     with db_session:
         add_default_info()
-        add_fake_discovery_info()
+        #add_fake_discovery_info()
 
 if __name__ == '__main__':
     main()

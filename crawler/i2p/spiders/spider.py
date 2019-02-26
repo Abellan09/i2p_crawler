@@ -9,6 +9,7 @@ import time			# https://docs.python.org/2/library/time.html
 import json			# https://docs.python.org/2/library/json.html
 import nltk			# https://www.nltk.org
 import random 		# https://docs.python.org/2/library/random.html
+import re			# https://docs.python.org/2.7/library/re.html
 from w3lib.html import remove_tags
 from i2p.items import I2P_spider_state
 from py_translator import Translator
@@ -166,8 +167,9 @@ class I2P_Spider(scrapy.Spider):
 			count = self.visited_links.get(link) + 1
 			self.visited_links.update({link:count})
 		else:
-			if len(self.visited_links)>self.MAX_VISITED_LINKS:
+			if len(self.visited_links)>=self.MAX_VISITED_LINKS:
 				self.overflow_visited_links = self.overflow_visited_links + 1
+				self.logger.info("Overflow_visited_links = " + str(self.overflow_visited_links))
 				min_val = min(self.visited_links.itervalues())
 				urls_min_value=[]
 				for url, value in self.visited_links.iteritems():
@@ -188,7 +190,8 @@ class I2P_Spider(scrapy.Spider):
 		main_page_code = response.body
 		main_page_without_tags = remove_tags(main_page_code)
 		title = response.xpath('normalize-space(//title/text())').extract()
-		sample = main_page_without_tags
+		sample = re.sub('[^?!A-Za-z0-9]+', ' ', main_page_without_tags)
+		# print sample
 		words=sample.replace("\n","")
 		words=words.split(" ")
 		num_words=len(words)
@@ -197,6 +200,8 @@ class I2P_Spider(scrapy.Spider):
 		for word in words:
 			num_letters = num_letters + len(word)
 		self.logger.info("Total letters in main page: " + str(num_letters))
+		if len(sample)>500:
+			sample = sample[0:500]
 		# Lenguaje con API de GOOGLE:
 		language_google=self.detect_language_google(sample)
 		# Lenguaje con nltk:

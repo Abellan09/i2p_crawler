@@ -63,7 +63,7 @@ class DiscoveringThread(I2PThread, object):
                     if self._sites_to_discover:
                         eepsite = self._sites_to_discover.pop()
                         ssdThread = SingleSiteDiscoveryThread(self._max_tries, self._duration, eepsite)
-                        ssdThread.setName("SingleSiteDiscoveryThread_"+eepsite)
+                        ssdThread.setName("SingleSiteDiscoveryThread_"+str(eepsite))
                         ssdThread.start()
                         running_threads.append(ssdThread)
                     else:
@@ -76,6 +76,7 @@ class DiscoveringThread(I2PThread, object):
                         running_threads.pop()
 
                 logging.debug("%s SingleSiteDiscoveryThread are running",len(running_threads))
+                logging.debug("SingleSiteDiscoveryThread running list: ", [t.getName() for t in running_threads])
 
                 time.sleep(1)
 
@@ -96,62 +97,62 @@ class SingleSiteDiscoveryThread(I2PThread, object):
 
     def run(self):
 
-        with db_session:
-
             try:
-                # Get next site
-                # eepsite = self._sites_to_discover.pop()
+                with db_session:
+                    # Get next site
+                    # eepsite = self._sites_to_discover.pop()
 
-                logging.debug("Trying to discover site %s", self._eepsite)
+                    logging.debug("Trying to discover site %s", self._eepsite)
 
-                # Computes the time spent from the first discovering status of the eepsite
-                time_spent = datetime.now() - \
-                             dbutils.get_processing_logs_by_site_status(s_url=self._eepsite,
-                                                                        s_status=dbsettings.Status.DISCOVERING)[
-                                 0].timestamp
-                discovering_tries = dbutils.get_site(s_url=self._eepsite).discovering_tries
-                logging.debug("Time spent for site %s: %s ", self._eepsite, time_spent)
-                logging.debug("Current tries for site %s: %s ", self._eepsite, discovering_tries)
+                    # Computes the time spent from the first discovering status of the eepsite
+                    time_spent = datetime.now() - \
+                                 dbutils.get_processing_logs_by_site_status(s_url=self._eepsite,
+                                                                            s_status=dbsettings.Status.DISCOVERING)[
+                                     0].timestamp
+                    discovering_tries = dbutils.get_site(s_url=self._eepsite).discovering_tries
+                    logging.debug("Time spent for site %s: %s ", self._eepsite, time_spent)
+                    logging.debug("Current tries for site %s: %s ", self._eepsite, discovering_tries)
 
-                # Checking maximum discovering tries and period of time for trying
-                if discovering_tries < self._max_tries \
-                        and time_spent <= timedelta(minutes=self._duration):
+                    # Checking maximum discovering tries and period of time for trying
+                    if discovering_tries < self._max_tries \
+                            and time_spent <= timedelta(minutes=self._duration):
 
-                    eepsite_http = "http://" + self._eepsite
-                    logging.debug("DISCOVERING: %s", self._eepsite)
-                    response = request_conn.connectThroughProxy(eepsite_http,
-                                                                proxies={'http': 'http://localhost:4444'})
-                    response_code = str(response.status_code)
-                    # Print CSV Line
-                    csv_line = ""
-                    csv_line += self._eepsite + "|" + response_code + "|"
-                    csv_line += str(response.elapsed.total_seconds()) + "|" + str(discovering_tries)
-                    logging.debug("RESPONSE: %s", csv_line)
+                        eepsite_http = "http://" + self._eepsite
+                        logging.debug("DISCOVERING: %s", self._eepsite)
+                        response = request_conn.connectThroughProxy(eepsite_http,
+                                                                    proxies={'http': 'http://localhost:4444'})
+                        response_code = str(response.status_code)
+                        # Print CSV Line
+                        csv_line = ""
+                        csv_line += self._eepsite + "|" + response_code + "|"
+                        csv_line += str(response.elapsed.total_seconds()) + "|" + str(discovering_tries)
+                        logging.debug("RESPONSE: %s", csv_line)
 
-                    logging.debug("Increasing discovering tries to site %s.", self._eepsite)
-                    dbutils.increase_tries_on_discovering(s_url=self._eepsite)
+                        logging.debug("Increasing discovering tries to site %s.", self._eepsite)
+                        dbutils.increase_tries_on_discovering(s_url=self._eepsite)
 
-                    # HTTP 2XX or 3XX
-                    if reg_http.match(response_code):
-                        dbutils.set_site_current_processing_status(s_url=self._eepsite,
-                                                                   s_http_status=response_code,
-                                                                   s_status=dbsettings.Status.PENDING)
-                        logging.debug("Site %s was set up to PENDING.", self._eepsite)
-                    # HTTP 4XX or 5XX
+                        # HTTP 2XX or 3XX
+                        if reg_http.match(response_code):
+                            dbutils.set_site_current_processing_status(s_url=self._eepsite,
+                                                                       s_http_status=response_code,
+                                                                       s_status=dbsettings.Status.PENDING)
+                            logging.debug("Site %s was set up to PENDING.", self._eepsite)
+                        # HTTP 4XX or 5XX
+                        else:
+                            dbutils.set_site_current_processing_status(s_url=self._eepsite,
+                                                                       s_http_status=response_code,
+                                                                       s_status=dbsettings.Status.DISCOVERING)
+                            logging.debug("Site %s was set up to DISCOVERING the response code %s received.", self._eepsite, response_code)
                     else:
                         dbutils.set_site_current_processing_status(s_url=self._eepsite,
-                                                                   s_http_status=response_code,
-                                                                   s_status=dbsettings.Status.DISCOVERING)
-                        logging.debug("Site %s was set up to DISCOVERING the response code %s received.", self._eepsite, response_code)
-                else:
-                    dbutils.set_site_current_processing_status(s_url=self._eepsite,
-                                                               s_status=dbsettings.Status.DISCARDED)
-                    logging.debug("Site %s was set up to DISCARDED due to the maximum time window (%s mins) to be discovered has been exceeded.", self._eepsite, self._duration)
+                                                                   s_status=dbsettings.Status.DISCARDED)
+                        logging.debug("Site %s was set up to DISCARDED because tries were %s (max %s) or duration was %s (max %s mins).", self._eepsite, discovering_tries, self._max_tries, time_spent, self._duration)
 
             except Exception as e:
                 logging.error("ERROR on discovering %s: %s", self._eepsite, e)
                 logging.debug("Increasing discovering tries to site %s.", self._eepsite)
-                dbutils.increase_tries_on_discovering(s_url=self._eepsite)
+                with db_session:
+                    dbutils.increase_tries_on_discovering(s_url=self._eepsite)
 
     def on_stop(self):
         # Should be overridden to do some stuff on thread stop

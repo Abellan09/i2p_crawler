@@ -181,6 +181,7 @@ def link_eepsites(site, targeted_sites):
             # Creates the src site, if needed
             dbutils.create_site(site)
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
+            logging.debug("Site %s was setup to FINISHED.",site)
 
             for eepsite in targeted_sites:
 

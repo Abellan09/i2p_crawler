@@ -67,17 +67,21 @@ class DiscoveringThread(I2PThread, object):
                         ssdThread = SingleSiteDiscoveryThread(self._max_tries, self._duration, eepsite)
                         ssdThread.setName("SingleSiteDiscoveryThread_"+str(eepsite))
                         ssdThread.start()
+                        logging.debug("Running threads counter: %s",running_threads)
                         simple_threads.insert(running_threads, ssdThread)
+                        logging.debug("Simple threads: %s", [t.getName() if t is not None else None for t in simple_threads])
                         running_threads += 1
-                        logging.debug("Running %s",ssdThread.getName())
+                        logging.debug("Running %s", ssdThread.getName())
                     else:
                         break
 
                 # Checking running threads
                 for i, thread in enumerate(simple_threads):
-                    logging.debug("SingleSiteDiscoveryThread %s is alive? %s", thread.name, thread.isAlive())
-                    if not thread.isAlive():
-                        running_threads -= 1
+                    if thread is not None:
+                        logging.debug("SingleSiteDiscoveryThread %s is alive? %s", thread.name, thread.isAlive())
+                        if not thread.isAlive():
+                            simple_threads[i] = None
+                            running_threads -= 1
 
                 logging.debug("%s SingleSiteDiscoveryThread are running", running_threads)
 

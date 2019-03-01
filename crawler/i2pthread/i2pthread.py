@@ -13,6 +13,7 @@
 
 import threading
 
+
 class I2PThread(threading.Thread, object):
         
     def __init__(self):

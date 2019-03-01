@@ -54,31 +54,32 @@ class DiscoveringThread(I2PThread, object):
                 logging.debug("Current # of sites to discover %s.", self._sites_to_discover)
 
             # Running Threads
-            running_threads = []
+            simple_threads = []
+            running_threads = 0
 
-            # While
-            while self._sites_to_discover or running_threads:
+            # While there sites to discover and running threads
+            while self._sites_to_discover or running_threads != 0:
 
                 # How many simultaneous single threads are allowed to be running?
-                for i in range(self._max_single_threads - len(running_threads)):
+                while (self._max_single_threads - running_threads) > 0:
                     if self._sites_to_discover:
                         eepsite = self._sites_to_discover.pop()
                         ssdThread = SingleSiteDiscoveryThread(self._max_tries, self._duration, eepsite)
                         ssdThread.setName("SingleSiteDiscoveryThread_"+str(eepsite))
                         ssdThread.start()
-                        running_threads.append(ssdThread)
+                        simple_threads.insert(running_threads, ssdThread)
+                        running_threads += 1
                         logging.debug("Running %s",ssdThread.getName())
                     else:
                         break
 
                 # Checking running threads
-                for index in range(len(running_threads)):
-                    logging.debug("SingleSiteDiscoveryThread %s is alive? %s", running_threads[index].name, running_threads[index].isAlive())
-                    if not running_threads[index].isAlive():
-                        running_threads.pop()
+                for i, thread in enumerate(simple_threads):
+                    logging.debug("SingleSiteDiscoveryThread %s is alive? %s", thread.name, thread.isAlive())
+                    if not thread.isAlive():
+                        running_threads -= 1
 
-                logging.debug("%s SingleSiteDiscoveryThread are running", len(running_threads))
-                logging.debug("SingleSiteDiscoveryThread running list: %s", [t.getName() for t in running_threads])
+                logging.debug("%s SingleSiteDiscoveryThread are running", running_threads)
 
                 time.sleep(1)
 

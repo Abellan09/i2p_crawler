@@ -31,6 +31,7 @@ from qos import request_conn
 HTTP_SUCCES_COD_REGEXPR = '[23]'
 reg_http = regex.compile(HTTP_SUCCES_COD_REGEXPR)
 
+
 class DiscoveringThread(I2PThread, object):
 
     def __init__(self, max_tries, duration, max_single_threads):
@@ -66,17 +67,18 @@ class DiscoveringThread(I2PThread, object):
                         ssdThread.setName("SingleSiteDiscoveryThread_"+str(eepsite))
                         ssdThread.start()
                         running_threads.append(ssdThread)
+                        logging.debug("Running %s",ssdThread.getName())
                     else:
                         break
 
                 # Checking running threads
-                for index, thread in enumerate(running_threads):
-                    logging.debug("SingleSiteDiscoveryThread %s is alive? %s",thread.name, thread.isAlive())
-                    if not thread.isAlive():
+                for index in range(len(running_threads)):
+                    logging.debug("SingleSiteDiscoveryThread %s is alive? %s", running_threads[index].name, running_threads[index].isAlive())
+                    if not running_threads[index].isAlive():
                         running_threads.pop()
 
-                logging.debug("%s SingleSiteDiscoveryThread are running",len(running_threads))
-                logging.debug("SingleSiteDiscoveryThread running list: ", [t.getName() for t in running_threads])
+                logging.debug("%s SingleSiteDiscoveryThread are running", len(running_threads))
+                logging.debug("SingleSiteDiscoveryThread running list: %s", [t.getName() for t in running_threads])
 
                 time.sleep(1)
 

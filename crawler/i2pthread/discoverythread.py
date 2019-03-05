@@ -69,7 +69,7 @@ class DiscoveringThread(I2PThread, object):
                         ssdThread.start()
                         logging.debug("Running threads counter: %s",running_threads)
                         simple_threads.insert(running_threads, ssdThread)
-                        logging.debug("Simple threads: %s", [t.getName() if t is not None else None for t in simple_threads])
+                        #logging.debug("Simple threads: %s", [t.getName() if t is not None else None for t in simple_threads])
                         running_threads += 1
                         logging.debug("Running %s", ssdThread.getName())
                     else:

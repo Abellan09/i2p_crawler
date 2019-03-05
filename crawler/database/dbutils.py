@@ -269,7 +269,7 @@ def delete_links(s_url):
 
 
 # NODE PROCESSING LOG - CRUD
-def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_status=000, s_http_response_time=-1):
+def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_status=000, s_http_response_time=''):
     """
     Creates a new crawler processing status. Default status PENDING
 
@@ -345,7 +345,7 @@ def get_sites_by_processing_status(s_status):
     return sites
 
 
-def set_site_current_processing_status(s_url, s_status, s_http_status='',s_http_response_time=-1, add_processing_log=True):
+def set_site_current_processing_status(s_url, s_status, s_http_status='', s_http_response_time='', add_processing_log=True):
     """
     Creates and sets a new processing status to a site.
 

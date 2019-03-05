@@ -59,7 +59,7 @@ class SiteProcessingLog(db.Entity):
     site = Required('Site')
     timestamp = Required(datetime)
     http_status = Optional(str)
-    http_response_time = Optional(int)
+    http_response_time = Optional(str)
 
 
 class SiteConnectivitySummary(db.Entity):

@@ -129,10 +129,11 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                         response = request_conn.connectThroughProxy(eepsite_http,
                                                                     proxies={'http': 'http://localhost:4444'})
                         response_code = str(response.status_code)
+                        response_time = str(response.elapsed.total_seconds())
                         # Print CSV Line
                         csv_line = ""
                         csv_line += self._eepsite + "|" + response_code + "|"
-                        csv_line += str(response.elapsed.total_seconds()) + "|" + str(discovering_tries)
+                        csv_line += response_time + "|" + str(discovering_tries)
                         logging.debug("RESPONSE: %s", csv_line)
 
                         logging.debug("Increasing discovering tries to site %s.", self._eepsite)
@@ -142,12 +143,14 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                         if reg_http.match(response_code):
                             dbutils.set_site_current_processing_status(s_url=self._eepsite,
                                                                        s_http_status=response_code,
+                                                                       s_http_response_time=response_time,
                                                                        s_status=dbsettings.Status.PENDING)
                             logging.debug("Site %s was set up to PENDING.", self._eepsite)
                         # HTTP 4XX or 5XX
                         else:
                             dbutils.set_site_current_processing_status(s_url=self._eepsite,
                                                                        s_http_status=response_code,
+                                                                       s_http_response_time=response_time,
                                                                        s_status=dbsettings.Status.DISCOVERING)
                             logging.debug("Site %s was set up to DISCOVERING the response code %s received.", self._eepsite, response_code)
                     else:

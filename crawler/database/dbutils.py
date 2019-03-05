@@ -269,13 +269,14 @@ def delete_links(s_url):
 
 
 # NODE PROCESSING LOG - CRUD
-def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_status=000):
+def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_status=000, s_http_response_time=-1):
     """
     Creates a new crawler processing status. Default status PENDING
 
     :param s_url: str - URL/name of the site
     :param s_status: str - The chosen processing status
     :param s_http_status: int - The HTTP response status returned by the discovery process
+    :param s_http_response_time: int - The spent HTTP response time
     :return: SiteProcessingLog - The new processing status log
     """
 
@@ -286,7 +287,8 @@ def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_
     new_status = entities.SiteStatus.get(type=s_status.name)
 
     # Creates the new processing status
-    return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today(), http_status=s_http_status)
+    return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today(),\
+                                      http_status=s_http_status, http_response_time=s_http_response_time)
 
 
 def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVERING, sorting_desc=True):
@@ -343,13 +345,14 @@ def get_sites_by_processing_status(s_status):
     return sites
 
 
-def set_site_current_processing_status(s_url, s_status, s_http_status='', add_processing_log=True):
+def set_site_current_processing_status(s_url, s_status, s_http_status='',s_http_response_time=-1, add_processing_log=True):
     """
     Creates and sets a new processing status to a site.
 
     :param s_url: str - URL/name of the site
     :param s_status: str - The chosen processing status
     :param s_http_status: int - The HTTP response status returned by the discovery process
+    :param s_http_response_time: int - The spent HTTP response time
     :param add_processing_log: bool - When True a new procession log is added.
     :return: site: Site - The updated Site with the updated corresponding processing status.
     """
@@ -363,7 +366,7 @@ def set_site_current_processing_status(s_url, s_status, s_http_status='', add_pr
 
         if add_processing_log:
             # Adds a new processing log
-            create_processing_log(s_url,s_status, s_http_status)
+            create_processing_log(s_url, s_status, s_http_status, s_http_response_time)
 
     return site
 

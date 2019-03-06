@@ -48,6 +48,7 @@ class I2P_Spider(scrapy.Spider):
 	state_item["total_eepsite_pages"] = 0
 	state_item["title"] = "none"
 	state_item["size_main_page"] = {}
+	cond = False
 	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
 	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
 	main_page = True
@@ -136,7 +137,7 @@ class I2P_Spider(scrapy.Spider):
 			if lang_count[language_nltk] == 0:
 				language_nltk = 'undefined'
 		except UnicodeDecodeError as e:
-			print 'Error'
+			self.logger.debug('Error')
 			language_nltk = 'error'
 		finally:
 			return language_nltk
@@ -157,10 +158,10 @@ class I2P_Spider(scrapy.Spider):
 
 	def add_visited_links(self, link):
 		'''
-		EN: It controls the process of adding a new link to the visited_links dictionary 
+		EN: It controls the process of adding a new link to the visited_links dictionary.
 		SP: Controla el proceso de adición de un nuevo link al diccionario visited_links.
 		
-		:param link: link to process / link a procesar.
+		:param link: link to process / link a procesar
 		'''
 		self.logger.debug("Dentro de add_visited_links()")
 		if link in self.visited_links:
@@ -179,19 +180,40 @@ class I2P_Spider(scrapy.Spider):
 				del self.visited_links[key]
 			self.visited_links[link]=1
 
+	def delimiter(self, words):
+		'''
+		EN: It separates the words contained on the main page into an odd number of groups of maximum 200 words each.
+		SP: Separa las palabras contenidas en la página principal en un número impar de grupos de máximo 200 palabras cada uno.
+		
+		:param words: full set of words / conjunto de palabras completo
+		:return: list that contains the groups of words / lista que contiene los grupos de palabras
+		'''
+		self.logger.debug("Dentro de delimiter()")
+		words_delimiter=[]
+		if len(words)>=200:
+			self.cond=True
+		while self.cond:
+			words_delimiter.append(words[0:200])
+			for i in range(0,200):
+				words.pop(0)
+			if len(words)<200:
+				self.cond=False
+		if len(words_delimiter)%2==0:
+			words_delimiter.append(words[0:len(words)])
+		return words_delimiter
+		
 	def main_page_analysis(self, response):
 		'''
 		EN: It analyzes and extracts information from the main page of an eepsite.
 		SP: Analiza y extrae información de la página principal de un eepsite.
 		
-		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite.
+		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite
 		'''
 		self.logger.debug("Dentro de main_page_analysis()")
 		main_page_code = response.body
 		main_page_without_tags = remove_tags(main_page_code)
 		title = response.xpath('normalize-space(//title/text())').extract()
 		sample = re.sub('[^?!A-Za-z0-9]+', ' ', main_page_without_tags)
-		# print sample
 		words=sample.replace("\n","")
 		words=words.split(" ")
 		num_words=len(words)
@@ -200,18 +222,36 @@ class I2P_Spider(scrapy.Spider):
 		for word in words:
 			num_letters = num_letters + len(word)
 		self.logger.info("Total letters in main page: " + str(num_letters))
-		if len(sample)>500:
-			sample = sample[0:500]
-		# Lenguaje con API de GOOGLE:
-		language_google=self.detect_language_google(sample)
-		# Lenguaje con nltk:
-		language_nltk=self.detect_language_nltk(sample)
+		
+		sample=self.delimiter(words)
+		language_google=[]
+		language_nltk=[]
+		for i in range(0, len(sample)):
+			# Lenguaje con API de GOOGLE:
+			language_google.append(self.detect_language_google(" ".join(sample[i])))
+			print str(language_google)
+			# Lenguaje con nltk:
+			language_nltk.append(self.detect_language_nltk(" ".join(sample[i])))
+			print str(language_nltk)
+		freq_lang_google = []
+		for w in language_google:
+			freq_lang_google.append(language_google.count(w))
+		language_google_decision = language_google[freq_lang_google.index(max(freq_lang_google))]
+		freq_lang_nltk = []
+		for w in language_nltk:
+			freq_lang_nltk.append(language_nltk.count(w))
+		language_nltk_decision = language_nltk[freq_lang_nltk.index(max(freq_lang_nltk))]
+		#print str(language_google)
+		#print str(language_nltk)
+		#print("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
+		#print("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
+		
 		# Añadiendo al item:
 		self.state_item["title"] = title
 		self.state_item["size_main_page"]['WORDS'] = num_words
 		self.state_item["size_main_page"]['LETTERS'] = num_letters
-		self.state_item["language"]['GOOGLE'] = language_google
-		self.state_item["language"]['NLTK'] = language_nltk
+		self.state_item["language"]['GOOGLE'] = language_google_decision
+		self.state_item["language"]['NLTK'] = language_nltk_decision
 
 	def parse(self, response):
 		'''

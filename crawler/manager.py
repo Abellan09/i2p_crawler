@@ -146,8 +146,18 @@ def process_ok(ok_spiders):
             # setting up the language
             set_site_language(current_site_name, crawled_items["language"])
 
+            # setting up the home site info
+            set_site_home_info(current_site_name, crawled_items["size_main_page"], crawled_items["title"][0])
+
             # moved here to handle the status of crawled eepsites
             link_eepsites(current_site_name, crawled_eepsites)
+
+            # setting up connectivity summary
+            # TODO this method should be called separately once the crawling process finished to the real values of in, out, degree
+            set_site_connectivity_summary(current_site_name, crawled_items["total_eepsite_pages"])
+
+            # setting up the number of pages to the site.
+            set_site_number_pages(current_site_name, crawled_items["total_eepsite_pages"])
 
     except Exception as e:
         logging.error("ERROR processing file %s",current_site_name)
@@ -214,6 +224,58 @@ def set_site_language(site, languages):
         for engine in languages.keys():
             logging.debug("Adding language to %s: %s,%s ", site, engine, languages[engine])
             dbutils.set_site_language(s_url=site, s_language=languages[engine], l_engine=engine)
+
+
+def set_site_home_info(site, size_main_page, title):
+    """
+
+    Creates the home info for a site.
+
+    :param site: str - Site url
+    :param size_main_page: dict - {LETTERS:n_letters,WORDS:n_words} Found in the home of a site
+    :param title: str - the found title in the home page
+    """
+
+    logging.info("Setting home info ...")
+
+    with db_session:
+        logging.debug("Adding info to %s: letters: %s, words: %s, title: %s ", site, size_main_page['LETTERS'], size_main_page['WORDS'], title)
+        dbutils.set_site_home_info(s_url=site, s_letters=size_main_page['LETTERS'], s_words=size_main_page['WORDS'], s_title=title)
+
+def set_site_number_pages(site, pages):
+    """
+
+    Updates the site to add the number of found pages
+
+    :param site: str - Site url
+    :param pages: int - The number of site pages
+    """
+
+    logging.info("Setting number of pages ...")
+
+    with db_session:
+        logging.debug("Updatin number of pages %s to site %s: ", pages, site)
+        dbutils.set_site_number_of_pages(s_url=site, n_pages=pages)
+
+
+
+def set_site_connectivity_summary(site, pages):
+    """
+
+    Creates a connectivity summary info which adds/updates incoming, outgoing, n of html pages to external sites, and degree
+
+    :param site: str - Site url
+    :param pages: int - The number of site pages
+    """
+
+    logging.info("Setting connectivity summary info ...")
+
+    with db_session:
+        n_incoming_links = len(dbutils.get_incoming_links(site))
+        n_outgoing_links = len(dbutils.get_outgoing_links(site))
+        degree = n_incoming_links
+        logging.debug("Adding connetivity summary to %s, in_links: %s, out_links: %s, degree: %s, out_pages_links: %s", site, n_incoming_links, n_outgoing_links, pages)
+        dbutils.set_connectivity_summary(s_url=site, n_incoming=n_incoming_links, n_outgoing=n_outgoing_links, n_degree=degree, n_pages=pages)
 
 
 def run_spider(site):

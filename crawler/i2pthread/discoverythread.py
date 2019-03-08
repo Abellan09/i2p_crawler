@@ -84,6 +84,7 @@ class DiscoveringThread(I2PThread, object):
                             running_threads -= 1
 
                 logging.debug("%s SingleSiteDiscoveryThread are running", running_threads)
+                logging.debug("There are %s sites to discover.", len(self._sites_to_discover))
 
                 time.sleep(1)
 

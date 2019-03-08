@@ -12,7 +12,6 @@
     :since: 0.0.1
 """
 from pony.orm import select
-from pony.orm import desc
 from datetime import datetime
 import entities
 import dbsettings
@@ -100,6 +99,24 @@ def set_site_type(s_url, s_type):
         site.type = entities.SiteType.get(type=s_type.name)
     return site
 
+def set_site_number_of_pages(s_url, n_pages):
+    """
+    Set the number of pages (html links) which are no linking to *.i2p sites
+
+    :param s_url: str - URL/name of the site
+    :param n_pages: int - Number of pages
+
+    :return: Site - The updated site or None if the site does not exists
+    """
+
+    # Gets the site to update
+    site = entities.Site.get(name=s_url)
+    # If the site exists
+    if isinstance(site, entities.Site):
+        # Get and set the number of pages
+        site.pages = n_pages
+    return site
+
 
 def increase_tries_on_error(s_url):
     """
@@ -157,8 +174,9 @@ def increase_tries_on_discovering(s_url):
 
     return site
 
+
 # NODE LINK STATS - CRUD (Create Read Update Delete)
-def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
+def set_connectivity_summary(s_url, n_incoming, n_outgoing, n_degree, n_pages):
     """
     Creates or updates site statistics
 
@@ -166,7 +184,8 @@ def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
     :param n_incoming: int - # of incoming links
     :param n_outgoing: int - # of outgoing links
     :param n_degree: int - site degree
-    :return: SiteConnectivitySummary - The site statistics
+    :param n_pages: int - number of pages of the site
+    :return: SiteConnectivitySummary - The site connectivity summary
     """
     # Gets the site
     site = entities.Site.get(name=s_url)
@@ -177,9 +196,10 @@ def set_statistics(s_url, n_incoming, n_outgoing, n_degree):
             site.connectivity_summary.incoming = n_incoming
             site.connectivity_summary.outgoing = n_outgoing
             site.connectivity_summary.degree = n_degree
+            site.connectivity_summary.pages = n_pages
         else:
             # set statistics
-            entities.SiteConnectivitySummary(site=site, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree)
+            entities.SiteConnectivitySummary(site=site, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree, pages=n_pages)
 
     return site.connectivity_summary
 
@@ -395,7 +415,7 @@ def set_qos(s_url, s_qos):
 # NODE language - CRUD
 def set_site_language(s_url, s_language, l_engine):
     """
-    Creates a new crawler processing status. Default status PENDING
+    Creates a language detected by a specific engine
 
     :param s_url: str - URL/name of the site
     :param s_language: str - The inferred language
@@ -405,3 +425,17 @@ def set_site_language(s_url, s_language, l_engine):
 
     # Creates the new language
     return entities.SiteLanguage(site=get_site(s_url=s_url), language=s_language, engine=l_engine)
+
+# NODE home info - CRUD
+def set_site_home_info(s_url, s_letters, s_words, s_title):
+    """
+    Creates a new crawler processing status. Default status PENDING
+
+    :param s_url: str - URL/name of the site
+    :param s_letters: int - Number of letters found in home page
+    :param s_words: int - Number of words found in home page
+    :return: SiteHomeInfo - The new info for the site home
+    """
+
+    # Creates the new language
+    return entities.SiteHomeInfo(site=get_site(s_url=s_url), letters=s_letters, words=s_words, title=s_title)

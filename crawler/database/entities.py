@@ -25,6 +25,7 @@ class Site(db.Entity):
     name = Required(str, unique=True)
     error_tries = Required(int, default=0)
     discovering_tries = Required(int, default=0)
+    pages = Optional(int)
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
     current_status = Optional('SiteStatus')
@@ -35,6 +36,7 @@ class Site(db.Entity):
     dst_link = Set('Link', reverse='dst_site')
     categories = Set('SiteCategory')
     languages = Set('SiteLanguage')
+    homeinfo = Set('SiteHomeInfo')
     qos = Set('SiteQoS')
 
 
@@ -67,6 +69,7 @@ class SiteConnectivitySummary(db.Entity):
     outgoing = Optional(int, default=0)
     incoming = Optional(int, default=0)
     degree = Optional(int, default=0)
+    pages = Optional(int, default=0)
     site = Required('Site')
 
 
@@ -87,6 +90,13 @@ class SiteLanguage(db.Entity):
     id = PrimaryKey(int, auto=True)
     language = Optional(str)
     engine = Optional(str)
+    site = Required('Site')
+
+class SiteHomeInfo(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    letters = Optional(int)
+    words = Optional(int)
+    title = Optional(str)
     site = Required('Site')
 
 

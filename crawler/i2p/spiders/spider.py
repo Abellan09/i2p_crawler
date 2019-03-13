@@ -324,6 +324,7 @@ class I2P_Spider(scrapy.Spider):
 		site = self.parse_eepsite.netloc
 		ok = i2psettings.PATH_FINISHED_SPIDERS + site + ".ok"
 		fail = i2psettings.PATH_FINISHED_SPIDERS + site + ".fail"
+		target = i2psettings.PATH_ONGOING_SPIDERS + site + ".json"
 		if self.error:
 			f = open(fail, "w")
 			f.close()
@@ -333,6 +334,13 @@ class I2P_Spider(scrapy.Spider):
 			f.close()
 			self.logger.debug(".ok has been created at %s",ok)
 			self.logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
+			with open(target,'r+') as f:
+				data = json.load(f)
+				del data["non_visited_links"]
+				del data["visited_links"]
+				f.seek(0)
+				json.dump(data, f)
+				f.truncate()
 		
 	def err(self, failure):
 		'''

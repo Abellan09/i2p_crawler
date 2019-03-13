@@ -180,7 +180,7 @@ class I2P_Spider(scrapy.Spider):
 				del self.visited_links[key]
 			self.visited_links[link]=1
 
-	def delimiter(self, words):
+	def split_words_in_groups(self, words):
 		'''
 		EN: It separates the words contained on the main page into an odd number of groups of maximum 200 words each.
 		SP: Separa las palabras contenidas en la página principal en un número impar de grupos de máximo 200 palabras cada uno.
@@ -223,7 +223,7 @@ class I2P_Spider(scrapy.Spider):
 			num_letters = num_letters + len(word)
 		self.logger.info("Total letters in main page: " + str(num_letters))
 		
-		sample=self.delimiter(words)
+		sample=self.split_words_in_groups(words)
 		language_google=[]
 		language_nltk=[]
 		for i in range(0, len(sample)):

@@ -26,11 +26,11 @@ class I2PFilterMiddleware(object):
     ".m4a", ".m4v", ".flv",
     # office suites
     ".xls", ".xlsx", ".ppt", ".pptx", ".pps", ".doc", ".docx", ".odt", ".ods", ".odg",
-    ".odp",
+    ".odp", ".txt"
     # code
     ".cpp", ".java", ".class", ".jar", ".py", ".pyc", ".pyo", ".pyw", ".rb", ".rbw", ".pl", ".pm", ".cgi",
     # other
-    ".css", ".pdf", ".exe", ".bin", ".rss", ".zip", ".rar", ".tar", ".gz",
+    ".css", ".pdf", ".exe", ".bin", ".rss", ".zip", ".rar", ".tar", ".gz", ".su3",
 	]
 	
 	def process_request(self, request, spider):

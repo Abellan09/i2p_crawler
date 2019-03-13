@@ -241,10 +241,10 @@ class I2P_Spider(scrapy.Spider):
 		for w in language_nltk:
 			freq_lang_nltk.append(language_nltk.count(w))
 		language_nltk_decision = language_nltk[freq_lang_nltk.index(max(freq_lang_nltk))]
-		#print str(language_google)
-		#print str(language_nltk)
-		#print("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
-		#print("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
+		#self.logger.debug("Language_google: " + str(language_google))
+		#self.logger.debug("Language_nltk: " + str(language_nltk))
+		#self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
+		#self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
 		
 		# Añadiendo al item:
 		self.state_item["title"] = title
@@ -344,7 +344,8 @@ class I2P_Spider(scrapy.Spider):
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
 		self.logger.debug("Dentro de err()")
-		self.logger.error(repr(failure))  
+		self.logger.error(repr(failure))
+		
 		if failure.check(HttpError):
 			response = failure.value.response 
 			self.logger.error("HttpError occurred on %s", response.url)  
@@ -353,4 +354,13 @@ class I2P_Spider(scrapy.Spider):
 			self.logger.error("DNSLookupError occurred on %s", request.url) 
 		elif failure.check(TimeoutError, TCPTimedOutError): 
 			request = failure.request 
-			self.logger.error("TimeoutError occurred on %s", request.url) 
+			self.logger.error("TimeoutError occurred on %s", request.url)
+		else:
+			request = failure.request 
+			if request.url in self.non_visited_links:
+				self.non_visited_links.remove(request.url)
+			if request.url not in self.visited_links:
+				self.add_visited_links(request.url)
+			self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
+			self.state_item["visited_links"]=copy.deepcopy(self.visited_links)
+			yield self.state_item

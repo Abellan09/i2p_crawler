@@ -48,6 +48,8 @@ class I2PPipeline(object):
         to_save[TOTAL_PAGES] = item[TOTAL_PAGES]
         to_save[TITLE] = item[TITLE]
         to_save[SIZE_MAIN_PAGE] = item[SIZE_MAIN_PAGE]
+        to_save[NO_VISITED] = item[NO_VISITED]
+        to_save[VISITED] = item[VISITED]
 
         line = json.dumps(dict(to_save)) + "\n"
         self.file.seek(0)

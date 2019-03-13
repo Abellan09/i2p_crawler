@@ -83,10 +83,13 @@ class I2P_Spider(scrapy.Spider):
 				target = spider_file
 				with open(target) as f:
 					state = json.load(f)
-					self.state_item["visited_links"] = state[len(state) - 1]["visited_links"]
-					self.state_item["non_visited_links"] = state[len(state) - 1]["non_visited_links"]
-					self.state_item["language"] = state[len(state) - 1]["language"]
-					self.state_item["extracted_eepsites"] = state[len(state) - 1]["extracted_eepsites"]
+					self.state_item["visited_links"] = state["visited_links"]
+					self.state_item["non_visited_links"] = state["non_visited_links"]
+					self.state_item["language"] = state["language"]
+					self.state_item["extracted_eepsites"] = state["extracted_eepsites"]
+					self.state_item["total_eepsite_pages"] = state["total_eepsite_pages"]
+					self.state_item["title"] = state["title"]
+					self.state_item["size_main_page"] = state["size_main_page"]
 				self.start_urls = copy.deepcopy(self.state_item["non_visited_links"])
 				self.non_visited_links = copy.deepcopy(self.state_item["non_visited_links"])
 				self.visited_links = self.state_item["visited_links"].copy()

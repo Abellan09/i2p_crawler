@@ -255,7 +255,7 @@ def set_site_number_pages(site, pages):
     logging.info("Setting number of pages ...")
 
     with db_session:
-        logging.debug("Updatin number of pages %s to site %s: ", pages, site)
+        logging.debug("Updating number of pages %s to site %s: ", pages, site)
         dbutils.set_site_number_of_pages(s_url=site, n_pages=pages)
 
 
@@ -275,7 +275,7 @@ def set_site_connectivity_summary(site, pages):
         n_incoming_links = len(dbutils.get_incoming_links(site))
         n_outgoing_links = len(dbutils.get_outgoing_links(site))
         degree = n_incoming_links
-        logging.debug("Adding connetivity summary to %s, in_links: %s, out_links: %s, degree: %s, out_pages_links: %s", site, n_incoming_links, n_outgoing_links, pages)
+        logging.debug("Adding connectivity summary to %s, in_links: %s, out_links: %s, degree: %s, out_pages_links: %s", site, n_incoming_links, n_outgoing_links, degree, pages)
         dbutils.set_connectivity_summary(s_url=site, n_incoming=n_incoming_links, n_outgoing=n_outgoing_links, n_degree=degree, n_pages=pages)
 
 

@@ -33,7 +33,7 @@ class I2P_Spider(scrapy.Spider):
 	end_time = 0
 	start_time = 0
 	start_urls = []
-	MAX_VISITED_LINKS = 10000
+	MAX_VISITED_LINKS = 1000
 	overflow_visited_links = 0
 	visited_links = {}
 	non_visited_links = []
@@ -82,22 +82,37 @@ class I2P_Spider(scrapy.Spider):
 				# Leemos la última línea y cargamos el estado.
 				target = spider_file
 				with open(target) as f:
-					state = json.load(f)
-					self.state_item["visited_links"] = state["visited_links"]
-					self.state_item["non_visited_links"] = state["non_visited_links"]
-					self.state_item["language"] = state["language"]
-					self.state_item["extracted_eepsites"] = state["extracted_eepsites"]
-					self.state_item["total_eepsite_pages"] = state["total_eepsite_pages"]
-					self.state_item["title"] = state["title"]
-					self.state_item["size_main_page"] = state["size_main_page"]
-				self.start_urls = copy.deepcopy(self.state_item["non_visited_links"])
-				self.non_visited_links = copy.deepcopy(self.state_item["non_visited_links"])
-				self.visited_links = self.state_item["visited_links"].copy()
-				self.main_page = False
+					try:
+						state = json.load(f)
+						file_empty = False
+					except ValueError as error:
+						self.logger.debug("Invalid json: %s" % error)
+						file_empty = True
+					if not file_empty:
+						if "visited_links" in state:
+							self.state_item["visited_links"] = state["visited_links"]
+							self.visited_links = self.state_item["visited_links"].copy()
+						if "non_visited_links" in state:
+							self.state_item["non_visited_links"] = state["non_visited_links"]
+							self.start_urls = copy.deepcopy(self.state_item["non_visited_links"])
+							self.non_visited_links = copy.deepcopy(self.state_item["non_visited_links"])
+						else:
+							self.start_urls.append(url)
+						if "language" in state:
+							self.state_item["language"] = state["language"]
+						if "extracted_eepsites" in state:
+							self.state_item["extracted_eepsites"] = state["extracted_eepsites"]
+						if "total_eepsite_pages" in state:
+							self.state_item["total_eepsite_pages"] = state["total_eepsite_pages"]
+						if "title" in state:
+							self.state_item["title"] = state["title"]
+						if "size_main_page" in state:
+							self.state_item["size_main_page"] = state["size_main_page"]
+						self.main_page = False
 			else:
 				self.start_urls.append(url)
 				self.start_time = time.time()
-				self.logger.info("Start URL: %s", self.parse_eepsite)
+				self.logger.info("Start URL: %s", str(self.start_urls[0]))
 		else:
 			self.logger.error("No URL passed to crawl")
 	
@@ -191,7 +206,7 @@ class I2P_Spider(scrapy.Spider):
 		:param words: full set of words / conjunto de palabras completo
 		:return: list that contains the groups of words / lista que contiene los grupos de palabras
 		'''
-		self.logger.debug("Dentro de delimiter()")
+		self.logger.debug("Dentro de split_words_in_groups()")
 		words_delimiter=[]
 		if len(words)>=200:
 			self.cond=True
@@ -214,7 +229,7 @@ class I2P_Spider(scrapy.Spider):
 		'''
 		self.logger.debug("Dentro de main_page_analysis()")
 		main_page_code = response.body
-		main_page_without_tags = remove_tags(main_page_code)
+		main_page_without_tags = remove_tags(main_page_code, which_ones=(), keep=(), encoding=None)
 		title = response.xpath('normalize-space(//title/text())').extract()
 		sample = re.sub('[^?!A-Za-z0-9]+', ' ', main_page_without_tags)
 		words=sample.replace("\n","")

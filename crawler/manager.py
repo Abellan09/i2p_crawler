@@ -143,21 +143,22 @@ def process_ok(ok_spiders):
             crawled_eepsites = crawled_items["extracted_eepsites"]
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
 
-            # setting up the language
-            set_site_language(current_site_name, crawled_items["language"])
+            with db_session:
+                # setting up the language
+                set_site_language(current_site_name, crawled_items["language"])
 
-            # setting up the home site info
-            set_site_home_info(current_site_name, crawled_items["size_main_page"], crawled_items["title"][0])
+                # setting up the home site info
+                set_site_home_info(current_site_name, crawled_items["size_main_page"], crawled_items["title"][0])
 
-            # moved here to handle the status of crawled eepsites
-            link_eepsites(current_site_name, crawled_eepsites)
+                # moved here to handle the status of crawled eepsites
+                link_eepsites(current_site_name, crawled_eepsites)
 
-            # setting up connectivity summary
-            # TODO this method should be called separately once the crawling process finished to the real values of in, out, degree
-            set_site_connectivity_summary(current_site_name, crawled_items["total_eepsite_pages"])
+                # setting up connectivity summary
+                # TODO this method should be called separately once the crawling process finished to get real values of in, out and degree
+                set_site_connectivity_summary(current_site_name, crawled_items["total_eepsite_pages"])
 
-            # setting up the number of pages to the site.
-            set_site_number_pages(current_site_name, crawled_items["total_eepsite_pages"])
+                # setting up the number of pages to the site.
+                set_site_number_pages(current_site_name, crawled_items["total_eepsite_pages"])
 
     except Exception as e:
         logging.error("ERROR processing file %s",current_site_name)

@@ -51,7 +51,7 @@ class DiscoveringThread(I2PThread, object):
                 status = siteutils.get_crawling_status()
                 # restored discovering sites
                 self._sites_to_discover = status[dbsettings.Status.DISCOVERING.name]
-                logging.debug("Current # of sites to discover %s.", self._sites_to_discover)
+                logging.debug("Current # of sites to discover %s.", len(self._sites_to_discover))
 
             # Running Threads
             simple_threads = []

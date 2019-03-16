@@ -19,7 +19,6 @@ db = Database()
 #TODO: move this to a config file
 db.bind(provider='mysql', host='localhost', user='i2p', passwd='4=XoG!*L', db='i2p_database')
 
-
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
@@ -115,3 +114,5 @@ class SiteFootprint(db.Entity):
 
 # Creates tablas from the above entities if they do not exist
 db.generate_mapping(create_tables=True)
+with db_session:
+    db.execute('ALTER TABLE sitehomeinfo CONVERT TO CHARACTER SET utf8mb4;')

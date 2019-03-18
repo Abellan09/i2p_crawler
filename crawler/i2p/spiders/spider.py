@@ -229,7 +229,7 @@ class I2P_Spider(scrapy.Spider):
 		'''
 		self.logger.debug("Dentro de main_page_analysis()")
 		main_page_code = response.body
-		main_page_without_tags = remove_tags(main_page_code, which_ones=(), keep=(), encoding=None)
+		main_page_without_tags = remove_tags(main_page_code)
 		title = response.xpath('normalize-space(//title/text())').extract()
 		sample = re.sub('[^?!A-Za-z0-9]+', ' ', main_page_without_tags)
 		words=sample.replace("\n","")
@@ -247,10 +247,10 @@ class I2P_Spider(scrapy.Spider):
 		for i in range(0, len(sample)):
 			# Lenguaje con API de GOOGLE:
 			language_google.append(self.detect_language_google(" ".join(sample[i])))
-			print str(language_google)
+			#print str(language_google)
 			# Lenguaje con nltk:
 			language_nltk.append(self.detect_language_nltk(" ".join(sample[i])))
-			print str(language_nltk)
+			#print str(language_nltk)
 		freq_lang_google = []
 		for w in language_google:
 			freq_lang_google.append(language_google.count(w))
@@ -259,15 +259,27 @@ class I2P_Spider(scrapy.Spider):
 		for w in language_nltk:
 			freq_lang_nltk.append(language_nltk.count(w))
 		language_nltk_decision = language_nltk[freq_lang_nltk.index(max(freq_lang_nltk))]
-		#self.logger.debug("Language_google: " + str(language_google))
-		#self.logger.debug("Language_nltk: " + str(language_nltk))
-		#self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
-		#self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
+		self.logger.debug("Language_google: " + str(language_google))
+		self.logger.debug("Language_nltk: " + str(language_nltk))
+		self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
+		self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
+		
+		images = response.xpath('//img/@src').extract()
+		self.logger.debug("Images (src): " + str(images))
+		num_images = len(images)
+		#scripts = response.xpath('//script[@type="text/javascript"]').extract()
+		scripts_type = response.xpath('//script/@type').extract()
+		scripts_src = response.xpath('//script/@src').extract()
+		self.logger.debug("Scripts (src): " + str(scripts_src))
+		self.logger.debug("Scripts (type): " + str(scripts_type))
+		num_scripts = len(scripts_src)+len(scripts_type)
 		
 		# Añadiendo al item:
 		self.state_item["title"] = title
 		self.state_item["size_main_page"]['WORDS'] = num_words
 		self.state_item["size_main_page"]['LETTERS'] = num_letters
+		self.state_item["size_main_page"]['IMAGES'] = num_images
+		self.state_item["size_main_page"]['SCRIPTS'] = num_scripts
 		self.state_item["language"]['GOOGLE'] = language_google_decision
 		self.state_item["language"]['NLTK'] = language_nltk_decision
 

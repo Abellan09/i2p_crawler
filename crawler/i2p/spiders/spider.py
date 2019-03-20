@@ -261,13 +261,12 @@ class I2P_Spider(scrapy.Spider):
 		language_nltk_decision = language_nltk[freq_lang_nltk.index(max(freq_lang_nltk))]
 		self.logger.debug("Language_google: " + str(language_google))
 		self.logger.debug("Language_nltk: " + str(language_nltk))
-		self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
-		self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
+		#self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
+		#self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
 		
 		images = response.xpath('//img/@src').extract()
 		self.logger.debug("Images (src): " + str(images))
 		num_images = len(images)
-		#scripts = response.xpath('//script[@type="text/javascript"]').extract()
 		scripts_type = response.xpath('//script/@type').extract()
 		scripts_src = response.xpath('//script/@src').extract()
 		self.logger.debug("Scripts (src): " + str(scripts_src))

@@ -264,14 +264,14 @@ class I2P_Spider(scrapy.Spider):
 		#self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
 		#self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
 		
-		images = response.xpath('//img/@src').extract()
-		self.logger.debug("Images (src): " + str(images))
+		images = response.xpath('//img').extract()
+		scripts = response.xpath('//script').extract()
 		num_images = len(images)
-		scripts_type = response.xpath('//script/@type').extract()
-		scripts_src = response.xpath('//script/@src').extract()
-		self.logger.debug("Scripts (src): " + str(scripts_src))
-		self.logger.debug("Scripts (type): " + str(scripts_type))
-		num_scripts = len(scripts_src)+len(scripts_type)
+		num_scripts = len(scripts)
+		#self.logger.debug("Images (content): " + str(images))
+		#self.logger.debug("Scripts (content): " + str(scripts))
+		self.logger.debug("Images: " + str(num_images))
+		self.logger.debug("Scripts: " + str(num_scripts))
 		
 		# Añadiendo al item:
 		self.state_item["title"] = title

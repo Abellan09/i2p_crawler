@@ -7,7 +7,7 @@ this tool can also be used for crawling some others HTTP based web sites
 like those found in TOR, Freenet and/or the surface web. 
 
 The crawler automatically extracts links to other i2p site thus getting an overall 
-view of the i2p darknet inter-connections.
+view of the i2p darknet inter-connections and some other useful information.
 
 ## How to install
 
@@ -16,86 +16,112 @@ view of the i2p darknet inter-connections.
 The crawler relies on the use of an adequate environment to run it. Mandatory elements
 for that are:
 
-- Linux **Unbuntu 16.04** and above (it can bee run in older version)
+- Linux **Unbuntu 16.04** and above (it can be run in older version)
 - **I2P router** (latest version)
 - **Mysql 5.7**, though some other DBMS can be used like SQLite.
-- **Python 2.7** environment
+- **Python 2.7** environment (+ dependencies found in requeriments.txt)
 
 #### Installation steps
-TODO
+As python based tool, we recommend to use virtual environments. In the following, we are going
+to use conda (https://www.anaconda.com) to create and manage python environments.
 
-### Linux
-
-1) I2P.
-
-```
-sudo apt-add-repository ppa:i2p-maintainers/i2p
-sudo apt-get update
-sudo apt-get install i2p
-```
-
-2) Python and Scrapy
+**Dabatase**
+1) Download and install database management system. We choose Mysql but some other can be used.
 
 ```
-sudo apt install python2.7
-sudo apt install python-pip
-sudo pip install scrapy
+sudo apt install -y mysql-server-5.7 mysql-client-5.7
 ```
 
-3) DB Browser for SQLite.
+2) Creating schema and users.
+
+Scheme ```i2p_database```, user ```i2p``` and password ```password``` will be created after 
+executing the following commands.
 
 ```
-sudo add-apt-repository -y ppa:linuxgndu/sqlitebrowser
-sudo apt-get update
-sudo apt-get install sqlitebrowser
+$ sudo mysql
+mysql> create database i2p_database;
+mysql> create user 'i2p'@'localhost' identified by 'password';
+mysql> grant all privileges on `i2p_database`.* to 'i2p'@'localhost';
+mysql> quit;
 ```
 
-4) Ongoing and finished directories.
+**Python environment and dependencies**
 
+1) Creating a virtual environment.
 ```
-cd /i2p_crawler/crawler/i2p/i2p/spiders
-mkdir ongoing
-mkdir finished
+$ conda create -n py27 python=2.7
+$ conda activate py27
+(py27) $
 ```
-
-## Usage example
-
-First, you have to raise an instance of I2P (it is recommended that the instance is active as much time as possible for better results).
-
-In Windows, just click on the "Start I2P" button; in Linux, start the service with ```i2prouter start```
-
-Then, go to the directory ~i2p_crawler/crawler/i2p with ```cd ~/i2p_crawler/crawler/i2p/``` and run the crawler:
-
+2) Installing python dependencies.
 ```
-python manager.py
+(py27) $ cd <root_project_folder>/crawler/
+(py27) $ pip install -r requirements.txt
 ```
 
-The script "manager.py" will try to crawl the entire I2P (all the eepsites it finds). This can take too much time (difficult to estimate).
-If you prefer crawling only one eepsite, run the spider "spider.py" in the next way:
+3) Database access from python.
+
+We use pony ORM for data persistence layer, so how to connect to database must be configured.
+Please edit the lien in file ```entity.py``` which is located 
+in ```<root_project_folder>/crawler/database/```. Please, change the ```password``` accordingly.
 
 ```
-scrapy crawl i2p -a url=URL -o OUTPUT.json
+db.bind(provider='mysql', host='localhost', user='i2p', passwd='password', db='i2p_database')
 ```
 
-Where "URL" is the URL of the eepsite you want to crawl and "OUTPUT" is the name of the file where the results of crawling will be.
-For example:
+### Crawling
+Now it is time to crawl the I2P network. Every time you want to start a new crawling procedure,
+we recommend to follow the next steps.
+
+1) Database population.
+
+We recommend to drop and create the scheme before running the crawling for a clean and fresh running.
 
 ```
-scrapy crawl i2p -a url=http://eepsite.example.i2p -o output_example.json
+$ sudo mysql
+mysql> drop database i2p_database;
+mysql> create database i2p_database;;
+mysql> quit;
 ```
 
-## Built With
+```
+(py27) $ cd <root_project_folder>/crawler/database/
+(py27) $ python populate.py
+```
 
-* [Python](https://www.python.org) - Used language.
-* [Scrapy](https://scrapy.org) - Used crawling framework.
+2) Spiders crawling output.
+
+Spiders output JSON files in specific folders so they should already be created. 
+On the contrary, please create them. For a clean and fresh running, delete all files in that folders.
+
+```
+(py27) $ cd <root_project_folder>/crawler/i2p/spiders/
+(py27) $ mkdir finished ongoing
+```
+
+3) Starting the crawling process.
+
+
+```
+(py27) $ cd <root_project_folder>/crawler/
+(py27) $ python manager.py &> /dev/null
+```
+
+If you want to supervise the crawling procedure please use see 
+```<root_project_folder>/logs/i2pcrawler.log```. Also, more information is being storage in
+the database.
+
+
+*Note:* The crawling procedure output tons of logs and information on standard output so we recommend to 
+launch the crawler appending ```&> /dev/null``` but it is up to the user.
 
 ## Authors
 
 * **Alberto Abellán**
-* **Roberto Magán**
+* **Roberto Magán-Carri**
 * **Gabriel Maciá-Fernández**
 
-See also the list of [contributors](https://github.com/Abellan09/i2p_crawler/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/nesg-ugr/I2P_Crawler/graphs/contributors) who participated in this project.
 
 ## License
 

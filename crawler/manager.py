@@ -26,19 +26,16 @@ MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
 MAX_CRAWLING_TRIES_ON_ERROR = 2
 # Number of tries for error sites
-MAX_CRAWLING_TRIES_ON_DISCOVERING = 2
+MAX_CRAWLING_TRIES_ON_DISCOVERING = 5
 # Number of tries for error sites
-MAX_DURATION_ON_DISCOVERING = 2 # Minutes
+MAX_DURATION_ON_DISCOVERING = 10 # Minutes
 # Number of parallel single threads running
 MAX_SINGLE_THREADS_ON_DISCOVERING = 2
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
-ok_spiders = []
-fail_spiders = []
 
-
-def check_spiders_status(ok_spiders, fail_spiders):
+def check_spiders_status():
     '''
     EN: It checks if in the /finished directory there are ".fail" and/or ".ok" files to process.
     SP: Comprueba si en el directorio /finished hay ficheros ".fail" y/o ".ok" que procesar.
@@ -49,10 +46,16 @@ def check_spiders_status(ok_spiders, fail_spiders):
     A continuación, llama a las funciones process_fail() y process_ok().
     '''
 
+    # init list
+    ok_spiders = []
+    fail_spiders = []
+
     logging.info("Checking spiders status ...")
 
     finished_files = os.listdir(i2psettings.PATH_FINISHED_SPIDERS)
-    logging.debug("Files in finished folder #%s: %s", len(finished_files),str(finished_files))
+
+    logging.debug("Files in finished folder #%s", len(finished_files))
+
     for fil in finished_files:
         if (fil.endswith(".ok")) and (fil not in ok_spiders):
             ok_spiders.append(fil)
@@ -88,13 +91,11 @@ def process_fail(fail_spiders):
             os.remove(eliminar)
 
     except Exception as e:
-        logging.error("ERROR processing FAILED files ")
-        logging.error("ERROR: %s", e)
+        logging.error("ERROR processing FAILED file - %s", e)
 
     finally:
         with db_session:
             for fil in files_to_remove:
-                fail_spiders.remove(fil)
                 # If the crawling process failed, there was an ERROR
                 site = fil.replace(".fail", "")
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ERROR)
@@ -161,17 +162,22 @@ def process_ok(ok_spiders):
                 set_site_number_pages(current_site_name, crawled_items["total_eepsite_pages"])
 
     except Exception as e:
-        logging.error("ERROR processing file %s",current_site_name)
-        logging.error("ERROR: %s",e)
+        logging.error("ERROR processing OK file %s - %s",current_site_name, e)
         # If an error is raised, this site should be tagged as ERROR
         with db_session:
             dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=dbsettings.Status.ERROR)
-    finally:
-        for i in files_to_remove:
-            ok_spiders.remove(i)
-        eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+
+        # removing the JSON file for the site which causes the error.
+        eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
         os.remove(eliminar)
-        logging.debug("Ending to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
+
+    finally:
+        # Delete *.ok files in finished folder
+        for fil in ok_spiders:
+            eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+            os.remove(eliminar)
+
+    logging.debug("Ending to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
 
 
 def link_eepsites(site, targeted_sites):
@@ -194,7 +200,7 @@ def link_eepsites(site, targeted_sites):
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
             logging.debug("Site %s was setup to FINISHED.",site)
 
-            for eepsite in targeted_sites:
+            for eepsite in []:
 
                 # is it a new site? Create it and set up the status to pending.
                 if dbutils.create_site(s_url=eepsite):
@@ -332,6 +338,7 @@ def error_to_pending(error_sites, pending_sites):
                 dbutils.reset_tries_on_error(s_url=site)
 
 def main():
+
     '''
     EN: It controls the whole process of the crawling through a loop that is repeated every 2 seconds.
     SP: Controla todo el proceso del crawling mediante un bucle que se repite cada 2 segundos.
@@ -426,7 +433,7 @@ def main():
                             dbutils.reset_tries_on_error(s_url=site)
 
             # Polling how spiders are going ...
-            check_spiders_status(ok_spiders, fail_spiders)
+            check_spiders_status()
 
             # Get current status
             status = siteutils.get_crawling_status()

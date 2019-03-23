@@ -114,5 +114,6 @@ class SiteFootprint(db.Entity):
 
 # Creates tablas from the above entities if they do not exist
 db.generate_mapping(create_tables=True)
+# To fix encoding problems found on site crawled site titles.
 with db_session:
     db.execute('ALTER TABLE sitehomeinfo CONVERT TO CHARACTER SET utf8mb4;')

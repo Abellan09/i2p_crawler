@@ -62,7 +62,7 @@ $ conda activate py27
 3) Database access from python.
 
 We use pony ORM for data persistence layer, so how to connect to database must be configured.
-Please edit the lien in file ```entity.py``` which is located 
+Please edit the lien in file ```entities.py``` which is located 
 in ```<root_project_folder>/crawler/database/```. Please, change the ```password``` accordingly.
 
 ```
@@ -80,7 +80,7 @@ We recommend to drop and create the scheme before running the crawling for a cle
 ```
 $ sudo mysql
 mysql> drop database i2p_database;
-mysql> create database i2p_database;;
+mysql> create database i2p_database;
 mysql> quit;
 ```
 
@@ -99,7 +99,17 @@ On the contrary, please create them. For a clean and fresh running, delete all f
 (py27) $ mkdir finished ongoing
 ```
 
-3) Starting the crawling process.
+3) Supervising crawling procedure: log.
+
+In order to supervise the crawling procedure, the log file is created in a specific folder.
+If "logs" folder is not created, please create it. For a clean and fresh running, delete this file.
+
+```
+(py27) $ cd <root_project_folder>/
+(py27) $ mkdir logs
+```
+
+4) Starting the crawling process.
 
 
 ```
@@ -117,7 +127,7 @@ launch the crawler appending ```&> /dev/null``` but it is up to the user.
 
 ## Authors
 
-* **Alberto Abellán**
+* **Alberto Abellán-Galera**
 * **Roberto Magán-Carrión**
 * **Gabriel Maciá-Fernández**
 
@@ -125,4 +135,4 @@ See also the list of [contributors](https://github.com/nesg-ugr/I2P_Crawler/grap
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details.

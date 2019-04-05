@@ -17,6 +17,7 @@ from pony.orm import db_session
 from database import dbutils, dbsettings
 
 import os
+import logging
 
 
 def get_seeds_from_file(path_to_file):
@@ -27,18 +28,22 @@ def get_seeds_from_file(path_to_file):
     :return: new_list: list - Site seed list
     """
 
-    # Gets all seeds from the file
-    with open(path_to_file) as seeds:
-        list_seeds = seeds.readlines()
-
     # New list
     new_list = []
 
-    # Postprocessing the list
-    for seed in list_seeds:
-        seed = str.replace(seed, '\n', '')
-        seed = str.replace(seed, '\r', '')
-        new_list.append(seed)
+    try:
+        # Gets all seeds from the file
+        with open(path_to_file) as seeds:
+            list_seeds = seeds.readlines()
+
+        # Postprocessing the list
+        for seed in list_seeds:
+            seed = str.replace(seed, '\n', '')
+            seed = str.replace(seed, '\r', '')
+            new_list.append(seed)
+
+    except Exception as e:
+        logging.debug("ERROR getting seeds: %s", e)
 
     return new_list
 

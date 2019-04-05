@@ -202,7 +202,7 @@ def link_eepsites(site, targeted_sites):
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
             logging.debug("Site %s was setup to FINISHED.",site)
 
-            for eepsite in []:
+            for eepsite in targeted_sites:
 
                 # is it a new site? Create it and set up the status to pending.
                 if dbutils.create_site(s_url=eepsite):
@@ -350,6 +350,25 @@ def error_to_pending(error_sites, pending_sites):
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
                 dbutils.reset_tries_on_error(s_url=site)
 
+
+def get_sites_from_floodfill():
+
+    """
+    Creates new sites from floodfill sites
+
+    """
+
+    # Gets initial seeds
+    seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "floodfill_seeds.txt")
+
+    # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
+    with db_session:
+        for site in seed_sites:
+            # is it a new site? Create it and set up the status to pending.
+            if dbutils.create_site(s_url=site):
+                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+
+
 def main():
 
     '''
@@ -379,8 +398,7 @@ def main():
     try:
 
         # Gets initial seeds
-        seed_sites = siteutils.get_initial_seeds(i2psettings.PATH_DATA + "all_seeds.txt")
-        #seed_sites = []
+        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "seed_urls_200.txt")
 
         # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
         with db_session:
@@ -388,6 +406,9 @@ def main():
                 # is it a new site? Create it and set up the status to pending.
                 if dbutils.create_site(s_url=site):
                     dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+
+        # Create all sites in DISCOVERING status obtained from floodfill seeds.
+        get_sites_from_floodfill()
 
         # Restoring the crawling status
         status = siteutils.get_crawling_status()
@@ -448,6 +469,9 @@ def main():
 
             # Polling how spiders are going ...
             check_spiders_status()
+
+            # Adding new sites to DISCOVERING status obtained from floodfill seeds.
+            get_sites_from_floodfill()
 
             # Get current status
             status = siteutils.get_crawling_status()

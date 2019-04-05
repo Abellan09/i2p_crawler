@@ -19,7 +19,7 @@ from database import dbutils, dbsettings
 import os
 
 
-def get_initial_seeds(path_to_file):
+def get_seeds_from_file(path_to_file):
     """
     Gets a list of initial site seeds
 
@@ -54,6 +54,7 @@ def tail(path_to_file, n=1):
 
     lines_str = os.popen('tail -n ' + str(n) + ' ' + path_to_file).read()
     return lines_str
+
 
 def get_crawling_status():
     """

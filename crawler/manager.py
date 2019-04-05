@@ -28,9 +28,11 @@ MAX_CRAWLING_TRIES_ON_ERROR = 2
 # Number of tries for error sites
 MAX_CRAWLING_TRIES_ON_DISCOVERING = 5
 # Number of tries for error sites
-MAX_DURATION_ON_DISCOVERING = 10 # Minutes
+MAX_DURATION_ON_DISCOVERING = 10  # Minutes
 # Number of parallel single threads running
 MAX_SINGLE_THREADS_ON_DISCOVERING = 2
+# Http response timeout
+HTTP_TIMEOUT = 30  # Seconds
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
@@ -239,15 +241,27 @@ def set_site_home_info(site, size_main_page, title):
     Creates the home info for a site.
 
     :param site: str - Site url
-    :param size_main_page: dict - {LETTERS:n_letters,WORDS:n_words} Found in the home of a site
+    :param size_main_page: dict - {LETTERS:n_letters,WORDS:n_words,IMAGES:n_images,SCRIPTS:n_scripts} Found in the home of a site
     :param title: str - the found title in the home page
     """
 
     logging.info("Setting home info ...")
 
     with db_session:
-        logging.debug("Adding info to %s: letters: %s, words: %s, title: %s ", site, size_main_page['LETTERS'], size_main_page['WORDS'], title)
-        dbutils.set_site_home_info(s_url=site, s_letters=size_main_page['LETTERS'], s_words=size_main_page['WORDS'], s_title=title)
+        logging.debug("Adding info to %s: letters: %s, words: %s, images: %s, scripts: %s, title: %s ",
+                      site,
+                      size_main_page['LETTERS'],
+                      size_main_page['WORDS'],
+                      size_main_page['IMAGES'],
+                      size_main_page['SCRIPTS'],
+                      title)
+        dbutils.set_site_home_info(s_url=site,
+                                   s_letters=size_main_page['LETTERS'],
+                                   s_words=size_main_page['WORDS'],
+                                   s_images=size_main_page['IMAGES'],
+                                   s_scripts=size_main_page['SCRIPTS'],
+                                   s_title=title)
+
 
 def set_site_number_pages(site, pages):
     """
@@ -263,7 +277,6 @@ def set_site_number_pages(site, pages):
     with db_session:
         logging.debug("Updating number of pages %s to site %s: ", pages, site)
         dbutils.set_site_number_of_pages(s_url=site, n_pages=pages)
-
 
 
 def set_site_connectivity_summary(site, pages):
@@ -366,7 +379,7 @@ def main():
     try:
 
         # Gets initial seeds
-        seed_sites = siteutils.get_initial_seeds(i2psettings.PATH_DATA + "seed_urls.txt")
+        seed_sites = siteutils.get_initial_seeds(i2psettings.PATH_DATA + "all_seeds.txt")
         #seed_sites = []
 
         # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
@@ -410,7 +423,8 @@ def main():
         logging.debug("Running discovering process ...")
         dThread = discoverythread.DiscoveringThread(MAX_CRAWLING_TRIES_ON_DISCOVERING,
                                                     MAX_DURATION_ON_DISCOVERING,
-                                                    MAX_SINGLE_THREADS_ON_DISCOVERING)
+                                                    MAX_SINGLE_THREADS_ON_DISCOVERING,
+                                                    HTTP_TIMEOUT)
         dThread.setName('DiscoveryThread')
         dThread.start()
 

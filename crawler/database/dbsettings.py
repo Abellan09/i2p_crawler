@@ -42,8 +42,12 @@ class Type(Enum):
     SURFACE = 3
     UNKNOWN = 4
 
+
 #{type:description}
 SITE_TYPE_DEFAULT_INFO = {Type.I2P.name:'I2P eepsite',
                           Type.TOR.name:'TOR onion site',
                           Type.SURFACE.name:'Surface web site',
                           Type.UNKNOWN.name:'Unknow site type'}
+
+# To schedule the discovering time. Each site will be discover every TIME_INTERVAL_TO_DISCOVER
+TIME_INTERVAL_TO_DISCOVER = 1  # minutes

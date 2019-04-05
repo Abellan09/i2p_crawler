@@ -13,8 +13,9 @@
 
 import requests
 
-def connectThroughProxy(eepsite_url, proxies):
+
+def connectThroughProxy(eepsite_url, proxies, timeout):
     # headers
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0'}
-    response = requests.get(eepsite_url, proxies=proxies, headers=headers)
+    response = requests.get(eepsite_url, proxies=proxies, headers=headers, timeout=timeout)
     return response

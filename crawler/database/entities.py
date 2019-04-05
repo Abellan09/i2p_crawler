@@ -62,6 +62,8 @@ class SiteProcessingLog(db.Entity):
     status = Required('SiteStatus')
     site = Required('Site')
     timestamp = Required(datetime)
+    # To be used in discovering process for planning when is the next time to try to discover.
+    next_time_to_try = Optional(datetime)
     http_status = Optional(str)
     http_response_time = Optional(str)
 
@@ -94,10 +96,13 @@ class SiteLanguage(db.Entity):
     engine = Optional(str)
     site = Required('Site')
 
+
 class SiteHomeInfo(db.Entity):
     id = PrimaryKey(int, auto=True)
     letters = Optional(int)
     words = Optional(int)
+    images = Optional(int)
+    scripts = Optional(int)
     title = Optional(str)
     site = Required('Site')
 

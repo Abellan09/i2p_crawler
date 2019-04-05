@@ -14,8 +14,11 @@
 from pony.orm import select
 from pony.orm import desc
 from datetime import datetime
+from datetime import timedelta
+
 import entities
 import dbsettings
+import random
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
@@ -307,9 +310,24 @@ def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_
     # Gets the chosen status
     new_status = entities.SiteStatus.get(type=s_status.name)
 
+    # Get the site
+    site = get_site(s_url=s_url)
+
+    # Next time to try, just for discovering process
+    # TODO: this functionality should not be here. Move outside db utils.
+    next_time_to_try = None
+    if s_status == dbsettings.Status.DISCOVERING:
+        if site.discovering_tries == 0:
+            # First try with a random sleep
+            next_time_to_try = site.timestamp_s + \
+                               timedelta(minutes=random.randint(0, dbsettings.TIME_INTERVAL_TO_DISCOVER))
+        else:
+            next_time_to_try = site.timestamp_s + timedelta(minutes=dbsettings.TIME_INTERVAL_TO_DISCOVER)
+
     # Creates the new processing status
-    return entities.SiteProcessingLog(site=get_site(s_url=s_url), status=new_status, timestamp=datetime.today(),\
-                                      http_status=s_http_status, http_response_time=s_http_response_time)
+    return entities.SiteProcessingLog(site=site, status=new_status, timestamp=site.timestamp_s,\
+                                      http_status=s_http_status, http_response_time=s_http_response_time,\
+                                      next_time_to_try=next_time_to_try)
 
 
 def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVERING, sorting_desc=False):
@@ -449,16 +467,20 @@ def set_site_language(s_url, s_language, l_engine):
     # Creates the new language
     return entities.SiteLanguage(site=get_site(s_url=s_url), language=s_language, engine=l_engine)
 
+
 # NODE home info - CRUD
-def set_site_home_info(s_url, s_letters, s_words, s_title):
+def set_site_home_info(s_url, s_letters, s_words, s_images, s_scripts, s_title):
     """
     Creates a new crawler processing status. Default status PENDING
 
     :param s_url: str - URL/name of the site
     :param s_letters: int - Number of letters found in home page
     :param s_words: int - Number of words found in home page
+    :param s_images: int - Number of images found in home page
+    :param s_scripts: int - Number of scripts found in home page
     :return: SiteHomeInfo - The new info for the site home
     """
 
-    # Creates the new language
-    return entities.SiteHomeInfo(site=get_site(s_url=s_url), letters=s_letters, words=s_words, title=s_title)
+    # Creates new site home info
+    return entities.SiteHomeInfo(site=get_site(s_url=s_url), letters=s_letters, words=s_words, images=s_images,
+                                 scripts=s_scripts, title=s_title)

@@ -12,6 +12,7 @@
     :since: 0.0.1
 """
 from pony.orm import select
+from pony.orm import desc
 from datetime import datetime
 import entities
 import dbsettings
@@ -39,7 +40,7 @@ def create_site(s_url, s_type=dbsettings.Type.I2P):
         new_type = entities.SiteType.get(type=s_type.name)
 
         # Creates the new site
-        site = entities.Site(name=s_url, type=new_type, timestamp=datetime.today())
+        site = entities.Site(name=s_url, type=new_type, timestamp=datetime.today(), timestamp_s=datetime.today())
 
     return site
 
@@ -311,13 +312,13 @@ def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_
                                       http_status=s_http_status, http_response_time=s_http_response_time)
 
 
-def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVERING, sorting_desc=True):
+def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVERING, sorting_desc=False):
     """
     Gets the processing logs for a specific site and status
 
     :param s_url: str - URL/name of the site
     :param s_status: str - The chosen processing status
-    :param sorting_desc: bool - Sorting order: True (desc), False (asc)
+    :param sorting_desc: bool - Sorting order: True (desc), False (asc - default in PONY)
     :return: list - list of SiteProcessinglog
     """
 
@@ -333,10 +334,17 @@ def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVE
         # Get the site status
         new_status = entities.SiteStatus.get(type=s_status.name)
 
-        site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status).\
-            order_by(entities.SiteProcessingLog.timestamp)[:].to_list()
+        if sorting_desc:
+            # Descending order
+            site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status).\
+                order_by(desc(entities.SiteProcessingLog.timestamp))[:].to_list()
+        else:
+            # Ascending order
+            site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status). \
+                        order_by(entities.SiteProcessingLog.timestamp)[:].to_list()
 
     return site_logs
+
 
 def get_all_processing_log():
 
@@ -350,19 +358,32 @@ def get_all_processing_log():
 
 
 # NODE PROCESSING STATUS - CRUD
-def get_sites_by_processing_status(s_status):
+def get_sites_by_processing_status(s_status, sorting_desc=False):
     """
 
     Gets sites by processing status
 
     :param s_status: str - The chosen processing status
-    :return: sites: list of str - The url of the sites in status ``s_status``
+    :param sorting_desc: bool - Sorting order: True (desc), False (asc - default in PONY)
+    :return: sites_names: list of str - The url of the sites in status ``s_status``
     """
     assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
 
-    sites = select(site.name for site in entities.Site if site.current_status.type is s_status.name)[:].to_list()
+    if sorting_desc:
+        #Descending order
+        sites = select(site for site in entities.Site if site.current_status.type is s_status.name). \
+                    order_by(desc(entities.Site.timestamp_s))[:].to_list()
+    else:
+        #Ascending order
+        sites = select(site for site in entities.Site if site.current_status.type is s_status.name).\
+                order_by(entities.Site.timestamp_s)[:].to_list()
 
-    return sites
+    site_names = []
+    # What we only need is the URL of the site which is the attribute 'name'
+    for site in sites:
+        site_names.append(site.name)
+
+    return site_names
 
 
 def set_site_current_processing_status(s_url, s_status, s_http_status='', s_http_response_time='', add_processing_log=True):
@@ -383,6 +404,8 @@ def set_site_current_processing_status(s_url, s_status, s_http_status='', s_http
     if isinstance(site, entities.Site):
         # Creates and set the new processing status
         site.current_status = entities.SiteStatus.get(type=s_status.name)
+        # Timestamp for changing status
+        site.timestamp_s = datetime.today()
 
         if add_processing_log:
             # Adds a new processing log

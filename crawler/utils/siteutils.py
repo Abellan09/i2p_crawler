@@ -65,11 +65,11 @@ def get_crawling_status():
     status = {}
 
     with db_session:
-        status[dbsettings.Status.PENDING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING)
-        status[dbsettings.Status.ONGOING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING)
-        status[dbsettings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR)
-        status[dbsettings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED)
-        status[dbsettings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED)
-        status[dbsettings.Status.DISCOVERING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCOVERING)
+        status[dbsettings.Status.PENDING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING, sorting_desc=True)
+        status[dbsettings.Status.ONGOING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING, sorting_desc=True)
+        status[dbsettings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR, sorting_desc=True)
+        status[dbsettings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED, sorting_desc=True)
+        status[dbsettings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED, sorting_desc=True)
+        status[dbsettings.Status.DISCOVERING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCOVERING, sorting_desc=True)
 
     return status

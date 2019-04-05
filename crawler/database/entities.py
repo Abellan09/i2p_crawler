@@ -28,7 +28,10 @@ class Site(db.Entity):
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
     current_status = Optional('SiteStatus')
+    # Creation timestamp
     timestamp = Required(datetime)
+    # Change status timestamp
+    timestamp_s = Required(datetime)
     connectivity_summary = Optional('SiteConnectivitySummary')
     footprint = Optional('SiteFootprint')
     src_link = Set('Link', reverse='src_site')

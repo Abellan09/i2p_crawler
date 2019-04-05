@@ -398,7 +398,7 @@ def main():
     try:
 
         # Gets initial seeds
-        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "seed_urls_200.txt")
+        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "all_seeds.txt")
 
         # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
         with db_session:

@@ -340,7 +340,9 @@ class I2P_Spider(scrapy.Spider):
 			self.end_time = time.time()
 			yield self.state_item
 		except Exception as e:
-			logger.error("ERROR scraping site %s: %s",response.url,e)
+			logger.error("ERROR scraping site %s: %s",response.url, e)
+			raise
+
 	
 	def get_links(self, response):
 		'''

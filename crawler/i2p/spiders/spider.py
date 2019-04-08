@@ -315,7 +315,7 @@ class I2P_Spider(scrapy.Spider):
 
 		try:
 			self.error = False
-			logger.error("Received response from {}".format(response.url))
+			logger.debug("Received response from {}".format(response.url))
 			if(self.main_page):
 				self.main_page_analysis(response)
 				self.main_page=False

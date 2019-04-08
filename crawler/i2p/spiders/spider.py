@@ -18,6 +18,24 @@ from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError 
 from twisted.internet.error import TimeoutError, TCPTimedOutError
 import i2p.i2psettings as i2psettings
+import sys
+
+import logging
+from logging.handlers import RotatingFileHandler
+
+logger = logging.getLogger('')
+format = logging.Formatter('%(asctime)s %(levelname)s - %(threadName)s - mod: %(module)s, method: %(funcName)s, msg: %(message)s')
+
+ch = logging.StreamHandler(sys.stdout)
+ch.setFormatter(format)
+ch.setLevel(logging.INFO)
+logger.addHandler(ch)
+
+fh = RotatingFileHandler(i2psettings.PATH_LOG + "spiders.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+fh.setFormatter(format)
+fh.setLevel(logging.ERROR)
+logger.addHandler(fh)
+
 
 class I2P_Spider(scrapy.Spider):
 	
@@ -62,7 +80,7 @@ class I2P_Spider(scrapy.Spider):
 		:param url: url of the site to crawl / url del site a crawlear
 		'''
 		super(I2P_Spider, self).__init__(*args, **kwargs)
-		self.logger.debug("Dentro de __init__()")
+		logger.debug("Dentro de __init__()")
 		if url is not None:
 			with open(i2psettings.PATH_DATA + "languages_google.json") as f:
 				self.LANGUAGES_GOOGLE = json.load(f)
@@ -78,7 +96,7 @@ class I2P_Spider(scrapy.Spider):
 			spider_file = i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
 			ongoing_spider = os.path.exists(spider_file)
 			if(ongoing_spider):
-				self.logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
+				logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
 				# Leemos la última línea y cargamos el estado.
 				target = spider_file
 				with open(target) as f:
@@ -86,7 +104,7 @@ class I2P_Spider(scrapy.Spider):
 						state = json.load(f)
 						file_empty = False
 					except ValueError as error:
-						self.logger.debug("Invalid json: %s" % error)
+						logger.debug("Invalid json: %s" % error)
 						file_empty = True
 					if not file_empty:
 						if "visited_links" in state:
@@ -112,16 +130,16 @@ class I2P_Spider(scrapy.Spider):
 			else:
 				self.start_urls.append(url)
 				self.start_time = time.time()
-				self.logger.info("Start URL: %s", str(self.start_urls[0]))
+				logger.info("Start URL: %s", str(self.start_urls[0]))
 		else:
-			self.logger.error("No URL passed to crawl")
+			logger.error("No URL passed to crawl")
 	
 	def start_requests(self):
 		'''
 		EN: It returns an iterable of Requests which the Spider will begin to crawl.
 		SP: Devuelve un iterable de Requests que el Spider comenzará a crawlear.
 		'''
-		self.logger.debug("Dentro de start_requests()")
+		logger.debug("Dentro de start_requests()")
 		for u in self.start_urls:
 			yield scrapy.Request(u, callback = self.parse, errback = self.err, dont_filter=True)  
 	
@@ -133,7 +151,7 @@ class I2P_Spider(scrapy.Spider):
 		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
 		:return: the detected language / el idioma detectado
 		'''
-		self.logger.debug("Dentro de detect_language_nltk()")
+		logger.debug("Dentro de detect_language_nltk()")
 		# Dividimos el texto de entrada en tokens o palabras únicas
 		tokens = nltk.tokenize.word_tokenize(sample)
 		tokens = [t.strip().lower() for t in tokens] # Convierte todos los textos a minúsculas para su posterior comparación
@@ -155,7 +173,7 @@ class I2P_Spider(scrapy.Spider):
 			if lang_count[language_nltk] == 0:
 				language_nltk = 'undefined'
 		except UnicodeDecodeError as e:
-			self.logger.debug('Error')
+			logger.debug('Error')
 			language_nltk = 'error'
 		finally:
 			return language_nltk
@@ -168,7 +186,7 @@ class I2P_Spider(scrapy.Spider):
 		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
 		:return: the detected language / el idioma detectado
 		'''
-		self.logger.debug("Dentro de detect_language_google()")
+		logger.debug("Dentro de detect_language_google()")
 		translator = Translator()
 		det = translator.detect(sample)
 		language_google = self.LANGUAGES_GOOGLE[det.lang]
@@ -181,14 +199,14 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param link: link to process / link a procesar
 		'''
-		self.logger.debug("Dentro de add_visited_links()")
+		logger.debug("Dentro de add_visited_links()")
 		if link in self.visited_links:
 			count = self.visited_links.get(link) + 1
 			self.visited_links.update({link:count})
 		else:
 			if len(self.visited_links)>=self.MAX_VISITED_LINKS:
 				self.overflow_visited_links = self.overflow_visited_links + 1
-				self.logger.info("Overflow_visited_links = " + str(self.overflow_visited_links))
+				logger.info("Overflow_visited_links = " + str(self.overflow_visited_links))
 				min_val = min(self.visited_links.itervalues())
 				urls_min_value=[]
 				for url, value in self.visited_links.iteritems():
@@ -206,7 +224,7 @@ class I2P_Spider(scrapy.Spider):
 		:param words: full set of words / conjunto de palabras completo
 		:return: list that contains the groups of words / lista que contiene los grupos de palabras
 		'''
-		self.logger.debug("Dentro de split_words_in_groups()")
+		logger.debug("Dentro de split_words_in_groups()")
 		words_delimiter=[]
 		if len(words)>=200:
 			self.cond=True
@@ -227,7 +245,7 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite
 		'''
-		self.logger.debug("Dentro de main_page_analysis()")
+		logger.debug("Dentro de main_page_analysis()")
 		main_page_code = response.body
 		main_page_without_tags = remove_tags(main_page_code)
 		title = response.xpath('normalize-space(//title/text())').extract()
@@ -235,11 +253,11 @@ class I2P_Spider(scrapy.Spider):
 		words=sample.replace("\n","")
 		words=words.split(" ")
 		num_words=len(words)
-		self.logger.info("Total words in main page: " + str(num_words))
+		logger.info("Total words in main page: " + str(num_words))
 		num_letters=0
 		for word in words:
 			num_letters = num_letters + len(word)
-		self.logger.info("Total letters in main page: " + str(num_letters))
+		logger.info("Total letters in main page: " + str(num_letters))
 		
 		sample=self.split_words_in_groups(words)
 		language_google=[]
@@ -259,19 +277,19 @@ class I2P_Spider(scrapy.Spider):
 		for w in language_nltk:
 			freq_lang_nltk.append(language_nltk.count(w))
 		language_nltk_decision = language_nltk[freq_lang_nltk.index(max(freq_lang_nltk))]
-		self.logger.debug("Language_google: " + str(language_google))
-		self.logger.debug("Language_nltk: " + str(language_nltk))
-		#self.logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
-		#self.logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
+		logger.debug("Language_google: " + str(language_google))
+		logger.debug("Language_nltk: " + str(language_nltk))
+		#logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
+		#logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
 		
 		images = response.xpath('//img').extract()
 		scripts = response.xpath('//script').extract()
 		num_images = len(images)
 		num_scripts = len(scripts)
-		#self.logger.debug("Images (content): " + str(images))
-		#self.logger.debug("Scripts (content): " + str(scripts))
-		self.logger.debug("Images: " + str(num_images))
-		self.logger.debug("Scripts: " + str(num_scripts))
+		#logger.debug("Images (content): " + str(images))
+		#logger.debug("Scripts (content): " + str(scripts))
+		logger.debug("Images: " + str(num_images))
+		logger.debug("Scripts: " + str(num_scripts))
 		
 		# Añadiendo al item:
 		self.state_item["title"] = title
@@ -294,31 +312,35 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param response: response returned by an eepsite / respuesta devuelta por un eepsite.
 		'''
-		self.error = False
-		self.logger.debug("Received response from {}".format(response.url))
-		if(self.main_page):
-			self.main_page_analysis(response)
-			self.main_page=False
-		self.add_visited_links(response.url)
-		self.state_item["total_eepsite_pages"]=len(self.visited_links)+self.overflow_visited_links
-		if response.url in self.non_visited_links:
-			self.non_visited_links.remove(response.url)
-		self.state_item["visited_links"]=self.visited_links.copy()
-		self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
-		links = self.get_links(response)
-		for link in links:
-			parse_link = urlparse.urlparse(link.url)
-			if ((parse_link.netloc not in self.state_item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc)):
-				self.state_item["extracted_eepsites"].append(parse_link.netloc)
-			if ((link.url not in self.non_visited_links) and (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc)):
-				self.non_visited_links.append(link.url)
-				yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
-				if response.url in self.non_visited_links:
-					self.non_visited_links.remove(response.url)
+
+		try:
+			self.error = False
+			logger.error("Received response from {}".format(response.url))
+			if(self.main_page):
+				self.main_page_analysis(response)
+				self.main_page=False
+			self.add_visited_links(response.url)
+			self.state_item["total_eepsite_pages"]=len(self.visited_links)+self.overflow_visited_links
+			if response.url in self.non_visited_links:
+				self.non_visited_links.remove(response.url)
+			self.state_item["visited_links"]=self.visited_links.copy()
 			self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
+			links = self.get_links(response)
+			for link in links:
+				parse_link = urlparse.urlparse(link.url)
+				if ((parse_link.netloc not in self.state_item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc)):
+					self.state_item["extracted_eepsites"].append(parse_link.netloc)
+				if ((link.url not in self.non_visited_links) and (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc)):
+					self.non_visited_links.append(link.url)
+					yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
+					if response.url in self.non_visited_links:
+						self.non_visited_links.remove(response.url)
+				self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
+				yield self.state_item
+			self.end_time = time.time()
 			yield self.state_item
-		self.end_time = time.time()
-		yield self.state_item
+		except Exception as e:
+			logger.error("ERROR scraping site %s: %s",response.url,e)
 	
 	def get_links(self, response):
 		'''
@@ -328,7 +350,7 @@ class I2P_Spider(scrapy.Spider):
 		:param response: response returned by an eepsite / respuesta devuelta por un eepsite
 		:return: list that contains the extracted links / lista que contiene los links extraídos
 		'''
-		self.logger.info("Extracting links ...")
+		logger.info("Extracting links ...")
 		links = self.extractor_i2p.extract_links(response)
 		return links
 	
@@ -344,9 +366,9 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param reason: a string which describes the reason why the spider was closed / string que describre por qué ha finalizado el spider
 		'''
-		self.logger.debug("Dentro de closed()")
-		self.logger.info("SPIDER FINALIZADO")
-		self.logger.info("ERROR = " + str(self.error))
+		logger.debug("Dentro de closed()")
+		logger.info("SPIDER FINALIZADO")
+		logger.info("ERROR = " + str(self.error))
 		site = self.parse_eepsite.netloc
 		ok = i2psettings.PATH_FINISHED_SPIDERS + site + ".ok"
 		fail = i2psettings.PATH_FINISHED_SPIDERS + site + ".fail"
@@ -354,12 +376,12 @@ class I2P_Spider(scrapy.Spider):
 		if self.error:
 			f = open(fail, "w")
 			f.close()
-			self.logger.debug(".fail has been created at %s",fail)
+			logger.debug(".fail has been created at %s",fail)
 		else:
 			f = open(ok, "w")
 			f.close()
-			self.logger.debug(".ok has been created at %s",ok)
-			self.logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
+			logger.debug(".ok has been created at %s",ok)
+			logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
 			with open(target,'r+') as f:
 				data = json.load(f)
 				del data["non_visited_links"]
@@ -380,18 +402,18 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
-		self.logger.debug("Dentro de err()")
-		self.logger.error(repr(failure))
+		logger.debug("Dentro de err()")
+		logger.error(repr(failure))
 		
 		if failure.check(HttpError):
 			response = failure.value.response 
-			self.logger.error("HttpError occurred on %s", response.url)  
+			logger.error("HttpError occurred on %s", response.url)
 		elif failure.check(DNSLookupError): 
 			request = failure.request 
-			self.logger.error("DNSLookupError occurred on %s", request.url) 
+			logger.error("DNSLookupError occurred on %s", request.url)
 		elif failure.check(TimeoutError, TCPTimedOutError): 
 			request = failure.request 
-			self.logger.error("TimeoutError occurred on %s", request.url)
+			logger.error("TimeoutError occurred on %s", request.url)
 		else:
 			request = failure.request 
 			if request.url in self.non_visited_links:

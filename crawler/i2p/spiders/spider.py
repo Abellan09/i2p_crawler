@@ -405,7 +405,7 @@ class I2P_Spider(scrapy.Spider):
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
 		logger.debug("Dentro de err()")
-		logger.error(failure.getErrorMessage())
+		logger.error(failure.printBriefTraceback())
 		
 		if failure.check(HttpError):
 			response = failure.value.response 

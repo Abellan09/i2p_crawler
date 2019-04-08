@@ -80,7 +80,7 @@ class DiscoveringThread(I2PThread, object):
                 # Checking running threads
                 for i, thread in enumerate(simple_threads):
                     if thread is not None:
-                        logging.debug("SingleSiteDiscoveryThread %s is alive? %s", thread.name, thread.isAlive())
+                        #logging.debug("SingleSiteDiscoveryThread %s is alive? %s", thread.name, thread.isAlive())
                         if not thread.isAlive():
                             simple_threads[i] = None
                             running_threads -= 1

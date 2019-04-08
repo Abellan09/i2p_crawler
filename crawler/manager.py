@@ -432,7 +432,7 @@ def main():
 
         # restored ONGOING SITES should be launched
         for site in ongoing_sites:
-            if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
+            if len(ongoing_sites) <= MAX_ONGOING_SPIDERS:
                 logging.debug("Starting spider for %s.", site)
                 run_spider(site)
 

@@ -6,6 +6,7 @@ import shutil		# https://docs.python.org/2/library/shutil.html
 import urlparse		# https://docs.python.org/2/library/urlparse.html
 import copy			# https://docs.python.org/2/library/copy.html
 import time			# https://docs.python.org/2/library/time.html
+import operator		# https://docs.python.org/2/library/operator.html
 import json			# https://docs.python.org/2/library/json.html
 import nltk			# https://www.nltk.org
 import random 		# https://docs.python.org/2/library/random.html
@@ -17,6 +18,7 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError 
 from twisted.internet.error import TimeoutError, TCPTimedOutError
+from bs4 import BeautifulSoup
 import i2p.i2psettings as i2psettings
 import sys
 
@@ -66,6 +68,7 @@ class I2P_Spider(scrapy.Spider):
 	state_item["total_eepsite_pages"] = 0
 	state_item["title"] = "none"
 	state_item["size_main_page"] = {}
+	state_item["main_page_tokenized_words"] = []
 	cond = False
 	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
 	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
@@ -247,6 +250,9 @@ class I2P_Spider(scrapy.Spider):
 		'''
 		logger.debug("Dentro de main_page_analysis()")
 		main_page_code = response.body
+		soup = BeautifulSoup(main_page_code,"html5lib")
+		text = soup.get_text(strip=True)
+		tokens = [t for t in text.split()]
 		main_page_without_tags = remove_tags(main_page_code)
 		title = response.xpath('normalize-space(//title/text())').extract()
 		sample = re.sub('[^?!A-Za-z0-9]+', ' ', main_page_without_tags)
@@ -293,6 +299,7 @@ class I2P_Spider(scrapy.Spider):
 		
 		# Añadiendo al item:
 		self.state_item["title"] = title
+		self.state_item["main_page_tokenized_words"] = tokens
 		self.state_item["size_main_page"]['WORDS'] = num_words
 		self.state_item["size_main_page"]['LETTERS'] = num_letters
 		self.state_item["size_main_page"]['IMAGES'] = num_images

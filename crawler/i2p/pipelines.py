@@ -17,6 +17,7 @@ EEPSITE_LINKS = "extracted_eepsites"
 TOTAL_PAGES = "total_eepsite_pages"
 TITLE = "title"
 SIZE_MAIN_PAGE = "size_main_page"
+TOKENIZED_WORDS = "main_page_tokenized_words"
 
 class I2PPipeline(object):
     """
@@ -50,6 +51,7 @@ class I2PPipeline(object):
         to_save[SIZE_MAIN_PAGE] = item[SIZE_MAIN_PAGE]
         to_save[NO_VISITED] = item[NO_VISITED]
         to_save[VISITED] = item[VISITED]
+        to_save[TOKENIZED_WORDS] = item[TOKENIZED_WORDS]
 
         line = json.dumps(dict(to_save)) + "\n"
         self.file.seek(0)

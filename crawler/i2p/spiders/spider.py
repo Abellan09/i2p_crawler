@@ -23,7 +23,7 @@ import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
-logger = logging.getLogger('')
+logger = logging.getLogger(__name__)
 format = logging.Formatter('%(asctime)s %(levelname)s - %(threadName)s - mod: %(module)s, method: %(funcName)s, msg: %(message)s')
 
 ch = logging.StreamHandler(sys.stdout)
@@ -33,7 +33,7 @@ logger.addHandler(ch)
 
 fh = RotatingFileHandler(i2psettings.PATH_LOG + "spiders.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
 fh.setFormatter(format)
-fh.setLevel(logging.ERROR)
+fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
 
 
@@ -173,7 +173,7 @@ class I2P_Spider(scrapy.Spider):
 			if lang_count[language_nltk] == 0:
 				language_nltk = 'undefined'
 		except UnicodeDecodeError as e:
-			logger.debug('Error')
+			logger.error('ERROR:',e)
 			language_nltk = 'error'
 		finally:
 			return language_nltk
@@ -405,7 +405,8 @@ class I2P_Spider(scrapy.Spider):
 		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
 		'''
 		logger.debug("Dentro de err()")
-		logger.error(failure.printBriefTraceback())
+		logger.error("Detailed traceback %s ",failure.printDetailedTraceback())
+		logger.error("Error message %s ", failure.getErrorMessage())
 		
 		if failure.check(HttpError):
 			response = failure.value.response 
@@ -417,7 +418,7 @@ class I2P_Spider(scrapy.Spider):
 			request = failure.request 
 			logger.error("TimeoutError occurred on %s", request.url)
 		else:
-			request = failure.request 
+			request = failure.request
 			if request.url in self.non_visited_links:
 				self.non_visited_links.remove(request.url)
 			if request.url not in self.visited_links:

@@ -11,6 +11,7 @@ import shlex
 import signal
 import traceback
 import threading
+import psutil
 
 from pony.orm import db_session, set_sql_debug
 from database import dbutils
@@ -22,22 +23,29 @@ from i2p import i2psettings
 
 # Config params
 # Number of simultaneous spiders running
-MAX_ONGOING_SPIDERS = 10
+MAX_ONGOING_SPIDERS = 5
 # Number of tries for error sites
 MAX_CRAWLING_TRIES_ON_ERROR = 2
-# Number of tries for error sites
+# Number of tries to discover a site
 MAX_CRAWLING_TRIES_ON_DISCOVERING = 5
 # Number of tries for error sites
 MAX_DURATION_ON_DISCOVERING = 10  # Minutes
 # Number of parallel single threads running
-MAX_SINGLE_THREADS_ON_DISCOVERING = 2
+MAX_SINGLE_THREADS_ON_DISCOVERING = 10
 # Http response timeout
 HTTP_TIMEOUT = 30  # Seconds
+# Initial seeds
+INITIAL_SEEDS = "seed_urls_200.txt"
+
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
 
+# scrapy processes launched by the manager.
+# {site:subproces}
+alive_spiders = {}
 
-def check_spiders_status():
+
+def check_crawling_status():
     '''
     EN: It checks if in the /finished directory there are ".fail" and/or ".ok" files to process.
     SP: Comprueba si en el directorio /finished hay ficheros ".fail" y/o ".ok" que procesar.
@@ -68,6 +76,34 @@ def check_spiders_status():
         process_fail(fail_spiders)
     if ok_spiders:
         process_ok(ok_spiders)
+
+def check_spiders_status():
+
+    """
+    Checks the status integrity among the launched scrapy sub-processes and their status in DB. It is preventing from
+    zombie/defunc processes that never update their status in DB, remaining in ONGOING forever.
+
+    Differences between status in DB and the real alive spider processes, tell us what were the crashed spiders.
+    """
+
+    with db_session:
+        ongoing_db_sites = dbutils.get_sites_by_processing_status(dbsettings.Status.ONGOING)
+
+        logging.debug("There are %s ongoing sites in db and %s alive spider processes.",
+                      len(ongoing_db_sites),
+                      len(alive_spiders))
+
+        for site in ongoing_db_sites:
+            p_status = psutil.Process(alive_spiders[site].pid).status()
+            logging.debug("Spider/Site %s is %s.", site, p_status)
+            del p_status
+            # Is it not running?
+            if (site not in alive_spiders.keys()) or (alive_spiders[site].poll() is not None):
+                dbutils.set_site_current_processing_status(s_status=dbsettings.Status.ERROR_DEFUNC, s_url=site)
+                alive_spiders.pop(site)
+                # TODO: remove the ongoing *.json file?
+
+
 
 
 def process_fail(fail_spiders):
@@ -102,6 +138,10 @@ def process_fail(fail_spiders):
                 site = fil.replace(".fail", "")
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ERROR)
                 logging.debug("Setting the ERROR status to site %s", site)
+                # This process should not be alive
+                if site in alive_spiders.keys():
+                    alive_spiders.pop(site)
+                    logging.debug("Removing %s from alive spiders.")
 
         logging.debug("Ending to process FAILED spiders #%s: %s", len(fail_spiders), str(fail_spiders))
 
@@ -168,6 +208,10 @@ def process_ok(ok_spiders):
         # If an error is raised, this site should be tagged as ERROR
         with db_session:
             dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=dbsettings.Status.ERROR)
+            # This process should not be alive
+            if current_site_name in alive_spiders.keys():
+                alive_spiders.pop(current_site_name)
+                logging.debug("Removing %s from alive spiders.")
 
         # removing the JSON file for the site which causes the error.
         eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
@@ -200,7 +244,12 @@ def link_eepsites(site, targeted_sites):
             # Creates the src site, if needed
             dbutils.create_site(site)
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
-            logging.debug("Site %s was setup to FINISHED.",site)
+            logging.debug("Site %s was setup to FINISHED.", site)
+
+            # This process should not be alive
+            if site in alive_spiders.keys():
+                alive_spiders.pop(site)
+                logging.debug("Removing %s from alive spiders.")
 
             for eepsite in targeted_sites:
 
@@ -327,6 +376,7 @@ def run_spider(site):
     return p
 
 
+
 def error_to_pending(error_sites, pending_sites):
     """
     ERROR sites are set up to PENDING if the max crawling tries are not exceeded.
@@ -398,7 +448,7 @@ def main():
     try:
 
         # Gets initial seeds
-        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "all_seeds.txt")
+        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + INITIAL_SEEDS)
 
         # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
         with db_session:
@@ -434,7 +484,10 @@ def main():
         for site in ongoing_sites:
             if len(ongoing_sites) <= MAX_ONGOING_SPIDERS:
                 logging.debug("Starting spider for %s.", site)
-                run_spider(site)
+                p = run_spider(site)
+                # To monitor all the running spiders
+                alive_spiders[site] = p
+
 
         # Discovering time
         stime = time.time()
@@ -459,7 +512,9 @@ def main():
                         site = pending_sites.pop()
                         if dbutils.get_site(s_url=site).error_tries < MAX_CRAWLING_TRIES_ON_ERROR:
                             logging.debug("Starting spider for %s.", site)
-                            run_spider(site)
+                            p = run_spider(site)
+                            # To monitor all the running spiders
+                            alive_spiders[site] = p
                         else:
                             logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.",site)
                             logging.debug("Setting up the DISCOVERING status to %s", site)
@@ -467,7 +522,10 @@ def main():
                             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
                             dbutils.reset_tries_on_error(s_url=site)
 
-            # Polling how spiders are going ...
+            # Polling how the crawling of spiders is going ...
+            check_crawling_status()
+
+            # Checking spiders status coherence between DB and the launched processes.
             check_spiders_status()
 
             # Adding new sites to DISCOVERING status obtained from floodfill seeds.

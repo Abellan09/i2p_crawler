@@ -24,6 +24,7 @@ class Status(Enum):
     ERROR = 4
     DISCARDED = 5
     DISCOVERING = 6
+    ERROR_DEFUNC = 7
 
 
 # {status:description}
@@ -32,7 +33,8 @@ SITE_STATUS_DEFAULT_INFO = {Status.ONGOING.name:'Ongoing: The site is being craw
                             Status.PENDING.name:'Pending: The site is waiting to be launched again. May there was a processing error.',
                             Status.ERROR.name:'Error: The site cannot be crawled',
                             Status.DISCARDED.name: 'Discarded: The site  has been discarded because the number of maximum tries or the temporal window is expired.',
-                            Status.DISCOVERING.name: 'Discovering: The site is being discovered.'}
+                            Status.DISCOVERING.name: 'Discovering: The site is being discovered.',
+                            Status.ERROR_DEFUNC.name: 'The spider subprocess has been stopped by the S.O.'}
 
 # SITE TYPE
 @unique

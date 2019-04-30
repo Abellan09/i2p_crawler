@@ -23,19 +23,19 @@ from i2p import i2psettings
 
 # Config params
 # Number of simultaneous spiders running
-MAX_ONGOING_SPIDERS = 5
+MAX_ONGOING_SPIDERS = 10
 # Number of tries for error sites
 MAX_CRAWLING_TRIES_ON_ERROR = 2
-# Number of tries to discover a site
-MAX_CRAWLING_TRIES_ON_DISCOVERING = 5
 # Number of tries for error sites
-MAX_DURATION_ON_DISCOVERING = 10  # Minutes
+MAX_CRAWLING_TRIES_ON_DISCOVERING = 24*7 # 1 week, 1 try per hour
+# Number of tries for error sites
+MAX_DURATION_ON_DISCOVERING = 60*24*7  # Minutes --> 1 week
 # Number of parallel single threads running
-MAX_SINGLE_THREADS_ON_DISCOVERING = 10
+MAX_SINGLE_THREADS_ON_DISCOVERING = 50
 # Http response timeout
 HTTP_TIMEOUT = 30  # Seconds
 # Initial seeds
-INITIAL_SEEDS = "seed_urls_200.txt"
+INITIAL_SEEDS = "all_seeds.txt"
 
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)

@@ -176,6 +176,7 @@ class SingleSiteDiscoveryThread(I2PThread, object):
 
             except Exception as e:
                 logging.error("ERROR on discovering %s: %s", self._eepsite, e)
+                logging.exception("ERROR:")
                 logging.debug("Increasing discovering tries to site %s.", self._eepsite)
                 with db_session:
                     dbutils.increase_tries_on_discovering(s_url=self._eepsite)

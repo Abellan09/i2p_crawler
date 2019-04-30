@@ -101,6 +101,7 @@ def check_spiders_status():
             if (site not in alive_spiders.keys()) or (alive_spiders[site].poll() is not None):
                 dbutils.set_site_current_processing_status(s_status=dbsettings.Status.ERROR_DEFUNC, s_url=site)
                 alive_spiders.pop(site)
+                logging.debug("Site %s has been set up to ERROR_DEFUNC")
                 # TODO: remove the ongoing *.json file?
 
 
@@ -130,6 +131,7 @@ def process_fail(fail_spiders):
 
     except Exception as e:
         logging.error("ERROR processing FAILED file - %s", e)
+        logging.exception("ERROR:")
 
     finally:
         with db_session:
@@ -205,6 +207,7 @@ def process_ok(ok_spiders):
 
     except Exception as e:
         logging.error("ERROR processing OK file %s - %s",current_site_name, e)
+        logging.exception("ERROR:")
         # If an error is raised, this site should be tagged as ERROR
         with db_session:
             dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=dbsettings.Status.ERROR)
@@ -265,6 +268,7 @@ def link_eepsites(site, targeted_sites):
     except Exception as e:
         logging.error("ERROR linking eepsites")
         logging.error("ERROR: %s", e)
+        logging.exception("ERROR:")
 
 
 def set_site_language(site, languages):
@@ -559,6 +563,7 @@ def main():
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5, file=sys.stdout)
+        logging.exception("ERROR:")
     finally:
         logging.info("Stopping all services ...")
 

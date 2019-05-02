@@ -318,6 +318,12 @@ class I2P_Spider(scrapy.Spider):
 		self.state_item["language"]['NLTK'] = language_nltk_decision
 
 	def delete_link_from_non_visited(self, link):
+		'''
+		EN: It deletes the link passed as parameter from the file that contains the non visited links.
+		SP: Elimina el link pasado como parámetro del fichero que contiene los links no visitados.
+		
+		:param link: link to delete / link a eliminar
+		'''
 		logger.debug("Dentro de delete_link_from_non_visited()")
 		f = open(self.non_visited_links_filename,"r")
 		lines = f.readlines()
@@ -329,6 +335,13 @@ class I2P_Spider(scrapy.Spider):
 		f.close()
 
 	def check_link_in_non_visited(self, link):
+		'''
+		EN: It checks if the link passed as parameter is inside the file that contains the non visited links.
+		SP: Comprueba si el link pasado como parámetro se encuentra dentro del archivo que contiene los links no visitados.
+		
+		:param link: link to check / link a comprobar
+		:return: boolean that is True if the link is in the file; False otherwise / booleano que está a True si el link se encuentra en el fichero; a False en caso contrario
+		'''
 		logger.debug("Dentro de check_link_in_non_visited()")
 		belongs = False
 		with open(self.non_visited_links_filename) as f:
@@ -341,6 +354,12 @@ class I2P_Spider(scrapy.Spider):
 		return belongs
 	
 	def add_link_to_non_visited(self, link):
+		'''
+		EN: It adds the link passed as parameter to the file that contains the non visited links.
+		SP: Añade el link pasado como parámetro al fichero que contiene los links no visitados.
+		
+		:param link: link to add / link a añadir
+		'''
 		logger.debug("Dentro de add_link_to_non_visited()")
 		f = open(self.non_visited_links_filename,"a+")
 		f.write("\n")

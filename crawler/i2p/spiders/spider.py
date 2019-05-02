@@ -56,13 +56,12 @@ class I2P_Spider(scrapy.Spider):
 	MAX_VISITED_LINKS = 1000
 	overflow_visited_links = 0
 	visited_links = {}
-	non_visited_links = []
+	non_visited_links_filename = "none"
 	parse_eepsite = None
 	error = True
 	state_item = I2P_spider_state()
 	state_item["eepsite"] = "none"
 	state_item["visited_links"] = {}
-	state_item["non_visited_links"] = []
 	state_item["language"] = {}
 	state_item["extracted_eepsites"] = []
 	state_item["total_eepsite_pages"] = 0
@@ -95,6 +94,23 @@ class I2P_Spider(scrapy.Spider):
 					line = g.readline()
 
 			self.parse_eepsite = urlparse.urlparse(url)
+			
+			self.non_visited_links_filename = i2psettings.PATH_ONGOING_SPIDERS + "nvl_" + self.parse_eepsite.netloc + ".txt"
+			if not os.path.isfile(self.non_visited_links_filename):
+				f = open(self.non_visited_links_filename, "a")
+				f.close()
+				self.start_urls.append(url)
+			elif os.stat(self.non_visited_links_filename).st_size != 0:
+				max_size_start_urls = 50
+				count = 0
+				with open(self.non_visited_links_filename) as f:
+					line = f.readline() 
+					while line != "" and count<max_size_start_urls:
+						line = line.replace("\n", "")
+						self.start_urls.append(line)
+						count = count + 1
+						line = f.readline() 
+			
 			self.state_item["eepsite"]=self.parse_eepsite.netloc
 			spider_file = i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
 			ongoing_spider = os.path.exists(spider_file)
@@ -113,12 +129,6 @@ class I2P_Spider(scrapy.Spider):
 						if "visited_links" in state:
 							self.state_item["visited_links"] = state["visited_links"]
 							self.visited_links = self.state_item["visited_links"].copy()
-						if "non_visited_links" in state:
-							self.state_item["non_visited_links"] = state["non_visited_links"]
-							self.start_urls = copy.deepcopy(self.state_item["non_visited_links"])
-							self.non_visited_links = copy.deepcopy(self.state_item["non_visited_links"])
-						else:
-							self.start_urls.append(url)
 						if "language" in state:
 							self.state_item["language"] = state["language"]
 						if "extracted_eepsites" in state:
@@ -180,7 +190,7 @@ class I2P_Spider(scrapy.Spider):
 			language_nltk = 'error'
 		finally:
 			return language_nltk
-	
+		
 	def detect_language_google(self, sample):
 		'''
 		EN: It uses Google Translate to detect the language of a given sample.
@@ -307,6 +317,36 @@ class I2P_Spider(scrapy.Spider):
 		self.state_item["language"]['GOOGLE'] = language_google_decision
 		self.state_item["language"]['NLTK'] = language_nltk_decision
 
+	def delete_link_from_non_visited(self, link):
+		logger.debug("Dentro de delete_link_from_non_visited()")
+		f = open(self.non_visited_links_filename,"r")
+		lines = f.readlines()
+		f.close()
+		f = open(self.non_visited_links_filename,"w")
+		for line in lines:
+			if (link not in line) and (".i2p" in line):
+				f.write(line)
+		f.close()
+
+	def check_link_in_non_visited(self, link):
+		logger.debug("Dentro de check_link_in_non_visited()")
+		belongs = False
+		with open(self.non_visited_links_filename) as f:
+			line = f.readline() 
+			while line != "" and not belongs:
+				if link in line:
+					belongs=True
+				else:
+					line = f.readline()
+		return belongs
+	
+	def add_link_to_non_visited(self, link):
+		logger.debug("Dentro de add_link_to_non_visited()")
+		f = open(self.non_visited_links_filename,"a+")
+		f.write("\n")
+		f.write(link)
+		f.close()
+
 	def parse(self, response):
 		'''
 		EN: It handles the downloaded response for each of the made requests.
@@ -328,23 +368,20 @@ class I2P_Spider(scrapy.Spider):
 				self.main_page=False
 			self.add_visited_links(response.url)
 			self.state_item["total_eepsite_pages"]=len(self.visited_links)+self.overflow_visited_links
-			if response.url in self.non_visited_links:
-				self.non_visited_links.remove(response.url)
+			if self.check_link_in_non_visited(response.url):
+				self.delete_link_from_non_visited(response.url)
 			self.state_item["visited_links"]=self.visited_links.copy()
-			self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
 			links = self.get_links(response)
 			for link in links:
 				parse_link = urlparse.urlparse(link.url)
 				if ((parse_link.netloc not in self.state_item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc)):
 					self.state_item["extracted_eepsites"].append(parse_link.netloc)
-				if ((link.url not in self.non_visited_links) and (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc)):
-					self.non_visited_links.append(link.url)
+				if ((not self.check_link_in_non_visited(link.url)) and (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc)):
+					self.add_link_to_non_visited(link.url)
 					yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
-					if response.url in self.non_visited_links:
-						self.non_visited_links.remove(response.url)
-				self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
+					if self.check_link_in_non_visited(response.url):
+						self.delete_link_from_non_visited(response.url)
 				yield self.state_item
-			self.end_time = time.time()
 			yield self.state_item
 		except Exception as e:
 			logger.error("ERROR scraping site %s: %s",response.url, e)
@@ -382,6 +419,7 @@ class I2P_Spider(scrapy.Spider):
 		ok = i2psettings.PATH_FINISHED_SPIDERS + site + ".ok"
 		fail = i2psettings.PATH_FINISHED_SPIDERS + site + ".fail"
 		target = i2psettings.PATH_ONGOING_SPIDERS + site + ".json"
+		self.end_time = time.time()
 		if self.error:
 			f = open(fail, "w")
 			f.close()
@@ -391,9 +429,10 @@ class I2P_Spider(scrapy.Spider):
 			f.close()
 			logger.debug(".ok has been created at %s",ok)
 			logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
+			if os.path.exists(self.non_visited_links_filename):
+				os.remove(self.non_visited_links_filename)
 			with open(target,'r+') as f:
 				data = json.load(f)
-				del data["non_visited_links"]
 				del data["visited_links"]
 				f.seek(0)
 				json.dump(data, f)
@@ -426,10 +465,9 @@ class I2P_Spider(scrapy.Spider):
 			logger.error("TimeoutError occurred on %s", request.url)
 		else:
 			request = failure.request
-			if request.url in self.non_visited_links:
-				self.non_visited_links.remove(request.url)
+			if self.check_link_in_non_visited(request.url):
+				self.delete_link_from_non_visited(request.url)
 			if request.url not in self.visited_links:
 				self.add_visited_links(request.url)
-			self.state_item["non_visited_links"]=copy.deepcopy(self.non_visited_links)
 			self.state_item["visited_links"]=copy.deepcopy(self.visited_links)
 			yield self.state_item

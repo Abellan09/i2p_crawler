@@ -9,7 +9,6 @@ import json
 import i2psettings
 
 # Scrapped items
-NO_VISITED = "non_visited_links"
 VISITED = "visited_links"
 EEPSITE = "eepsite"
 LANGUAGE = "language"
@@ -49,7 +48,6 @@ class I2PPipeline(object):
         to_save[TOTAL_PAGES] = item[TOTAL_PAGES]
         to_save[TITLE] = item[TITLE]
         to_save[SIZE_MAIN_PAGE] = item[SIZE_MAIN_PAGE]
-        to_save[NO_VISITED] = item[NO_VISITED]
         to_save[VISITED] = item[VISITED]
         to_save[TOKENIZED_WORDS] = item[TOKENIZED_WORDS]
 

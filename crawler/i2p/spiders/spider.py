@@ -107,7 +107,9 @@ class I2P_Spider(scrapy.Spider):
 					line = f.readline() 
 					while line != "" and count<max_size_start_urls:
 						line = line.replace("\n", "")
-						self.start_urls.append(line)
+						link = "http://" + str(self.parse_eepsite.netloc) + line
+						self.start_urls.append(link)
+						logger.debug("Link añadido a start_urls: " + link)
 						count = count + 1
 						line = f.readline() 
 			
@@ -126,6 +128,7 @@ class I2P_Spider(scrapy.Spider):
 						logger.debug("Invalid json: %s" % error)
 						file_empty = True
 					if not file_empty:
+						self.error = False
 						if "visited_links" in state:
 							self.state_item["visited_links"] = state["visited_links"]
 							self.visited_links = self.state_item["visited_links"].copy()
@@ -139,6 +142,8 @@ class I2P_Spider(scrapy.Spider):
 							self.state_item["title"] = state["title"]
 						if "size_main_page" in state:
 							self.state_item["size_main_page"] = state["size_main_page"]
+						if "main_page_tokenized_words" in state:
+							self.state_item["main_page_tokenized_words"] = state["main_page_tokenized_words"]
 						self.main_page = False
 			else:
 				self.start_urls.append(url)
@@ -325,12 +330,18 @@ class I2P_Spider(scrapy.Spider):
 		:param link: link to delete / link a eliminar
 		'''
 		logger.debug("Dentro de delete_link_from_non_visited()")
+		link_parse = urlparse.urlparse(link)
+		link_path = link_parse.path
 		f = open(self.non_visited_links_filename,"r")
 		lines = f.readlines()
 		f.close()
 		f = open(self.non_visited_links_filename,"w")
 		for line in lines:
-			if (link not in line) and (".i2p" in line):
+			if ((link_path not in line) and (not line.isspace())):
+				#if (link_path not in line) and (line.isalnum()) and (not line.isspace()):
+				line = line.replace("\n","")
+				line = line.replace(" ","")
+				f.write("\n")
 				f.write(line)
 		f.close()
 
@@ -343,11 +354,13 @@ class I2P_Spider(scrapy.Spider):
 		:return: boolean that is True if the link is in the file; False otherwise / booleano que está a True si el link se encuentra en el fichero; a False en caso contrario
 		'''
 		logger.debug("Dentro de check_link_in_non_visited()")
+		link_parse = urlparse.urlparse(link)
+		link_path = link_parse.path
 		belongs = False
 		with open(self.non_visited_links_filename) as f:
 			line = f.readline() 
 			while line != "" and not belongs:
-				if link in line:
+				if link_path in line:
 					belongs=True
 				else:
 					line = f.readline()
@@ -361,9 +374,11 @@ class I2P_Spider(scrapy.Spider):
 		:param link: link to add / link a añadir
 		'''
 		logger.debug("Dentro de add_link_to_non_visited()")
+		link_parse = urlparse.urlparse(link)
+		link_path = link_parse.path
 		f = open(self.non_visited_links_filename,"a+")
 		f.write("\n")
-		f.write(link)
+		f.write(link_path)
 		f.close()
 
 	def parse(self, response):

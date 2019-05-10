@@ -101,7 +101,7 @@ def check_spiders_status():
             if (site not in alive_spiders.keys()) or (alive_spiders[site].poll() is not None):
                 dbutils.set_site_current_processing_status(s_status=dbsettings.Status.ERROR_DEFUNC, s_url=site)
                 alive_spiders.pop(site)
-                logging.debug("Site %s has been set up to ERROR_DEFUNC")
+                logging.debug("Site %s has been set up to ERROR_DEFUNC",site)
                 # TODO: remove the ongoing *.json file?
 
 
@@ -143,7 +143,7 @@ def process_fail(fail_spiders):
                 # This process should not be alive
                 if site in alive_spiders.keys():
                     alive_spiders.pop(site)
-                    logging.debug("Removing %s from alive spiders.")
+                    logging.debug("Removing %s from alive spiders.", site)
 
         logging.debug("Ending to process FAILED spiders #%s: %s", len(fail_spiders), str(fail_spiders))
 
@@ -214,7 +214,7 @@ def process_ok(ok_spiders):
             # This process should not be alive
             if current_site_name in alive_spiders.keys():
                 alive_spiders.pop(current_site_name)
-                logging.debug("Removing %s from alive spiders.")
+                logging.debug("Removing %s from alive spiders.", current_site_name)
 
         # removing the JSON file for the site which causes the error.
         eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
@@ -252,7 +252,7 @@ def link_eepsites(site, targeted_sites):
             # This process should not be alive
             if site in alive_spiders.keys():
                 alive_spiders.pop(site)
-                logging.debug("Removing %s from alive spiders.")
+                logging.debug("Removing %s from alive spiders.", site)
 
             for eepsite in targeted_sites:
 

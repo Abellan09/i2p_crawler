@@ -104,6 +104,7 @@ class SiteHomeInfo(db.Entity):
     images = Optional(int)
     scripts = Optional(int)
     title = Optional(str)
+    text = Optional(LongStr)
     site = Required('Site')
 
 

@@ -469,7 +469,7 @@ def set_site_language(s_url, s_language, l_engine):
 
 
 # NODE home info - CRUD
-def set_site_home_info(s_url, s_letters, s_words, s_images, s_scripts, s_title):
+def set_site_home_info(s_url, s_letters, s_words, s_images, s_scripts, s_title, s_text):
     """
     Creates a new crawler processing status. Default status PENDING
 
@@ -478,9 +478,11 @@ def set_site_home_info(s_url, s_letters, s_words, s_images, s_scripts, s_title):
     :param s_words: int - Number of words found in home page
     :param s_images: int - Number of images found in home page
     :param s_scripts: int - Number of scripts found in home page
+    :param s_title: str - Home page title
+    :param s_text: str - Home page text
     :return: SiteHomeInfo - The new info for the site home
     """
 
     # Creates new site home info
     return entities.SiteHomeInfo(site=get_site(s_url=s_url), letters=s_letters, words=s_words, images=s_images,
-                                 scripts=s_scripts, title=s_title)
+                                 scripts=s_scripts, title=s_title, text=s_text)

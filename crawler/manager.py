@@ -77,6 +77,7 @@ def check_crawling_status():
     if ok_spiders:
         process_ok(ok_spiders)
 
+
 def check_spiders_status():
 
     """
@@ -103,8 +104,6 @@ def check_spiders_status():
                 alive_spiders.pop(site)
                 logging.debug("Site %s has been set up to ERROR_DEFUNC",site)
                 # TODO: remove the ongoing *.json file?
-
-
 
 
 def process_fail(fail_spiders):
@@ -193,7 +192,8 @@ def process_ok(ok_spiders):
                 set_site_language(current_site_name, crawled_items["language"])
 
                 # setting up the home site info
-                set_site_home_info(current_site_name, crawled_items["size_main_page"], crawled_items["title"][0])
+                text = ' '.join(crawled_items["main_page_tokenized_words"])
+                set_site_home_info(current_site_name, crawled_items["size_main_page"], crawled_items["title"][0], text)
 
                 # moved here to handle the status of crawled eepsites
                 link_eepsites(current_site_name, crawled_eepsites)
@@ -288,7 +288,7 @@ def set_site_language(site, languages):
             dbutils.set_site_language(s_url=site, s_language=languages[engine], l_engine=engine)
 
 
-def set_site_home_info(site, size_main_page, title):
+def set_site_home_info(site, size_main_page, title, text):
     """
 
     Creates the home info for a site.
@@ -296,6 +296,7 @@ def set_site_home_info(site, size_main_page, title):
     :param site: str - Site url
     :param size_main_page: dict - {LETTERS:n_letters,WORDS:n_words,IMAGES:n_images,SCRIPTS:n_scripts} Found in the home of a site
     :param title: str - the found title in the home page
+    :param text: str - body text content on the home page
     """
 
     logging.info("Setting home info ...")
@@ -313,7 +314,8 @@ def set_site_home_info(site, size_main_page, title):
                                    s_words=size_main_page['WORDS'],
                                    s_images=size_main_page['IMAGES'],
                                    s_scripts=size_main_page['SCRIPTS'],
-                                   s_title=title)
+                                   s_title=title,
+                                   s_text=text)
 
 
 def set_site_number_pages(site, pages):

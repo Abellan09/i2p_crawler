@@ -44,6 +44,9 @@ set_sql_debug(debug=False)
 # {site:subproces}
 alive_spiders = {}
 
+# Crawling process UUID
+uuid = ''
+
 
 def check_crawling_status():
     '''
@@ -245,7 +248,7 @@ def link_eepsites(site, targeted_sites):
             logging.debug("Linking %s to %s ", site, targeted_sites)
 
             # Creates the src site, if needed
-            dbutils.create_site(site)
+            dbutils.create_site(s_url=site, s_uuid=uuid)
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
             logging.debug("Site %s was setup to FINISHED.", site)
 
@@ -257,7 +260,7 @@ def link_eepsites(site, targeted_sites):
             for eepsite in targeted_sites:
 
                 # is it a new site? Create it and set up the status to pending.
-                if dbutils.create_site(s_url=eepsite):
+                if dbutils.create_site(s_url=eepsite, s_uuid=uuid):
                     dbutils.set_site_current_processing_status(s_url=eepsite, s_status=dbsettings.Status.DISCOVERING)
 
                 # Linking
@@ -371,7 +374,7 @@ def run_spider(site):
 
     with db_session:
         # Create site if needed.
-        dbutils.create_site(s_url=site)
+        dbutils.create_site(s_url=site, s_uuid=uuid)
         # Setting up the correct status
         dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ONGOING)
         # Increasing tries
@@ -421,8 +424,30 @@ def get_sites_from_floodfill():
     with db_session:
         for site in seed_sites:
             # is it a new site? Create it and set up the status to pending.
-            if dbutils.create_site(s_url=site):
+            if dbutils.create_site(s_url=site, s_uuid=uuid):
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+
+
+def set_uuid(path_to_file):
+    """
+    Set a UUID for this crawling process
+
+    :param path_to_file: str - path to the uuid.txt file
+    :return: UUID - srt
+    """
+
+    try:
+        with open(path_to_file, 'r') as f:
+            uuid = f.readline()
+    except IOError as ioe:
+        uuid = str(siteutils.generate_uuid())
+        with open(path_to_file, 'w') as fr:
+            fr.write(uuid)
+        logging.warning('UUID file does not exist. Generating new one: %s', uuid)
+
+    logging.debug("UUID: %s", uuid)
+
+    return uuid
 
 
 def main():
@@ -451,6 +476,10 @@ def main():
 
     logging.info("Starting I2P Darknet crawling ... ")
 
+    # Generating UUID for the crawling process
+    global uuid
+    uuid = set_uuid('uuid.txt')
+
     try:
 
         # Gets initial seeds
@@ -460,7 +489,7 @@ def main():
         with db_session:
             for site in seed_sites:
                 # is it a new site? Create it and set up the status to pending.
-                if dbutils.create_site(s_url=site):
+                if dbutils.create_site(s_url=site, s_uuid=uuid):
                     dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
 
         # Create all sites in DISCOVERING status obtained from floodfill seeds.

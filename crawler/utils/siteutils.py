@@ -18,6 +18,7 @@ from database import dbutils, dbsettings
 
 import os
 import logging
+import uuid
 
 
 def get_seeds_from_file(path_to_file):
@@ -79,3 +80,14 @@ def get_crawling_status():
         status[dbsettings.Status.DISCOVERING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCOVERING, sorting_desc=True)
 
     return status
+
+
+def generate_uuid():
+
+    """
+    Generate UUID from current timestamp and MAC address
+
+    :return: UUID - UUID (https://docs.python.org/2/library/uuid.html)
+    """
+
+    return uuid.uuid1()

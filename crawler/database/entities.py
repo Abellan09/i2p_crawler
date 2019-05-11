@@ -19,12 +19,14 @@ db = Database()
 #TODO: move this to a config file
 db.bind(provider='mysql', host='localhost', user='i2p', passwd='4=XoG!*L', db='i2p_database')
 
+
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
     name = Required(str, unique=True)
     error_tries = Required(int, default=0)
     discovering_tries = Required(int, default=0)
     pages = Optional(int)
+    uuid = Required(str)
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
     current_status = Optional('SiteStatus')

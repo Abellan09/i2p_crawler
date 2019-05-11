@@ -22,12 +22,13 @@ import random
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_type=dbsettings.Type.I2P):
+def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P):
     """
     Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
 
     :param s_url: str - URL of the site, which will the name of the new site
     :param s_type: str - Type of the new site
+    :param s_uuid: str - UUID of the crawling process which created the site
 
     :return: Site - The new site if the site does not exist. Otherwise, return None
     """
@@ -43,7 +44,8 @@ def create_site(s_url, s_type=dbsettings.Type.I2P):
         new_type = entities.SiteType.get(type=s_type.name)
 
         # Creates the new site
-        site = entities.Site(name=s_url, type=new_type, timestamp=datetime.today(), timestamp_s=datetime.today())
+        site = entities.Site(name=s_url, uuid=s_uuid, type=new_type, timestamp=datetime.today(),
+                             timestamp_s=datetime.today())
 
     return site
 

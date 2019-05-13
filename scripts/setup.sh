@@ -21,6 +21,11 @@ rm $i2p_data/logs/*
 echo "--> Deleting/creating database"
 mysql -u i2p -p4=XoG\!\*L -e "drop database i2p_database; create database i2p_database"
 
+echo "[+] Populate database"
+conda activate py27
+python crawler/database/populate.py
+conda deactivate
+
 
 
 

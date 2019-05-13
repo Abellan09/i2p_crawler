@@ -16,7 +16,7 @@ do
   ssh $vm "bash $script_path/setup.sh"
 
   echo "[+] Configuring crawling process on $vm ..."
-  bash configuration.sh $vm
+  ssh $vm "bash $script_path/configuration.sh"
 
   echo "[+] Starting the crawling process on $vm ..."
   ssh $vm "bash $script_path/start.sh $vm"

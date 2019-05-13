@@ -20,22 +20,7 @@ from utils import siteutils
 from i2pthread import discoverythread
 from logging.handlers import RotatingFileHandler
 from i2p import i2psettings
-
-# Config params
-# Number of simultaneous spiders running
-MAX_ONGOING_SPIDERS = 10
-# Number of tries for error sites
-MAX_CRAWLING_TRIES_ON_ERROR = 2
-# Number of tries for error sites
-MAX_CRAWLING_TRIES_ON_DISCOVERING = 24*7 # 1 week, 1 try per hour
-# Number of tries for error sites
-MAX_DURATION_ON_DISCOVERING = 60*24*7  # Minutes --> 1 week
-# Number of parallel single threads running
-MAX_SINGLE_THREADS_ON_DISCOVERING = 50
-# Http response timeout
-HTTP_TIMEOUT = 30  # Seconds
-# Initial seeds
-INITIAL_SEEDS = "all_seeds.txt"
+import settings
 
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
@@ -397,7 +382,7 @@ def error_to_pending(error_sites, pending_sites):
     # Error sites should be tagged as pending sites.
     with db_session:
         for site in error_sites:
-            if dbutils.get_site(s_url=site).error_tries < MAX_CRAWLING_TRIES_ON_ERROR:
+            if dbutils.get_site(s_url=site).error_tries < settings.MAX_CRAWLING_TRIES_ON_ERROR:
                 logging.debug("The site %s has been restored. New status PENDING.", site)
                 pending_sites.insert(0, site)
                 # sets up the error site to pending status
@@ -483,7 +468,7 @@ def main():
     try:
 
         # Gets initial seeds
-        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + INITIAL_SEEDS)
+        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + settings.INITIAL_SEEDS)
 
         # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
         with db_session:
@@ -517,7 +502,7 @@ def main():
 
         # restored ONGOING SITES should be launched
         for site in ongoing_sites:
-            if len(ongoing_sites) <= MAX_ONGOING_SPIDERS:
+            if len(ongoing_sites) <= settings.MAX_ONGOING_SPIDERS:
                 logging.debug("Starting spider for %s.", site)
                 p = run_spider(site)
                 # To monitor all the running spiders
@@ -530,10 +515,10 @@ def main():
 
         # discoverying thread
         logging.debug("Running discovering process ...")
-        dThread = discoverythread.DiscoveringThread(MAX_CRAWLING_TRIES_ON_DISCOVERING,
-                                                    MAX_DURATION_ON_DISCOVERING,
-                                                    MAX_SINGLE_THREADS_ON_DISCOVERING,
-                                                    HTTP_TIMEOUT)
+        dThread = discoverythread.DiscoveringThread(settings.MAX_CRAWLING_TRIES_ON_DISCOVERING,
+                                                    settings.MAX_DURATION_ON_DISCOVERING,
+                                                    settings.MAX_SINGLE_THREADS_ON_DISCOVERING,
+                                                    settings.HTTP_TIMEOUT)
         dThread.setName('DiscoveryThread')
         dThread.start()
 
@@ -541,11 +526,11 @@ def main():
         while pending_sites or ongoing_sites or discovering_sites:
 
             # Try to run another site
-            if len(ongoing_sites) < MAX_ONGOING_SPIDERS:
+            if len(ongoing_sites) < settings.MAX_ONGOING_SPIDERS:
                 if pending_sites:
                     with db_session:
                         site = pending_sites.pop()
-                        if dbutils.get_site(s_url=site).error_tries < MAX_CRAWLING_TRIES_ON_ERROR:
+                        if dbutils.get_site(s_url=site).error_tries < settings.MAX_CRAWLING_TRIES_ON_ERROR:
                             logging.debug("Starting spider for %s.", site)
                             p = run_spider(site)
                             # To monitor all the running spiders

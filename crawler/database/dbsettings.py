@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    :mod:`settings`
+    :mod:`dbsettings`
     ===========================================================================
     :synopsis: default data and constants for the database
     :author: Roberto Magán Carrión
@@ -52,4 +52,4 @@ SITE_TYPE_DEFAULT_INFO = {Type.I2P.name:'I2P eepsite',
                           Type.UNKNOWN.name:'Unknow site type'}
 
 # To schedule the discovering time. Each site will be discover every TIME_INTERVAL_TO_DISCOVER
-TIME_INTERVAL_TO_DISCOVER = 60  # minutes
+TIME_INTERVAL_TO_DISCOVER = 1  # minutes

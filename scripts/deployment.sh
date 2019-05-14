@@ -13,12 +13,12 @@ script_path=~/RMAGAN/projects/I2P_Crawler/scripts
 for vm in vm_list;
 do
   echo "[+] Setting up process on $vm ..."
-  ssh $vm "cd $script_path; ./setup.sh"
+  ssh $vm "cd $script_path; bash setup.sh"
 
   echo "[+] Configuring crawling process on $vm ..."
-  ssh $vm "cd $script_path; ./configuration.sh"
+  ssh $vm "cd $script_path; bash configuration.sh"
 
   echo "[+] Starting the crawling process on $vm ..."
-  ssh $vm "cd $script_path; ./start.sh $vm"
+  ssh $vm "cd $script_path; bash start.sh $vm"
 
 done

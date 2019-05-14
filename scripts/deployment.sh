@@ -10,7 +10,7 @@ vm_list=`cat instances.txt`
 script_path=~/RMAGAN/projects/I2P_Crawler/scripts
 
 # Deployment
-for vm in vm_list;
+for vm in $vm_list;
 do
   echo "[+] Setting up process on $vm ..."
   ssh $vm "cd $script_path; bash setup.sh"

@@ -11,7 +11,7 @@ i2p_data=~/datos/i2p
 
 
 # Deployment
-for vm in vm_list;
+for vm in $vm_list;
 do
   echo "######### VM $vm ############"
   echo "[+] I2prouter status on $vm ..."

@@ -8,7 +8,7 @@ vm_list=`cat instances.txt`
 
 # Remote scripts path
 script_path=~/RMAGAN/projects/I2P_Crawler/scripts
-chmod 775 cript_path/*
+chmod 775 script_path/*
 
 # Deployment
 for vm in vm_list;

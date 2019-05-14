@@ -9,3 +9,4 @@ langdetect >= 1.0.7
 html >= 1.16
 slugify >= 0.0.1
 regex >= 2.4
+psutil

@@ -7,18 +7,25 @@
 vm_list=`cat instances.txt`
 
 # Remote scripts path
-script_path=~/RMAGAN/projects/I2P_Crawler/scripts
+script_path=/home/administrador/RMAGAN/projects/I2P_Crawler/scripts
 
 # Deployment
 for vm in $vm_list;
 do
+
+  echo "######### VM $vm ############"
   echo "[+] Setting up process on $vm ..."
   ssh $vm "cd $script_path; bash setup.sh"
+  echo " "
 
   echo "[+] Configuring crawling process on $vm ..."
   ssh $vm "cd $script_path; bash configuration.sh"
+  echo " "
 
   echo "[+] Starting the crawling process on $vm ..."
   ssh $vm "cd $script_path; bash start.sh $vm"
+  echo " "
+
+  echo "---- VM $vm -----"
 
 done

@@ -180,6 +180,11 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                 logging.debug("Increasing discovering tries to site %s.", self._eepsite)
                 with db_session:
                     dbutils.increase_tries_on_discovering(s_url=self._eepsite)
+                    dbutils.set_site_current_processing_status(s_url=self._eepsite,
+                                                               s_http_status=response_code,
+                                                               s_http_response_time=response_time,
+                                                               s_status=dbsettings.Status.DISCOVERING)
+                logging.debug("Site %s was set up to DISCOVERING because there was an HTTP error.", self._eepsite)
 
     def on_stop(self):
         # Should be overridden to do some stuff on thread stop

@@ -15,7 +15,7 @@ for vm in $vm_list;
 do
   echo "######### VM $vm ############"
   echo "[+] I2prouter status on $vm ..."
-  ssh $vm "i2prouter status"
+  ssh $vm "systemctl status i2p | grep -e \"Active\""
   echo " "
 
   echo "[+] Crawling process status on $vm ..."

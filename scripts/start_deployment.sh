@@ -22,17 +22,23 @@ do
   ssh $vm "cd $script_path; bash configuration.sh"
   echo " "
 
-  echo "[+] Setting up process on $vm ..."
-  ssh $vm "cd $script_path; bash setup.sh"
-  echo " "
-
-  # Starting crawling process for VMs different from the VMs
-  if [ $vm != 'i2pProjectBBDD' ]
+  # Reseting BBDD and schema
+  if [ $vm == 'i2pProjectBBDD' ]
   then
-  	echo "[+] Starting the crawling process on $vm ..."
+  	echo "[+] Setting up the file environment $vm ..."
+  	ssh $vm "cd $script_path; bash setup_bbdd.sh"
+  	echo " "
+  else
+        echo "[+] Setting up the file environment $vm ..."
+  	ssh $vm "cd $script_path; bash setup.sh"
+  	echo " "
+
+        # Starting crawling process for VMs different from the VMs
+        echo "[+] Starting the crawling process on $vm ..."
   	ssh $vm "cd $script_path; bash start.sh $vm"
   	echo " "
   fi
+ 
   echo "---- VM $vm -----"
 
 done

@@ -37,18 +37,18 @@ get_status() {
 }
 
 if [ "$#" -gt 0 ]; then
-  vm=$1
-  get_status $vm
+	vm=$1
+	get_status $vm
 else
 
-# list of all VM instances
-vm_list=`cat instances.txt`
+	# list of all VM instances
+	vm_list=`cat instances.txt`
 
-# Deployment
-for vm in $vm_list;
-do
-  get_status $vm
-done
+	# Deployment
+	for vm in $vm_list;
+	do
+	  get_status $vm
+	done
 
 fi
 

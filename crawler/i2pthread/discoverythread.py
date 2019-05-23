@@ -181,8 +181,8 @@ class SingleSiteDiscoveryThread(I2PThread, object):
                 with db_session:
                     dbutils.increase_tries_on_discovering(s_url=self._eepsite)
                     dbutils.set_site_current_processing_status(s_url=self._eepsite,
-                                                               s_http_status=response_code,
-                                                               s_http_response_time=response_time,
+                                                               s_http_status='',
+                                                               s_http_response_time='',
                                                                s_status=dbsettings.Status.DISCOVERING)
                 logging.debug("Site %s was set up to DISCOVERING because there was an HTTP error.", self._eepsite)
 

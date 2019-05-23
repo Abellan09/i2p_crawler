@@ -3,16 +3,13 @@
 # Check the status of I2P routers and crawling processes on the involved VMs
 # Author: Roberto Magan, 2019
 
-# list of all VM instances
-vm_list=`cat allinstances.txt`
-
 # Remote scripts path
-script_path=~/RMAGAN/projects/I2P_Crawler/scripts
+i2p_data=/home/administrador/datos
 
+get_status() {
+  # $1 name of the remote VM
+  vm=$1
 
-# Deployment
-for vm in $vm_list;
-do
   echo "######### VM $vm ############"
   echo "[+] I2prouter status on $vm ..."
   ssh $vm "systemctl status i2p | grep -e \"Active\""
@@ -20,6 +17,10 @@ do
 
   echo "[+] Crawling process status on $vm ..."
   ssh $vm "ps -ef | grep manager.py"
+  echo " "
+
+  echo "[+] Floodfill status"
+  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
   echo " "
 
   echo "[+] HD status $vm ..."
@@ -33,4 +34,27 @@ do
   echo "---- VM $vm -----"
   echo " "
 
+}
+
+if [ "$#" -gt 0 ]; then
+  vm=$1
+  get_status $vm
+else
+
+# list of all VM instances
+vm_list=`cat instances.txt`
+
+# Deployment
+for vm in $vm_list;
+do
+  get_status $vm
 done
+
+fi
+
+
+
+
+
+
+

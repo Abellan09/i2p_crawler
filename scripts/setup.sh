@@ -6,14 +6,6 @@
 root_path=~/RMAGAN/projects/I2P_Crawler
 i2p_data=~/datos/i2p
 
-echo "[+] Pulling from repository"
-# Checking out previous versions
-cd $root_path
-git checkout crawler/settings.py
-git checkout crawler/database/dbsettings.py
-git checkout crawler/database/entities.py
-git pull
-
 echo "[+] Deleting log and output files"
 echo "--> Deleting spider output"
 find $i2p_data/spiders -type f -delete

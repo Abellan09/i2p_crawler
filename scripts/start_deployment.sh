@@ -14,12 +14,16 @@ for vm in $vm_list;
 do
 
   echo "######### VM $vm ############"
-  echo "[+] Setting up process on $vm ..."
-  ssh $vm "cd $script_path; bash setup.sh"
+
+  bash pull.sh $vm
   echo " "
 
   echo "[+] Configuring crawling process on $vm ..."
   ssh $vm "cd $script_path; bash configuration.sh"
+  echo " "
+
+  echo "[+] Setting up process on $vm ..."
+  ssh $vm "cd $script_path; bash setup.sh"
   echo " "
 
   # Starting crawling process for VMs different from the VMs

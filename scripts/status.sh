@@ -3,8 +3,8 @@
 # Check the status of I2P routers and crawling processes on the involved VMs
 # Author: Roberto Magan, 2019
 
-# list of VM instances
-vm_list=`cat instances.txt`
+# list of all VM instances
+vm_list=`cat allinstances.txt`
 
 # Remote scripts path
 script_path=~/RMAGAN/projects/I2P_Crawler/scripts
@@ -31,5 +31,6 @@ do
   echo " "
 
   echo "---- VM $vm -----"
+  echo " "
 
 done

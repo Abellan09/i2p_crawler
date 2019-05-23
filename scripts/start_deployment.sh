@@ -22,10 +22,13 @@ do
   ssh $vm "cd $script_path; bash configuration.sh"
   echo " "
 
-  echo "[+] Starting the crawling process on $vm ..."
-  ssh $vm "cd $script_path; bash start.sh $vm"
-  echo " "
-
+  # Starting crawling process for VMs different from the VMs
+  if [ $vm != 'i2pProjectBBDD' ]
+  then
+  	echo "[+] Starting the crawling process on $vm ..."
+  	ssh $vm "cd $script_path; bash start.sh $vm"
+  	echo " "
+  fi
   echo "---- VM $vm -----"
 
 done

@@ -66,17 +66,19 @@ def check_crawling_status():
         process_ok(ok_spiders)
 
 
-def check_spiders_status():
+def check_spiders_status(uuid):
 
     """
     Checks the status integrity among the launched scrapy sub-processes and their status in DB. It is preventing from
     zombie/defunc processes that never update their status in DB, remaining in ONGOING forever.
 
     Differences between status in DB and the real alive spider processes, tell us what were the crashed spiders.
+
+    :param uuid: str - Crawling process UUID
     """
 
     with db_session:
-        ongoing_db_sites = dbutils.get_sites_by_processing_status(dbsettings.Status.ONGOING)
+        ongoing_db_sites = dbutils.get_sites_by_processing_status(dbsettings.Status.ONGOING, uuid)
 
         logging.debug("There are %s ongoing sites in db and %s alive spider processes.",
                       len(ongoing_db_sites),

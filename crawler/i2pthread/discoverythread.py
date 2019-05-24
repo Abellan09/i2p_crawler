@@ -34,13 +34,14 @@ reg_http = regex.compile(HTTP_SUCCES_COD_REGEXPR)
 
 class DiscoveringThread(I2PThread, object):
 
-    def __init__(self, max_tries, duration, max_single_threads, http_request_timeout):
+    def __init__(self, max_tries, duration, max_single_threads, http_request_timeout, uuid):
         super(DiscoveringThread, self).__init__()
         self._sites_to_discover = []
         self._max_tries = max_tries
         self._duration = duration
         self._max_single_threads = max_single_threads
         self._http_request_timeout = http_request_timeout
+        self._uuid = uuid
 
     def run(self):
 
@@ -49,7 +50,7 @@ class DiscoveringThread(I2PThread, object):
 
             with db_session:
                 # Restoring the crawling status
-                status = siteutils.get_crawling_status()
+                status = siteutils.get_crawling_status(self._uuid)
                 # restored discovering sites
                 self._sites_to_discover = status[dbsettings.Status.DISCOVERING.name]
                 logging.debug("Current # of sites to discover %s.", len(self._sites_to_discover))

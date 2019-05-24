@@ -378,24 +378,25 @@ def get_all_processing_log():
 
 
 # NODE PROCESSING STATUS - CRUD
-def get_sites_by_processing_status(s_status, sorting_desc=False):
+def get_sites_by_processing_status(s_status, uuid, sorting_desc=False):
     """
 
     Gets sites by processing status
 
     :param s_status: str - The chosen processing status
     :param sorting_desc: bool - Sorting order: True (desc), False (asc - default in PONY)
+    :param uuid: str - Crawling process UUID
     :return: sites_names: list of str - The url of the sites in status ``s_status``
     """
     assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
 
     if sorting_desc:
         #Descending order
-        sites = select(site for site in entities.Site if site.current_status.type is s_status.name). \
+        sites = select(site for site in entities.Site if site.uuid is uuid and site.current_status.type is s_status.name).\
                     order_by(desc(entities.Site.timestamp_s))[:].to_list()
     else:
         #Ascending order
-        sites = select(site for site in entities.Site if site.current_status.type is s_status.name).\
+        sites = select(site for site in entities.Site if site.uuid is uuid and site.current_status.type is s_status.name).\
                 order_by(entities.Site.timestamp_s)[:].to_list()
 
     site_names = []

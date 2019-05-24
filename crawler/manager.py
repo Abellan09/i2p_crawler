@@ -481,7 +481,7 @@ def main():
         get_sites_from_floodfill()
 
         # Restoring the crawling status
-        status = siteutils.get_crawling_status()
+        status = siteutils.get_crawling_status(uuid)
         # restored pending sites
         pending_sites = status[dbsettings.Status.PENDING.name]
         # restored ongoing sites
@@ -552,7 +552,7 @@ def main():
             get_sites_from_floodfill()
 
             # Get current status
-            status = siteutils.get_crawling_status()
+            status = siteutils.get_crawling_status(uuid)
             pending_sites = status[dbsettings.Status.PENDING.name]
             ongoing_sites = status[dbsettings.Status.ONGOING.name]
             error_sites = status[dbsettings.Status.ERROR.name]

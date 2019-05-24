@@ -62,22 +62,29 @@ def tail(path_to_file, n=1):
     return lines_str
 
 
-def get_crawling_status():
+def get_crawling_status(uuid):
     """
     Gets a snapshot of how the crawling procedure is going
 
+    :param uuid: str - Crawling process UUID
     :return: status: dict - The current crawling status
     """
 
     status = {}
 
     with db_session:
-        status[dbsettings.Status.PENDING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING, sorting_desc=True)
-        status[dbsettings.Status.ONGOING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING, sorting_desc=True)
-        status[dbsettings.Status.ERROR.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR, sorting_desc=True)
-        status[dbsettings.Status.DISCARDED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED, sorting_desc=True)
-        status[dbsettings.Status.FINISHED.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED, sorting_desc=True)
-        status[dbsettings.Status.DISCOVERING.name] = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCOVERING, sorting_desc=True)
+        status[dbsettings.Status.PENDING.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING, uuid=uuid, sorting_desc=True)
+        status[dbsettings.Status.ONGOING.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING, uuid=uuid, sorting_desc=True)
+        status[dbsettings.Status.ERROR.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR, uuid=uuid, sorting_desc=True)
+        status[dbsettings.Status.DISCARDED.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED, uuid=uuid, sorting_desc=True)
+        status[dbsettings.Status.FINISHED.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED, uuid=uuid, sorting_desc=True)
+        status[dbsettings.Status.DISCOVERING.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCOVERING, uuid=uuid, sorting_desc=True)
 
     return status
 

@@ -549,7 +549,7 @@ def main():
             check_crawling_status()
 
             # Checking spiders status coherence between DB and the launched processes.
-            check_spiders_status()
+            check_spiders_status(uuid)
 
             # Adding new sites to DISCOVERING status obtained from floodfill seeds.
             get_sites_from_floodfill()

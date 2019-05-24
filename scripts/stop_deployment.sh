@@ -14,9 +14,15 @@ for vm in $vm_list;
 do
 
   echo "######### VM $vm ############"
-  echo "[+] Stopping processes on $vm ..."
-  ssh $vm "cd $script_path; bash stop.sh"
-  echo " "
+  
+
+  # No processes in BBDD VM
+  if [ $vm != 'i2pProjectBBDD' ]
+  then
+  	echo "[+] Stopping processes on $vm ..."
+  	ssh $vm "cd $script_path; bash stop.sh"
+  	echo " "
+  fi
 
   echo "---- VM $vm -----"
 

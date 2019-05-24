@@ -518,7 +518,8 @@ def main():
         dThread = discoverythread.DiscoveringThread(settings.MAX_CRAWLING_TRIES_ON_DISCOVERING,
                                                     settings.MAX_DURATION_ON_DISCOVERING,
                                                     settings.MAX_SINGLE_THREADS_ON_DISCOVERING,
-                                                    settings.HTTP_TIMEOUT)
+                                                    settings.HTTP_TIMEOUT,
+                                                    uuid)
         dThread.setName('DiscoveryThread')
         dThread.start()
 

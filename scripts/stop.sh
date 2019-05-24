@@ -3,10 +3,12 @@
 # Stops the crawling process gracefully
 # Author: Roberto Magan, 2019
 
-echo "[+] Stopping crawling proces with UUID=`cat uuid.txt`"
-echo "--> Killing manager with PID=`cat pid.txt`"
-# stopping the manager (hard stop)`cat pid.txt`
-kill -9 `cat pid.txt`
+root_path=~/RMAGAN/projects/I2P_Crawler/crawler
+
+echo "[+] Stopping crawling proces with UUID=`cat $root_path/uuid.txt`"
+echo "--> Killing manager with PID=`cat $root_path/pid.txt`"
+# stopping the manager (hard stop)
+kill -9 `cat $root_path/pid.txt`
 echo "--> Killing spiders ..."
 # stopping spiders (hard stop)
 kill -9 `pgrep scrapy`

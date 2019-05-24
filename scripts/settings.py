@@ -25,4 +25,4 @@ MAX_SINGLE_THREADS_ON_DISCOVERING = 50
 # Http response timeout
 HTTP_TIMEOUT = 30  # Seconds
 # Initial seeds
-INITIAL_SEEDS = "seed_urls_200.txt"
+INITIAL_SEEDS = "all_seeds.txt"

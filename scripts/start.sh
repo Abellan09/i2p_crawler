@@ -9,7 +9,8 @@ cd $root_path/crawler
 
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate py27
-python manager.py &>/dev/null &
+#python manager.py &>/dev/null &
+python manager.py &> console.log &
 pid=$!
 
 echo "[+] Launching manager with PID=$pid"

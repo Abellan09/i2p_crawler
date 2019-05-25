@@ -449,16 +449,17 @@ def main():
     Finalmente, la información extraída se añade a la base de datos y se genera el archivo json que se utilizará para la visulación web del mapa de nodos.
     '''
 
-    log = logging.getLogger('')
-    log.setLevel(logging.DEBUG)
+    log = logging.getLogger(__name__)
     format = logging.Formatter('%(asctime)s %(levelname)s - %(threadName)s - mod: %(module)s, method: %(funcName)s, msg: %(message)s')
 
     ch = logging.StreamHandler(sys.stdout)
     ch.setFormatter(format)
+    ch.setLevel(logging.ERROR)
     log.addHandler(ch)
 
     fh = RotatingFileHandler(i2psettings.PATH_LOG + "i2pcrawler.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
     fh.setFormatter(format)
+    fh.setLevel(logging.ERROR)
     log.addHandler(fh)
 
     logging.info("Starting I2P Darknet crawling ... ")

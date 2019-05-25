@@ -16,20 +16,20 @@ get_status() {
   echo " "
 
   echo "[+] Crawling process status on $vm ..."
-  ssh $vm "ps -ef | grep manager.py"
+  ssh $vm "ps -ef | grep manager.py | head -n 1"
   echo " "
 
-  echo "[+] Floodfill status"
-  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
-  echo " "
-
-  echo "[+] HD status $vm ..."
-  ssh $vm "df -kh | grep -e \"sd\""
-  echo " "
-
-  echo "[+] MEM status $vm ..."
-  ssh $vm "free -h"
-  echo " "
+#  echo "[+] Floodfill status"
+#  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
+#  echo " "
+#
+#  echo "[+] HD status $vm ..."
+#  ssh $vm "df -kh | grep -e \"sd\""
+#  echo " "
+#
+#  echo "[+] MEM status $vm ..."
+#  ssh $vm "free -h"
+#  echo " "
 
   echo "---- VM $vm -----"
   echo " "

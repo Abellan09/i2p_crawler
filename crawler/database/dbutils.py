@@ -36,10 +36,9 @@ def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P):
     # TODO: create Exception hierarchy.
     assert isinstance(s_type, dbsettings.Type), 'Not valid type of site'
 
-    # The new Site
-    site = None
-
-    if not entities.Site.exists(name=s_url):
+    # Has the site already been created?
+    s_site = entities.Site.get(name=s_url)
+    if isinstance(s_site, entities.Site):
         # Gets the site type
         new_type = entities.SiteType.get(type=s_type.name)
 

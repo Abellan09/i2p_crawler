@@ -16,7 +16,7 @@ get_status() {
   echo " "
 
   echo "[+] Crawling process status on $vm ..."
-  ssh $vm "ps -ef | grep manager.py | head -n 1"
+  ssh $vm "ps -ef | grep manager.py"
   echo " "
 
 #  echo "[+] Floodfill status"

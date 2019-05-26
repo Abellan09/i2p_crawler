@@ -19,6 +19,7 @@ from datetime import timedelta
 import entities
 import dbsettings
 import random
+import logging
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
@@ -33,19 +34,24 @@ def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P):
     :return: Site - The new site if the site does not exist. Otherwise, return None
     """
 
-    # TODO: create Exception hierarchy.
-    assert isinstance(s_type, dbsettings.Type), 'Not valid type of site'
+    site = None
 
-    # Has the site already been created?
-    s_site = entities.Site.get(name=s_url)
-    if isinstance(s_site, entities.Site):
-        # Gets the site type
-        new_type = entities.SiteType.get(type=s_type.name)
+    try:
 
-        # Creates the new site
-        site = entities.Site(name=s_url, uuid=s_uuid, type=new_type, timestamp=datetime.today(),
-                             timestamp_s=datetime.today())
+        # TODO: create Exception hierarchy.
+        assert isinstance(s_type, dbsettings.Type), 'Not valid type of site'
 
+        if not entities.Site.exists(name=s_url):
+            # Gets the site type
+            new_type = entities.SiteType.get(type=s_type.name)
+
+            # Creates the new site
+            site = entities.Site(name=s_url, uuid=s_uuid, type=new_type, timestamp=datetime.today(),
+                                 timestamp_s=datetime.today())
+    except Exception as e:
+        logging.exception("ERROR: site %s could not be created.", s_url)
+
+    # None, if the site has already been created.
     return site
 
 

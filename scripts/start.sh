@@ -10,8 +10,7 @@ cd $root_path/crawler
 
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate py27
-#python manager.py &>/dev/null &
-python manager.py &> $i2p_data/logs/i2pconsole.log &
+python manager.py &>/dev/null &
 pid=$!
 
 echo "[+] Launching manager with PID=$pid"

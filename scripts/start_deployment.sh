@@ -3,8 +3,16 @@
 # Setup, configure and run all the crawling processes on all the involved VMs
 # Author: Roberto Magan, 2019
 
+if [ "$#" -lt 1 ]; then
+  echo " "
+  echo "Use: ./start_deployment.sh <instances> <vm>"
+  echo " "
+  exit 1
+fi
+
+
 # list of VM instances
-vm_list=`cat instances.txt`
+vm_list=`cat $1`
 
 # Remote scripts path
 script_path=/home/administrador/RMAGAN/projects/I2P_Crawler/scripts
@@ -44,13 +52,10 @@ deploy() {
 
 }
 
-if [ "$#" -gt 0 ]; then
-	vm=$1
+if [ "$#" -eq 2 ]; then
+	vm=$2
 	deploy $vm
 else
-
-	# list of all VM instances
-	vm_list=`cat instances.txt`
 
 	# Deployment
 	for vm in $vm_list;

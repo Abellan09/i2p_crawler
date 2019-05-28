@@ -3,6 +3,17 @@
 # Pulling code remotely for all instances
 # Author: Roberto Magan, 2019
 
+if [ "$#" -lt 1 ]; then
+  echo " "
+  echo "Use: ./pull.sh <instances> <vm>"
+  echo " "
+  exit 1
+fi
+
+# list of all VM instances
+vm_list=`cat $1`
+
+
 # Remote scripts path
 root_path=/home/administrador/RMAGAN/projects/I2P_Crawler
 
@@ -17,13 +28,10 @@ pull() {
 
 }
 
-if [ "$#" -gt 0 ]; then
-	vm=$1
+if [ "$#" -eq 2 ]; then
+	vm=$2
 	pull $vm
 else
-
-	# list of all VM instances
-	vm_list=`cat instances.txt`
 
 	# Deployment
 	for vm in $vm_list;

@@ -3,8 +3,17 @@
 # Stopping all the related processes on all the involved VMs
 # Author: Roberto Magan, 2019
 
+if [ "$#" -lt 1 ]; then
+  echo " "
+  echo "Use: ./stop_deployment.sh <instances> <vm>"
+  echo " "
+  exit 1
+fi
+
+
+
 # list of VM instances
-vm_list=`cat instances.txt`
+vm_list=`cat $1`
 
 # Remote scripts path
 script_path=/home/administrador/RMAGAN/projects/I2P_Crawler/scripts
@@ -28,13 +37,11 @@ stop() {
 
 }
 
-if [ "$#" -gt 0 ]; then
-	vm=$1
+if [ "$#" -eq 2 ]; then
+	# Just only one VM
+	vm=$2
 	stop $vm
 else
-
-	# list of all VM instances
-	vm_list=`cat instances.txt`
 
 	# Deployment
 	for vm in $vm_list;

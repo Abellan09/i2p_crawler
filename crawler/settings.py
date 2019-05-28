@@ -19,7 +19,7 @@ MAX_CRAWLING_TRIES_ON_ERROR = 2
 # Number of tries for error sites
 MAX_CRAWLING_TRIES_ON_DISCOVERING = 5 # 1 week, 1 try per hour
 # Number of tries for error sites
-MAX_DURATION_ON_DISCOVERING = 10  # Minutes --> 1 week
+MAX_DURATION_ON_DISCOVERING = 2  # Minutes --> 1 week
 # Number of parallel single threads running
 MAX_SINGLE_THREADS_ON_DISCOVERING = 50
 # Http response timeout

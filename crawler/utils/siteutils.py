@@ -79,6 +79,8 @@ def get_crawling_status(uuid):
             dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING, uuid=uuid, sorting_desc=True)
         status[dbsettings.Status.ERROR.name] = \
             dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR, uuid=uuid, sorting_desc=True)
+        status[dbsettings.Status.ERROR_DEFUNC.name] = \
+            dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ERROR_DEFUNC, uuid=uuid, sorting_desc=True)
         status[dbsettings.Status.DISCARDED.name] = \
             dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.DISCARDED, uuid=uuid, sorting_desc=True)
         status[dbsettings.Status.FINISHED.name] = \

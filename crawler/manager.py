@@ -85,6 +85,7 @@ def check_spiders_status(uuid):
                       len(alive_spiders))
 
         for site in ongoing_db_sites:
+            logging.debug("Current alive spiders %s", alive_spiders.keys())
             p_status = psutil.Process(alive_spiders[site].pid).status()
             logging.debug("Spider/Site %s is %s.", site, p_status)
             del p_status
@@ -227,38 +228,37 @@ def link_eepsites(site, targeted_sites):
     :param site: site in question to add to the database / site en cuestión a añadir a la base de datos
     :param targeted_sites: sites to which the site points at / sitios a los que el site apunta
     '''
-    logging.info("Linking eepsites ...")
+    logging.debug("Linking %s to %s ", site, targeted_sites)
 
     try:
         with db_session:
 
-            logging.debug("Linking %s to %s ", site, targeted_sites)
-
-            # Creates the src site, if needed
-            dbutils.create_site(s_url=site, s_uuid=uuid)
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
             logging.debug("Site %s was setup to FINISHED.", site)
 
-            # This process should not be alive
-            if site in alive_spiders.keys():
-                alive_spiders.pop(site)
-                logging.debug("Removing %s from alive spiders.", site)
+        for eepsite in targeted_sites:
+            try:
+                with db_session:
+                    # is it a new site? Create it and set up the status to pending.
+                    if dbutils.create_site(s_url=eepsite, s_uuid=uuid):
+                        dbutils.set_site_current_processing_status(s_url=eepsite,
+                                                                   s_status=dbsettings.Status.DISCOVERING)
+            except Exception as e:
+                logging.exception("ERROR: destination eepsite %s is already created ", eepsite)
 
-            for eepsite in targeted_sites:
-
-                # is it a new site? Create it and set up the status to pending.
-                if dbutils.create_site(s_url=eepsite, s_uuid=uuid):
-                    dbutils.set_site_current_processing_status(s_url=eepsite, s_status=dbsettings.Status.DISCOVERING)
-
+            with db_session:
                 # Linking
                 dbutils.create_link(site, eepsite)
 
-                logging.debug("New link: %s --> %s",site,eepsite)
+            logging.debug("New link: %s --> %s", site, eepsite)
 
     except Exception as e:
-        logging.error("ERROR linking eepsites")
-        logging.error("ERROR: %s", e)
-        logging.exception("ERROR:")
+        logging.exception("ERROR: linking site %s", site)
+
+    # This process should not be alive
+    if site in alive_spiders.keys():
+        alive_spiders.pop(site)
+        logging.debug("Removing %s from alive spiders.", site)
 
 
 def set_site_language(site, languages):
@@ -353,24 +353,29 @@ def run_spider(site):
 
     # TODO each spider process should be better monitored. Maybe launching them in separated threads.
 
-    # Try running a spider
-    command = 'scrapy crawl i2p -a url="http://' + site + '"'
-    p = subprocess.Popen(shlex.split(command))
+    p = None
 
-    logging.debug("Command launched %s",shlex.split(command))
+    try:
 
-    with db_session:
-        # Create site if needed.
-        dbutils.create_site(s_url=site, s_uuid=uuid)
-        # Setting up the correct status
-        dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ONGOING)
-        # Increasing tries
-        siteEntity = dbutils.increase_tries_on_error(s_url=site)
+        with db_session:
+            # Create site if needed.
+            dbutils.create_site(s_url=site, s_uuid=uuid)
+            # Setting up the correct status
+            dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ONGOING)
+            # Increasing tries
+            siteEntity = dbutils.increase_tries_on_error(s_url=site)
 
-        logging.debug("Process launched for %s with PID=%s, tries=%s",site,p.pid,siteEntity.error_tries)
+        # Try running a spider
+        command = 'scrapy crawl i2p -a url="http://' + site + '"'
+        p = subprocess.Popen(shlex.split(command))
+
+        logging.debug("Command launched %s", shlex.split(command))
+        logging.debug("Process launched for %s with PID=%s, tries=%s", site, p.pid, siteEntity.error_tries)
+
+    except Exception as e:
+        logging.exception("Spider of site %s could not be launched. Maybe it has already been launched.")
 
     return p
-
 
 
 def error_to_pending(error_sites, pending_sites):
@@ -408,11 +413,14 @@ def get_sites_from_floodfill():
     seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "floodfill_seeds.txt")
 
     # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
-    with db_session:
-        for site in seed_sites:
-            # is it a new site? Create it and set up the status to pending.
-            if dbutils.create_site(s_url=site, s_uuid=uuid):
-                dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+    for site in seed_sites:
+        try:
+            with db_session:
+                # is it a new site? Create it and set up the status to pending.
+                if dbutils.create_site(s_url=site, s_uuid=uuid):
+                    dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+        except Exception as e:
+            logging.exception("ERROR: site %s could not be created.", site)
 
 
 def set_uuid(path_to_file):
@@ -453,16 +461,16 @@ def main():
     log.setLevel(logging.DEBUG)
     format = logging.Formatter('%(asctime)s %(levelname)s - %(threadName)s - mod: %(module)s, method: %(funcName)s, msg: %(message)s')
 
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setFormatter(format)
-    ch.setLevel(logging.DEBUG)
+    fhall = RotatingFileHandler(i2psettings.PATH_LOG + "i2pcrawler.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+    fhall.setFormatter(format)
+    fhall.setLevel(logging.DEBUG)
 
-    fh = RotatingFileHandler(i2psettings.PATH_LOG + "i2pcrawler.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
-    fh.setFormatter(format)
-    fh.setLevel(logging.ERROR)
+    fherror = RotatingFileHandler(i2psettings.PATH_LOG + "i2perror.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+    fherror.setFormatter(format)
+    fherror.setLevel(logging.ERROR)
 
-    log.addHandler(ch)
-    log.addHandler(fh)
+    log.addHandler(fhall)
+    log.addHandler(fherror)
 
     logging.info("Starting I2P Darknet crawling ... ")
 
@@ -476,11 +484,15 @@ def main():
         seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + settings.INITIAL_SEEDS)
 
         # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
-        with db_session:
-            for site in seed_sites:
-                # is it a new site? Create it and set up the status to pending.
-                if dbutils.create_site(s_url=site, s_uuid=uuid):
-                    dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
+        for site in seed_sites:
+            try:
+                with db_session:
+                    # is it a new site? Create it and set up the status to pending.
+                    if dbutils.create_site(s_url=site, s_uuid=uuid):
+                        dbutils.set_site_current_processing_status(s_url=site,
+                                                                   s_status=dbsettings.Status.DISCOVERING)
+            except Exception as e:
+                logging.exception("ERROR: site %s could not be created.", site)
 
         # Create all sites in DISCOVERING status obtained from floodfill seeds.
         get_sites_from_floodfill()
@@ -511,12 +523,9 @@ def main():
                 logging.debug("Starting spider for %s.", site)
                 p = run_spider(site)
                 # To monitor all the running spiders
-                alive_spiders[site] = p
+                if p and not p.returncode:  # if successfully launched
+                    alive_spiders[site] = p
 
-
-        # Discovering time
-        stime = time.time()
-        etime = time.time()
 
         # discoverying thread
         logging.debug("Running discovering process ...")
@@ -540,9 +549,11 @@ def main():
                             logging.debug("Starting spider for %s.", site)
                             p = run_spider(site)
                             # To monitor all the running spiders
-                            alive_spiders[site] = p
+                            if p and not p.returncode:  # if successfully launched
+                                alive_spiders[site] = p
                         else:
-                            logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.",site)
+                            logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR "
+                                          "status has been reached.", site)
                             logging.debug("Setting up the DISCOVERING status to %s", site)
                             # The site
                             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
@@ -562,6 +573,7 @@ def main():
             pending_sites = status[dbsettings.Status.PENDING.name]
             ongoing_sites = status[dbsettings.Status.ONGOING.name]
             error_sites = status[dbsettings.Status.ERROR.name]
+            error_defunc = status[dbsettings.Status.ERROR_DEFUNC.name]
             discarded_sites = status[dbsettings.Status.DISCARDED.name]
             finished_sites = status[dbsettings.Status.FINISHED.name]
             discovering_sites = status[dbsettings.Status.DISCOVERING.name]
@@ -569,23 +581,19 @@ def main():
             # Getting error sites and setting up them to pending to be crawled again.
             error_to_pending(error_sites, pending_sites)
 
-            logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, DISCOVERING %s, DISCARDED %s", \
-                          len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites), len(discovering_sites),
-                          len(discarded_sites))
+            logging.debug("Stats --> ONGOING %s, PENDING %s, FINISHED %s, ERROR %s, ERROR_DEFUNC %s, DISCOVERING %s,"
+                          " DISCARDED %s",
+                          len(ongoing_sites), len(pending_sites), len(finished_sites), len(error_sites),
+                          len(error_defunc), len(discovering_sites), len(discarded_sites))
 
             time.sleep(1)
-            if (etime - stime) < 2:
-                etime = time.time()
-            else:
-                stime = time.time()
-                etime = time.time()
 
     except KeyboardInterrupt:
-        logging.info("KeyboardInterrupt received ...")
+        logging.exception("KeyboardInterrupt received ...")
     except:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5, file=sys.stdout)
-        logging.exception("ERROR:")
+        logging.exception("ERROR: not controlled exception.")
     finally:
         logging.info("Stopping all services ...")
 

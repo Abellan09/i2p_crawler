@@ -50,6 +50,7 @@ def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P):
                                  timestamp_s=datetime.today())
     except Exception as e:
         logging.exception("ERROR: site %s could not be created.", s_url)
+        raise e
 
     # None, if the site has already been created.
     return site
@@ -424,18 +425,23 @@ def set_site_current_processing_status(s_url, s_status, s_http_status='', s_http
     :return: site: Site - The updated Site with the updated corresponding processing status.
     """
 
-    # Gets the site
-    site = entities.Site.get(name=s_url)
-    # If the site exists
-    if isinstance(site, entities.Site):
-        # Creates and set the new processing status
-        site.current_status = entities.SiteStatus.get(type=s_status.name)
-        # Timestamp for changing status
-        site.timestamp_s = datetime.today()
+    try:
+        # Gets the site
+        site = entities.Site.get(name=s_url)
+        # If the site exists
+        if isinstance(site, entities.Site):
+            # Creates and set the new processing status
+            site.current_status = entities.SiteStatus.get(type=s_status.name)
+            # Timestamp for changing status
+            site.timestamp_s = datetime.today()
 
-        if add_processing_log:
-            # Adds a new processing log
-            create_processing_log(s_url, s_status, s_http_status, s_http_response_time)
+            if add_processing_log:
+                # Adds a new processing log
+                create_processing_log(s_url, s_status, s_http_status, s_http_response_time)
+
+    except Exception as e:
+        logging.exception("ERROR: site %s could not be created.", s_url)
+        raise e
 
     return site
 

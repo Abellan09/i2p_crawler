@@ -3,6 +3,16 @@
 # Check the status of I2P routers and crawling processes on the involved VMs
 # Author: Roberto Magan, 2019
 
+if [ "$#" -lt 1 ]; then
+  echo " "
+  echo "Use: ./status.sh <instances> <vm>"
+  echo " "
+  exit 1
+fi
+
+# list of all VM instances
+vm_list=`cat $1`
+
 # Remote scripts path
 i2p_data=/home/administrador/datos
 
@@ -19,30 +29,31 @@ get_status() {
   ssh $vm "ps -ef | grep manager.py"
   echo " "
 
-#  echo "[+] Floodfill status"
-#  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
-#  echo " "
-#
-#  echo "[+] HD status $vm ..."
-#  ssh $vm "df -kh | grep -e \"sd\""
-#  echo " "
-#
-#  echo "[+] MEM status $vm ..."
-#  ssh $vm "free -h"
-#  echo " "
+  echo "[+] Ongoing spiders $vm ..."
+  ssh $vm "pgrep scrapy | wc -l"
+  echo " "
+
+  echo "[+] Floodfill status"
+  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
+  echo " "
+
+  echo "[+] HD status $vm ..."
+  ssh $vm "df -kh | grep -e \"sd\""
+  echo " "
+
+  echo "[+] MEM status $vm ..."
+  ssh $vm "free -h"
+  echo " "
 
   echo "---- VM $vm -----"
   echo " "
 
 }
 
-if [ "$#" -gt 0 ]; then
-	vm=$1
+if [ "$#" -eq 2 ]; then
+	vm=$2
 	get_status $vm
 else
-
-	# list of all VM instances
-	vm_list=`cat instances.txt`
 
 	# Deployment
 	for vm in $vm_list;

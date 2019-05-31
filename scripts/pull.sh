@@ -21,7 +21,7 @@ pull() {
   # $1 name of the remote VM
   vm=$1
 
-  echo "[+] Pulling $vm from repository"
+  echo "[+] Pulling $vm from repository ..."
   # Checking out previous versions
   ssh $vm "cd $root_path; git checkout crawler/settings.py crawler/database/dbsettings.py crawler/database/entities.py; git pull;"
   echo " "

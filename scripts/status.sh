@@ -33,17 +33,17 @@ get_status() {
   ssh $vm "pgrep scrapy | wc -l"
   echo " "
 
-  echo "[+] Floodfill status"
-  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
-  echo " "
-
-  echo "[+] HD status $vm ..."
-  ssh $vm "df -kh | grep -e \"sd\""
-  echo " "
-
-  echo "[+] MEM status $vm ..."
-  ssh $vm "free -h"
-  echo " "
+#  echo "[+] Floodfill status"
+#  ssh $vm "tail -n 6 $i2p_data/seeds/log_script.log"
+#  echo " "
+#
+#  echo "[+] HD status $vm ..."
+#  ssh $vm "df -kh | grep -e \"sd\""
+#  echo " "
+#
+#  echo "[+] MEM status $vm ..."
+#  ssh $vm "free -h"
+#  echo " "
 
   echo "---- VM $vm -----"
   echo " "

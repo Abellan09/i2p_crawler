@@ -13,7 +13,6 @@ fi
 # list of all VM instances
 vm_list=`cat $1`
 
-
 # Remote scripts path
 root_path=/home/administrador/RMAGAN/projects/I2P_Crawler
 

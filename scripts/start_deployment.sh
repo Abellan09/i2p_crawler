@@ -20,10 +20,9 @@ script_path=/home/administrador/RMAGAN/projects/I2P_Crawler/scripts
 deploy() {
   # $1 name of the remote VM
   vm=$1
-
   echo "######### VM $vm ############"
 
-  bash pull.sh $vm
+  bash pull.sh fake.txt $vm
   echo " "
 
   echo "[+] Configuring crawling process on $vm ..."

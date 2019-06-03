@@ -29,4 +29,4 @@ INITIAL_SEEDS = "all_seeds.txt"
 # Batch size of initial seeds
 INITIAL_SEEDS_BACH_SIZE = 394  # 3938/10=393,8 ~ 394
 # Time to wait until the next seeds self-assignment
-SEEDS_ASSIGMENT_PERIOD = 60  # seconds
+SEEDS_ASSIGMENT_PERIOD = 300  # seconds

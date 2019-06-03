@@ -19,6 +19,8 @@ from database import dbsettings
 from utils import siteutils
 from i2pthread import discoverythread
 from logging.handlers import RotatingFileHandler
+from datetime import datetime
+from datetime import timedelta
 from i2p import i2psettings
 import settings
 
@@ -240,7 +242,7 @@ def link_eepsites(site, targeted_sites):
             try:
                 with db_session:
                     # is it a new site? Create it and set up the status to pending.
-                    if dbutils.create_site(s_url=eepsite, s_uuid=uuid):
+                    if dbutils.create_site(s_url=eepsite, s_uuid=uuid, s_source=dbsettings.Source.DISCOVERED):
                         dbutils.set_site_current_processing_status(s_url=eepsite,
                                                                    s_status=dbsettings.Status.DISCOVERING)
             except Exception as e:
@@ -358,8 +360,6 @@ def run_spider(site):
     try:
 
         with db_session:
-            # Create site if needed.
-            dbutils.create_site(s_url=site, s_uuid=uuid)
             # Setting up the correct status
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ONGOING)
             # Increasing tries
@@ -412,15 +412,46 @@ def get_sites_from_floodfill():
     # Gets initial seeds
     seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "floodfill_seeds.txt")
 
+    logging.debug("There are %s floodfill sites.", len(seed_sites))
+
     # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
     for site in seed_sites:
         try:
             with db_session:
                 # is it a new site? Create it and set up the status to pending.
-                if dbutils.create_site(s_url=site, s_uuid=uuid):
+                if dbutils.create_site(s_url=site, s_uuid=uuid, s_source=dbsettings.Source.FLOODFILL):
                     dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
         except Exception as e:
             logging.exception("ERROR: site %s could not be created.", site)
+
+
+def set_seeds(n_seeds):
+    """
+    Try to assign to this manager a number of seeds in PRE_DISCOVERING status.
+
+    :param n_seeds: int - Number of seeds to be assigned
+    """
+
+    with db_session:
+        # Gets all initial seeds
+        seed_sites = dbutils.get_sites_by_processing_status(dbsettings.Status.PRE_DISCOVERING, uuid='')
+
+    logging.debug("There are %s seeds sites.", len(seed_sites))
+
+    # Get the first n seeds
+    seed_sites = seed_sites[:n_seeds]
+
+    # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
+    for site in seed_sites:
+        try:
+            with db_session:
+                # is it a new site? Create it and set up the status to pending.
+                if dbutils.update_seed_site(s_url=site, s_uuid=uuid):
+                    dbutils.set_site_current_processing_status(s_url=site,
+                                                               s_status=dbsettings.Status.DISCOVERING)
+        except Exception as e:
+            logging.exception("ERROR: site %s could not be assigned to me. Maybe it is already managed by other"
+                              " manager.", site)
 
 
 def set_uuid(path_to_file):
@@ -480,19 +511,8 @@ def main():
 
     try:
 
-        # Gets initial seeds
-        seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + settings.INITIAL_SEEDS)
-
-        # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
-        for site in seed_sites:
-            try:
-                with db_session:
-                    # is it a new site? Create it and set up the status to pending.
-                    if dbutils.create_site(s_url=site, s_uuid=uuid):
-                        dbutils.set_site_current_processing_status(s_url=site,
-                                                                   s_status=dbsettings.Status.DISCOVERING)
-            except Exception as e:
-                logging.exception("ERROR: site %s could not be created.", site)
+        # Try to assign N seeds sites to me
+        set_seeds(settings.INITIAL_SEEDS_BACH_SIZE)
 
         # Create all sites in DISCOVERING status obtained from floodfill seeds.
         get_sites_from_floodfill()
@@ -537,6 +557,9 @@ def main():
         dThread.setName('DiscoveryThread')
         dThread.start()
 
+        # Timestamp to compute time to next seed self-assignment
+        initial = datetime.now()
+
         # main loop
         while pending_sites or ongoing_sites or discovering_sites:
 
@@ -564,6 +587,11 @@ def main():
 
             # Checking spiders status coherence between DB and the launched processes.
             check_spiders_status(uuid)
+
+            # Each settings.SEEDS_ASSIGMENT_PERIOD I try to self-assign seeds
+            if (datetime.now() - initial) > timedelta(seconds=settings.SEEDS_ASSIGMENT_PERIOD):
+                set_seeds(settings.INITIAL_SEEDS_BACH_SIZE)
+                initial = datetime.now()
 
             # Adding new sites to DISCOVERING status obtained from floodfill seeds.
             get_sites_from_floodfill()

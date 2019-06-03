@@ -26,10 +26,11 @@ class Site(db.Entity):
     error_tries = Required(int, default=0)
     discovering_tries = Required(int, default=0)
     pages = Optional(int)
-    uuid = Required(str)
+    uuid = Optional(str)
     type = Required('SiteType')
     processing_log = Set('SiteProcessingLog')
     current_status = Optional('SiteStatus')
+    source = Optional('SiteSource')
     # Creation timestamp
     timestamp = Required(datetime)
     # Change status timestamp
@@ -46,16 +47,23 @@ class Site(db.Entity):
 
 class SiteType(db.Entity):
     id = PrimaryKey(int, auto=True)
-    type = Required(str,unique=True)
+    type = Required(str, unique=True)
     description = Optional(str)
     site = Set('Site')
 
 
 class SiteStatus(db.Entity):
     id = PrimaryKey(int, auto=True)
-    type = Required(str,unique=True)
+    type = Required(str, unique=True)
     description = Optional(str)
     processing_log = Set('SiteProcessingLog')
+    site = Set('Site')
+
+
+class SiteSource(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    type = Required(str, unique=True)
+    description = Optional(str)
     site = Set('Site')
 
 

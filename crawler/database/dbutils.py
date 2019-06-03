@@ -23,13 +23,14 @@ import logging
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P):
+def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P, s_source=dbsettings.Source.SEED):
     """
     Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
 
     :param s_url: str - URL of the site, which will the name of the new site
-    :param s_type: str - Type of the new site
     :param s_uuid: str - UUID of the crawling process which created the site
+    :param s_type: Type - Type of the new site
+    :param s_source: Source - Source of the new site
 
     :return: Site - The new site if the site does not exist. Otherwise, return None
     """
@@ -45,14 +46,46 @@ def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P):
             # Gets the site type
             new_type = entities.SiteType.get(type=s_type.name)
 
+            # Gets the source type
+            new_source = entities.SiteSource.get(type=s_source.name)
+
             # Creates the new site
-            site = entities.Site(name=s_url, uuid=s_uuid, type=new_type, timestamp=datetime.today(),
+            site = entities.Site(name=s_url, uuid=s_uuid, type=new_type, source=new_source, timestamp=datetime.today(),
                                  timestamp_s=datetime.today())
     except Exception as e:
         logging.exception("ERROR: site %s could not be created.", s_url)
         raise e
 
     # None, if the site has already been created.
+    return site
+
+
+def update_seed_site(s_url, s_uuid):
+
+    """
+    Updates a seed source site.
+
+    :param s_url: str - URL of the site to be updated
+    :param s_uuid: str - UUID of the crawling process which updates the site
+
+    :return: Site - The updated site or None if the site does not exist.
+
+    """
+
+    site = get_site(s_url=s_url)
+
+    logging.debug("Updating site %s", site.name)
+
+    try:
+
+        if site:
+            site.uuid = s_uuid
+            site.timestamp_s = datetime.today()
+
+    except Exception as e:
+        logging.exception("ERROR: site %s could not be updated.", s_url)
+        raise e
+
     return site
 
 

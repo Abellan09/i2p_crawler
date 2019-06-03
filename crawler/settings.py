@@ -24,5 +24,9 @@ MAX_DURATION_ON_DISCOVERING = 2  # Minutes --> 1 week
 MAX_SINGLE_THREADS_ON_DISCOVERING = 50
 # Http response timeout
 HTTP_TIMEOUT = 30  # Seconds
-# Initial seeds
+# Initial seed file
 INITIAL_SEEDS = "seed_urls_200.txt"
+# Batch size of initial seeds
+INITIAL_SEEDS_BACH_SIZE = 2  # 3938/10=393,8 ~ 394
+# Time to wait until the next seeds self-assignment
+SEEDS_ASSIGMENT_PERIOD = 60  # seconds

@@ -11,7 +11,7 @@ mysql -u i2p -p4=XoG\!\*L -e "drop database i2p_database; create database i2p_da
 echo "--> Populate database"
 source ~/anaconda3/etc/profile.d/conda.sh
 conda activate py27
-python $root_path/crawler/database/populate.py
+python $root_path/crawler/populate.py
 conda deactivate
 
 

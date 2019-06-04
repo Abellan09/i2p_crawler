@@ -154,21 +154,20 @@ def process_ok(ok_spiders):
     '''
     logging.info("Processing OK spiders ...")
 
-    files_to_remove = []
     logging.debug("Starting to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
 
     # Used in case of error to setup in BBDD as ERROR
     current_site_name = None
 
-    try:
-        for fil in ok_spiders:
-            files_to_remove.append(fil)
+    for fil in ok_spiders:
+
+        try:
+
             current_site_name = fil.replace(".ok", "")
             fil_json_extension = fil.replace(".ok", ".json")
             source = i2psettings.PATH_ONGOING_SPIDERS + fil_json_extension
             target = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
             shutil.move(source, target)
-
 
             # Once a site has been crawled, what we only need is the extracted eepsite which are at the end of the
             # json file
@@ -198,28 +197,28 @@ def process_ok(ok_spiders):
                 # setting up the number of pages to the site.
                 set_site_number_pages(current_site_name, crawled_items["total_eepsite_pages"])
 
-    except Exception as e:
-        logging.error("ERROR processing OK file %s - %s",current_site_name, e)
-        logging.exception("ERROR:")
-        # If an error is raised, this site should be tagged as ERROR
-        with db_session:
-            dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=dbsettings.Status.ERROR)
-            # This process should not be alive
-            if current_site_name in alive_spiders.keys():
-                alive_spiders.pop(current_site_name)
-                logging.debug("Removing %s from alive spiders.", current_site_name)
+        except Exception as e:
+            logging.error("ERROR processing OK file %s - %s",current_site_name, e)
+            logging.exception("ERROR:")
+            # If an error is raised, this site should be tagged as ERROR
+            with db_session:
+                dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=dbsettings.Status.ERROR)
+                # This process should not be alive
+                if current_site_name in alive_spiders.keys():
+                    alive_spiders.pop(current_site_name)
+                    logging.debug("Removing %s from alive spiders.", current_site_name)
 
-        # removing the JSON file for the site which causes the error.
-        eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
-        os.remove(eliminar)
-
-    finally:
-        # Delete *.ok files in finished folder
-        for fil in ok_spiders:
-            eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+            # removing the JSON file for the site which causes the error.
+            eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
             os.remove(eliminar)
 
-    logging.debug("Ending to process OK spiders #%s: %s", len(ok_spiders), str(ok_spiders))
+    # Delete *.ok files in finished folder
+    for fil in ok_spiders:
+        eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+        os.remove(eliminar)
+        logging.debug("Deleting OK file %s",fil)
+
+    logging.debug("Ending to process OK spiders")
 
 
 def link_eepsites(site, targeted_sites):

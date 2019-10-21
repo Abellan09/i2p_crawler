@@ -57,36 +57,34 @@ class DiscoveringThread(I2PThread, object):
 
             # Running Threads
             simple_threads = []
-            running_threads = 0
+            #running_threads = 0
 
-            # While there sites to discover and running threads
-            while self._sites_to_discover or running_threads != 0:
+            # While there are sites to discover and running threads
+            while self._sites_to_discover or len(simple_threads) != 0:
 
                 # How many simultaneous single threads are allowed to be running?
-                while (self._max_single_threads - running_threads) > 0:
+                while (self._max_single_threads - len(simple_threads)) > 0:
                     if self._sites_to_discover:
                         eepsite = self._sites_to_discover.pop()
                         ssdThread = SingleSiteDiscoveryThread(self._max_tries, self._duration,
                                                               self._http_request_timeout, eepsite)
                         ssdThread.setName("SingleSiteDiscoveryThread_"+str(eepsite))
                         ssdThread.start()
-                        logging.debug("Running threads counter: %s",running_threads)
-                        simple_threads.insert(running_threads, ssdThread)
+                        #logging.debug("Running threads counter: %s",running_threads)
+                        simple_threads.append(ssdThread)
                         #logging.debug("Simple threads: %s", [t.getName() if t is not None else None for t in simple_threads])
-                        running_threads += 1
+                        #running_threads += 1
                         logging.debug("Running %s", ssdThread.getName())
                     else:
                         break
 
                 # Checking running threads
                 for i, thread in enumerate(simple_threads):
-                    if thread is not None:
-                        #logging.debug("SingleSiteDiscoveryThread %s is alive? %s", thread.name, thread.isAlive())
-                        if not thread.isAlive():
-                            simple_threads[i] = None
-                            running_threads -= 1
+                    if not thread.isAlive(): # if dead
+                        del simple_threads[i]
+                        #running_threads -= 1
 
-                logging.debug("%s SingleSiteDiscoveryThread are running", running_threads)
+                logging.debug("%s SingleSiteDiscoveryThread are running", len(simple_threads))
                 logging.debug("There are %s sites to discover.", len(self._sites_to_discover))
 
                 time.sleep(1)

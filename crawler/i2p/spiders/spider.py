@@ -205,10 +205,16 @@ class I2P_Spider(scrapy.Spider):
 		:return: the detected language / el idioma detectado
 		'''
 		logger.debug("Dentro de detect_language_google()")
-		translator = Translator()
-		det = translator.detect(sample)
-		language_google = self.LANGUAGES_GOOGLE[det.lang]
-		return language_google
+		language_google=""
+		try:
+			translator = Translator()
+			det = translator.detect(sample)
+			language_google = self.LANGUAGES_GOOGLE[det.lang]
+		except ValueError as e:
+			logger.error('ERROR:',e)
+			language_google = "undefined--" + det.lang
+		finally:
+			return language_google
 
 	def add_visited_links(self, link):
 		'''
@@ -285,7 +291,13 @@ class I2P_Spider(scrapy.Spider):
 		language_nltk=[]
 		for i in range(0, len(sample)):
 			# Lenguaje con API de GOOGLE:
-			language_google.append(self.detect_language_google(" ".join(sample[i])))
+			try:
+				language_google.append(self.detect_language_google(" ".join(sample[i])))
+			except ValueError as e:
+				logger.error('ERROR:',e)
+				lang_google_error = "undefined--" + det.lang
+				#print "\nLanguage error: " + str(lang_google_error)
+				language_google.append(lang_google_error)
 			#print str(language_google)
 			# Lenguaje con nltk:
 			language_nltk.append(self.detect_language_nltk(" ".join(sample[i])))

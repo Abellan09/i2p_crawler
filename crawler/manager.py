@@ -80,7 +80,7 @@ def check_spiders_status(uuid):
     """
 
     with db_session:
-        ongoing_db_sites = dbutils.get_sites_by_processing_status(dbsettings.Status.ONGOING, uuid)
+        ongoing_db_sites = dbutils.get_sites_names_by_processing_status(dbsettings.Status.ONGOING, uuid)
 
         logging.debug("There are %s ongoing sites in db and %s alive spider processes.",
                       len(ongoing_db_sites),
@@ -433,7 +433,7 @@ def set_seeds(n_seeds):
 
     with db_session:
         # Gets all initial seeds
-        seed_sites = dbutils.get_sites_by_processing_status(dbsettings.Status.PRE_DISCOVERING, uuid='')
+        seed_sites = dbutils.get_sites_names_by_processing_status(dbsettings.Status.PRE_DISCOVERING, uuid='')
 
     logging.debug("There are %s seeds sites.", len(seed_sites))
 

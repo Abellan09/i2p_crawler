@@ -100,19 +100,19 @@ class DatabaseTests(unittest.TestCase):
         dbutils.set_site_current_processing_status(s_url="four_site.i2p", s_status=dbsettings.Status.ERROR, add_processing_log=False)
 
         # get all ongoing sites
-        all_ongoing_sites = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.ONGOING)
+        all_ongoing_sites = dbutils.get_sites_names_by_processing_status(s_status=dbsettings.Status.ONGOING)
         self.assertEqual(len(all_ongoing_sites), 1, msg="Just only one site should be ONGOING")
 
         # get all pending sites
-        all_pending_sites = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING)
+        all_pending_sites = dbutils.get_sites_names_by_processing_status(s_status=dbsettings.Status.PENDING)
         self.assertEqual(len(all_pending_sites), 1, msg="Just only one site should be PENDING")
 
         # get all finished sites
-        all_finished_sites = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.FINISHED)
+        all_finished_sites = dbutils.get_sites_names_by_processing_status(s_status=dbsettings.Status.FINISHED)
         self.assertEqual(len(all_finished_sites), 1, msg="Just only one site should be FINISHED")
 
         # get all error sites
-        all_error_sites = dbutils.get_sites_by_processing_status(s_status=dbsettings.Status.PENDING)
+        all_error_sites = dbutils.get_sites_names_by_processing_status(s_status=dbsettings.Status.PENDING)
         self.assertEqual(len(all_error_sites), 1, msg="Just only one site should be ERROR")
 
         #Checks the number of processing logs added

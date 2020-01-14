@@ -1,4 +1,4 @@
-# I2P CRAWLER
+# c4i2p: Crawl for I2P
 
 HTTP crawling tool for the I2P Darknet sites.
 

@@ -61,7 +61,6 @@ def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P, s_source=dbsettings.S
 
 
 def update_seed_site(s_url, s_uuid):
-
     """
     Updates a seed source site.
 
@@ -143,6 +142,7 @@ def set_site_type(s_url, s_type):
         # Get and set the new type
         site.type = entities.SiteType.get(type=s_type.name)
     return site
+
 
 def set_site_number_of_pages(s_url, n_pages):
     """
@@ -244,7 +244,8 @@ def set_connectivity_summary(s_url, n_incoming, n_outgoing, n_degree, n_pages):
             site.connectivity_summary.pages = n_pages
         else:
             # set statistics
-            entities.SiteConnectivitySummary(site=site, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree, pages=n_pages)
+            entities.SiteConnectivitySummary(site=site, incoming=n_incoming, outgoing=n_outgoing, degree=n_degree,
+                                             pages=n_pages)
 
     return site.connectivity_summary
 
@@ -264,6 +265,16 @@ def delete_statistics(s_url):
 
 
 # NODE LINKS - CRUD (Create Read Update Delete)
+def get_links():
+    """
+    Gets all links among sites
+
+    :return: list - list of links
+    """
+
+    return entities.Link.select()[:]
+
+
 def create_link(src_url, dst_url):
     """
     Creates a link if and only if both sites, source and destination site, exist.
@@ -366,8 +377,8 @@ def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_
             next_time_to_try = site.timestamp_s + timedelta(minutes=dbsettings.TIME_INTERVAL_TO_DISCOVER)
 
     # Creates the new processing status
-    return entities.SiteProcessingLog(site=site, status=new_status, timestamp=site.timestamp_s,\
-                                      http_status=s_http_status, http_response_time=s_http_response_time,\
+    return entities.SiteProcessingLog(site=site, status=new_status, timestamp=site.timestamp_s, \
+                                      http_status=s_http_status, http_response_time=s_http_response_time, \
                                       next_time_to_try=next_time_to_try)
 
 
@@ -395,18 +406,17 @@ def get_processing_logs_by_site_status(s_url, s_status=dbsettings.Status.DISCOVE
 
         if sorting_desc:
             # Descending order
-            site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status).\
-                order_by(desc(entities.SiteProcessingLog.timestamp))[:].to_list()
+            site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status). \
+                            order_by(desc(entities.SiteProcessingLog.timestamp))[:].to_list()
         else:
             # Ascending order
             site_logs = entities.SiteProcessingLog.select(lambda log: log.site == site and log.status == new_status). \
-                        order_by(entities.SiteProcessingLog.timestamp)[:].to_list()
+                            order_by(entities.SiteProcessingLog.timestamp)[:].to_list()
 
     return site_logs
 
 
 def get_all_processing_log():
-
     """
     Gets all processing log
 
@@ -417,7 +427,7 @@ def get_all_processing_log():
 
 
 # NODE PROCESSING STATUS - CRUD
-def get_sites_by_processing_status(s_status, uuid, sorting_desc=False):
+def get_sites_names_by_processing_status(s_status, uuid, sorting_desc=False):
     """
 
     Gets sites by processing status
@@ -430,13 +440,15 @@ def get_sites_by_processing_status(s_status, uuid, sorting_desc=False):
     assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
 
     if sorting_desc:
-        #Descending order
-        sites = select(site for site in entities.Site if site.uuid is uuid and site.current_status.type is s_status.name).\
+        # Descending order
+        sites = select(
+            site for site in entities.Site if site.uuid is uuid and site.current_status.type is s_status.name). \
                     order_by(desc(entities.Site.timestamp_s))[:].to_list()
     else:
-        #Ascending order
-        sites = select(site for site in entities.Site if site.uuid is uuid and site.current_status.type is s_status.name).\
-                order_by(entities.Site.timestamp_s)[:].to_list()
+        # Ascending order
+        sites = select(
+            site for site in entities.Site if site.uuid is uuid and site.current_status.type is s_status.name). \
+                    order_by(entities.Site.timestamp_s)[:].to_list()
 
     site_names = []
     # What we only need is the URL of the site which is the attribute 'name'
@@ -446,7 +458,33 @@ def get_sites_by_processing_status(s_status, uuid, sorting_desc=False):
     return site_names
 
 
-def set_site_current_processing_status(s_url, s_status, s_http_status='', s_http_response_time='', add_processing_log=True):
+def get_sites_by_processing_status(s_status, sorting_desc=False):
+    """
+
+    Gets sites by processing status
+
+    :param s_status: str - The chosen processing status
+    :param sorting_desc: bool - Sorting order: True (desc), False (asc - default in PONY)
+    :return: sites_names: list of str - The url of the sites in status ``s_status``
+    """
+    assert isinstance(s_status, dbsettings.Status), 'Not valid type of status'
+
+    if sorting_desc:
+        # Descending order
+        sites = select(
+            site for site in entities.Site if site.current_status.type is s_status.name). \
+                    order_by(desc(entities.Site.timestamp_s))[:].to_list()
+    else:
+        # Ascending order
+        sites = select(
+            site for site in entities.Site if site.current_status.type is s_status.name). \
+                    order_by(entities.Site.timestamp_s)[:].to_list()
+
+    return sites
+
+
+def set_site_current_processing_status(s_url, s_status, s_http_status='', s_http_response_time='',
+                                       add_processing_log=True):
     """
     Creates and sets a new processing status to a site.
 

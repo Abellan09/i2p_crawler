@@ -85,7 +85,7 @@ mysql> quit;
 ```
 
 ```
-(py27) $ cd <root_project_folder>/crawler/
+(py27) $ cd <root_project_folder>/crawler/database/
 (py27) $ python populate.py
 ```
 

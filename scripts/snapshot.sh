@@ -20,6 +20,7 @@ lfolder=$3
 # Remote scripts path
 root_path=/home/administrador/RMAGAN/projects/I2P_Crawler
 script_path=$root_path/scripts
+data_path=/home/administrador/datos
 
 # ts of snapshop
 ts=`date +"%d%m%y%H%M%S"`
@@ -36,11 +37,11 @@ snapshot() {
   then
   	echo "[+] Dumping bbdd $vm ..."
   	ssh $vm "cd $script_path; bash dump_bbdd.sh"
-	scp $vm:$root_path/i2p_database.sql $ts/$vm-backup
+	scp $vm:$data_path/i2p/i2p_database.sql $ts/$vm-backup
   	echo " "
   else
         echo "[+] Backing up $vm ..."
-	rsync -av --exclude='*nltk*' $vm:/home/administrador/datos/ $ts/$vm-backup
+	rsync -av --exclude='*nltk*' $vm:$data_path $ts/$vm-backup
   	echo " "
   fi
  

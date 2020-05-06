@@ -38,10 +38,16 @@ snapshot() {
   	echo "[+] Dumping bbdd $vm ..."
   	ssh $vm "cd $script_path; bash dump_bbdd.sh"
 	scp $vm:$data_path/i2p/i2p_database.sql $ts/$vm-backup
+	echo "[+] Compressing backup file for $vm..."
+	tar czf $ts/$vm-backup.tar.gz $ts/$vm-backup
+	rm -r $ts/$vm-backup
   	echo " "
   else
         echo "[+] Backing up $vm ..."
-	rsync -av --exclude='*nltk*' $vm:$data_path $ts/$vm-backup
+	rsync -av --exclude='*nltk*' $vm:$data_path/ $ts/$vm-backup
+	echo "[+] Compressing backup file for $vm..."
+	tar czf $ts/$vm-backup.tar.gz $ts/$vm-backup
+	rm -r $ts/$vm-backup
   	echo " "
   fi
  

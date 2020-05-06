@@ -18,7 +18,7 @@ echo "[+] Deleting log and output files"
 echo "--> Deleting spider output"
 find $i2p_data/spiders -type f -delete
 echo "--> Deleting log output"
-rm $i2p_data/logs/*
+find $i2p_data/logs -type f -delete
 
 
 

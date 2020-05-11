@@ -44,7 +44,7 @@ get_status() {
 # Reseting BBDD and schema
 #  if [ $vm == 'i2pProjectBBDD' ]
 #  then
-  	    echo "[+] HD status $vm ..."
+  	echo "[+] HD status $vm ..."
         ssh $vm "df -kh | grep -e \"sd\""
         echo " "
 
@@ -54,6 +54,7 @@ get_status() {
 #  fi
 
   echo "---- VM $vm -----"
+  echo " "
   echo " "
 
 }

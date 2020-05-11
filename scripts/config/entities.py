@@ -17,7 +17,7 @@ from datetime import datetime
 db = Database()
 
 #TODO: move this to a config file
-db.bind(provider='mysql', host='localhost', user='i2p', passwd='4=XoG!*L', db='i2p_database')
+db.bind(provider='mysql', host='127.0.0.1', user='i2p', passwd='4=XoG!*L', db='i2p_database')
 
 
 class Site(db.Entity):

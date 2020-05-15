@@ -27,6 +27,6 @@ HTTP_TIMEOUT = 30  # Seconds
 # Initial seed file
 INITIAL_SEEDS = "all_seeds.txt"
 # Batch size of initial seeds
-INITIAL_SEEDS_BACH_SIZE = 475  # 4750/10=475
+INITIAL_SEEDS_BACH_SIZE = 460  # 4599/10=459,6 ~ 460
 # Time to wait until the next seeds self-assignment
 SEEDS_ASSIGMENT_PERIOD = 30*60  # seconds

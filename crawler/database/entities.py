@@ -28,20 +28,20 @@ class Site(db.Entity):
     pages = Optional(int)
     uuid = Optional(str)
     type = Required('SiteType')
-    processing_log = Set('SiteProcessingLog')
+    processing_log = Set('SiteProcessingLog', cascade_delete=True)
     current_status = Optional('SiteStatus')
     source = Optional('SiteSource')
     # Creation timestamp
     timestamp = Required(datetime)
     # Change status timestamp
     timestamp_s = Required(datetime)
-    connectivity_summary = Optional('SiteConnectivitySummary')
+    connectivity_summary = Optional('SiteConnectivitySummary', cascade_delete=True)
     footprint = Optional('SiteFootprint')
     src_link = Set('Link', reverse='src_site')
     dst_link = Set('Link', reverse='dst_site')
     categories = Set('SiteCategory')
-    languages = Set('SiteLanguage')
-    homeinfo = Set('SiteHomeInfo')
+    languages = Set('SiteLanguage', cascade_delete=True)
+    homeinfo = Set('SiteHomeInfo', cascade_delete=True)
     qos = Set('SiteQoS')
 
 

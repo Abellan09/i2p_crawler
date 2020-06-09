@@ -99,6 +99,17 @@ def get_site(s_url):
     return entities.Site.get(name=s_url)
 
 
+def get_site_by_id(s_id):
+    """
+    Gets the site by its ID
+
+    :param s_id: int - ID of the site
+    :return: Site - The site or None if it was not found.
+    """
+    # Gets the site by url
+    return entities.Site.get(id=s_id)
+
+
 def get_sites():
     """
     Gets all sites
@@ -117,6 +128,18 @@ def delete_site(s_url):
     """
     # Gets the site to delete
     site = entities.Site.get(name=s_url)
+    # If the site exists
+    if isinstance(site, entities.Site):
+        site.delete()
+
+def delete_site_by_id(s_id):
+    """
+    Deletes the site by its ID which is the name of the site if it exists.
+
+    :param s_id: int - ID of the site
+    """
+    # Gets the site to delete
+    site = entities.Site.get(id=s_id)
     # If the site exists
     if isinstance(site, entities.Site):
         site.delete()
@@ -317,6 +340,18 @@ def get_incoming_links(ts_url):
     return incoming
 
 
+def get_incoming_links_by_site_id(ts_id):
+    """
+    Gets all incoming links to a destination site
+
+    :param ts_id: int - ID of the destination site
+    :return: list of Link
+    """
+    incoming = select(
+        link for link in entities.Link for dst_site in link.dst_site if dst_site.id == ts_id)[:]
+    return incoming
+
+
 def get_outgoing_links(ss_url):
     """
     Gets all outgoing links from a source site
@@ -326,6 +361,18 @@ def get_outgoing_links(ss_url):
     """
     outgoing = select(
         link for link in entities.Link for src_site in link.src_site if src_site.name == ss_url)[:]
+    return outgoing
+
+
+def get_outgoing_links_by_site_id(ss_id):
+    """
+    Gets all outgoing links from a source site
+
+    :param ss_id: int - ID of the source site
+    :return: list of Link
+    """
+    outgoing = select(
+        link for link in entities.Link for src_site in link.src_site if src_site.id == ss_id)[:]
     return outgoing
 
 
@@ -341,6 +388,22 @@ def delete_links(s_url):
 
     # Delete outgoing links
     outgoing = get_outgoing_links(s_url)
+    [link.delete() for link in outgoing]
+
+
+def delete_links_by_site_id(s_id):
+    """
+    Deletes all links to and from a specific site
+
+    :param s_id: int - ID of the site
+    """
+
+    # Delete incoming links
+    incoming = get_incoming_links_by_site_id(s_id)
+    [link.delete() for link in incoming]
+
+    # Delete outgoing links
+    outgoing = get_outgoing_links_by_site_id(s_id)
     [link.delete() for link in outgoing]
 
 

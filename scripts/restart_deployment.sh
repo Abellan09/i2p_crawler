@@ -41,8 +41,8 @@ else
 	for vm in $vm_list;
 	do
 	  deploy $vm
-	  echo "[+] Waiting 1 mins ..."
-	  sleep 1m
+	  #echo "[+] Waiting 1 mins ..."
+	  #sleep 1m
 	done
 
 fi

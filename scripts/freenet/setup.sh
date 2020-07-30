@@ -4,6 +4,7 @@
 # Author: Emilio Figueras, 2020
 
 root_path=~/RMAGAN/projects/I2P_Crawler
+cd $root_path
 
 echo "[+] Creating folders..."
 mkdir -p logs

@@ -11,7 +11,6 @@ ssh freenetProjectBBDD "cd $script_path; bash dump_database.sh"
 echo " "
 
 echo "[+] Download database freenet_database.sql"
-ssh freenetProjectBBDD "cd $script_path; bash dump_database.sh"
 scp freenetProjectBBDD:$data_path/i2p/freenet_database.sql freenet_database.sql
 echo " "
 

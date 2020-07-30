@@ -1,15 +1,23 @@
 import socket
 import time
+from database import connection_settings
 
 def connectThroughProxy(eepsite_url):
     headers = "GET " + eepsite_url + " HTTP/1.1\r\n\r\n"
 
-    host = "localhost" #proxy server IP
-    port = 4444        #proxy server port
+    if not connection_settings.PROXY:
+        host = None
+        port = None
+    elif ':' in connection_settings.PROXY:
+        host = connection_settings.PROXY.split(':')[0]
+        port = connection_settings.PROXY.split(':')[1]
+    else:
+        host = connection_settings.PROXY
+        port = None
 
     try:
         s = socket.socket()
-        print("Connecting to " + eepsite_url)
+        print(("Connecting to " + eepsite_url))
         s.connect((host,port))
         #print(headers)
         s.send(headers.encode('utf-8'))
@@ -29,7 +37,7 @@ def connectThroughProxy(eepsite_url):
 
         s.close()
     except socket.error as m:
-        print (str(m))
+        print((str(m)))
         s.close()
 
     return response, start_time, end_time, elapsed_time

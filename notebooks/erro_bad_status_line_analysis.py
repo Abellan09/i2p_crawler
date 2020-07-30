@@ -37,9 +37,9 @@ def printResponse(response):
     '''
     HTTP response printing
     '''
-    print(response.status_code)
-    print(response.elapsed.total_seconds())
-    print(response.headers)
+    print((response.status_code))
+    print((response.elapsed.total_seconds()))
+    print((response.headers))
 
 
 # In[44]:
@@ -65,7 +65,7 @@ site_error = {}
 for site in bsl:
     try:
         url='http://'+site
-        print("[+] Connecting to " + url)
+        print(("[+] Connecting to " + url))
 
         response = connectThroughProxy(url, proxies, timeout)
         printResponse(response)
@@ -82,9 +82,9 @@ for site in bsl:
 # In[66]:
 
 
-for site in site_error.keys():
+for site in list(site_error.keys()):
     command="ncat -v --proxy localhost:4444 "+ site
-    print("[+] " + str(command))
+    print(("[+] " + str(command)))
     p = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE)
     (output, err) = p.communicate()
     print(output)

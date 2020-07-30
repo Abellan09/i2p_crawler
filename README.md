@@ -19,7 +19,7 @@ for that are:
 - Linux **Unbuntu 16.04** and above (it can be run in older version)
 - **I2P router** (latest version)
 - **Mysql 5.7**, though some other DBMS can be used like SQLite.
-- **Python 2.7** environment (+ dependencies found in requeriments.txt)
+- **Python 3.7** environment (+ dependencies found in requeriments.txt)
 
 #### Installation steps
 As python based tool, we recommend to use virtual environments. In the following, we are going
@@ -49,25 +49,21 @@ mysql> quit;
 
 1) Creating a virtual environment.
 ```
-$ conda create -n py27 python=2.7
-$ conda activate py27
-(py27) $
+$ conda create -n py37 python=3.7
+$ conda activate py37
+(py37) $
 ```
 2) Installing python dependencies.
 ```
-(py27) $ cd <root_project_folder>/crawler/
-(py27) $ pip install -r requirements.txt
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ pip install -r requirements.txt
 ```
 
 3) Database access from python.
 
 We use pony ORM for data persistence layer, so how to connect to database must be configured.
-Please edit the lien in file ```entities.py``` which is located 
-in ```<root_project_folder>/crawler/database/```. Please, change the ```password``` accordingly.
-
-```
-db.bind(provider='mysql', host='localhost', user='i2p', passwd='password', db='i2p_database')
-```
+Please edit the lien in file ```connection_settings.py``` which is located 
+in ```<root_project_folder>/crawler/database/```.
 
 ### Crawling
 Now it is time to crawl the I2P network. Every time you want to start a new crawling procedure,
@@ -85,8 +81,8 @@ mysql> quit;
 ```
 
 ```
-(py27) $ cd <root_project_folder>/crawler/database/
-(py27) $ python populate.py
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ python populate.py
 ```
 
 2) Spiders crawling output.
@@ -95,8 +91,8 @@ Spiders output JSON files in specific folders so they should already be created.
 On the contrary, please create them. For a clean and fresh running, delete all files in that folders.
 
 ```
-(py27) $ cd <root_project_folder>/crawler/i2p/spiders/
-(py27) $ mkdir finished ongoing
+(py37) $ cd <root_project_folder>/crawler/i2p/spiders/
+(py37) $ mkdir finished ongoing
 ```
 
 3) Supervising crawling procedure: log.
@@ -105,16 +101,16 @@ In order to supervise the crawling procedure, the log file is created in a speci
 If "logs" folder is not created, please create it. For a clean and fresh running, delete this file.
 
 ```
-(py27) $ cd <root_project_folder>/
-(py27) $ mkdir logs
+(py37) $ cd <root_project_folder>/
+(py37) $ mkdir logs
 ```
 
 4) Starting the crawling process.
 
 
 ```
-(py27) $ cd <root_project_folder>/crawler/
-(py27) $ python manager.py &> /dev/null
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ python manager.py &> /dev/null
 ```
 
 If you want to supervise the crawling procedure please use see 
@@ -130,8 +126,9 @@ launch the crawler appending ```&> /dev/null``` but it is up to the user.
 * **Alberto Abellán-Galera**
 * **Roberto Magán-Carrión**
 * **Gabriel Maciá-Fernández**
+* **Emilio Figueras Martín**
 
-See also the list of [contributors](https://github.com/nesg-ugr/I2P_Crawler/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/EmilioFigueras/I2P_Crawler/graphs/contributors) who participated in this project.
 
 ## License
 

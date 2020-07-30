@@ -1,19 +1,22 @@
 # encoding: utf-8
 
-import scrapy		# https://doc.scrapy.org/en/latest
+'''import scrapy		# https://doc.scrapy.org/en/latest
 import os			# https://docs.python.org/2/library/os.html
 import shutil		# https://docs.python.org/2/library/shutil.html
-import urlparse		# https://docs.python.org/2/library/urlparse.html
+import urllib.parse		# https://docs.python.org/2/library/urlparse.html
 import copy			# https://docs.python.org/2/library/copy.html
 import time			# https://docs.python.org/2/library/time.html
 import operator		# https://docs.python.org/2/library/operator.html
 import json			# https://docs.python.org/2/library/json.html
 import nltk			# https://www.nltk.org
+nltk.download('punkt')
+nltk.download('stopwords')
 import random 		# https://docs.python.org/2/library/random.html
 import re			# https://docs.python.org/2.7/library/re.html
 from w3lib.html import remove_tags
 from i2p.items import I2P_spider_state
-from py_translator import Translator
+#from py_translator import Translator
+from googletrans import Translator
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError 
@@ -23,7 +26,22 @@ import i2p.i2psettings as i2psettings
 import sys
 
 import logging
+from logging.handlers import RotatingFileHandler'''
+
+from . import spiderBase
+import random 		# https://docs.python.org/2/library/random.html
+import re			# https://docs.python.org/2.7/library/re.html
+import logging
 from logging.handlers import RotatingFileHandler
+import sys
+import copy			# https://docs.python.org/2/library/copy.html
+import time			# https://docs.python.org/2/library/time.html
+import operator		# https://docs.python.org/2/library/operator.html
+import json			# https://docs.python.org/2/library/json.html
+import os			# https://docs.python.org/2/library/os.html
+import urllib.parse		# https://docs.python.org/2/library/urlparse.html
+from database import dbsettings
+
 
 logger = logging.getLogger(__name__)
 format = logging.Formatter('%(asctime)s %(levelname)s - %(threadName)s - mod: %(module)s, method: %(funcName)s, msg: %(message)s')
@@ -33,13 +51,13 @@ ch.setFormatter(format)
 ch.setLevel(logging.INFO)
 logger.addHandler(ch)
 
-fh = RotatingFileHandler(i2psettings.PATH_LOG + "spiders.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+fh = RotatingFileHandler(spiderBase.i2psettings.PATH_LOG + "spiders.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
 fh.setFormatter(format)
 fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
 
 
-class I2P_Spider(scrapy.Spider):
+class I2P_Spider(spiderBase.spiderBase):
 	
 	'''
 	EN: Spider that is responsible for extracting the links contained in an eepsite.
@@ -49,30 +67,7 @@ class I2P_Spider(scrapy.Spider):
 	Para obtener información general sobre scrapy.Spider, consulte: https://doc.scrapy.org/en/latest/topics/spiders.html
 	'''
 	
-	name = "i2p"
-	end_time = 0
-	start_time = 0
-	start_urls = []
-	MAX_VISITED_LINKS = 1000
-	overflow_visited_links = 0
-	visited_links = {}
-	non_visited_links_filename = "none"
-	parse_eepsite = None
-	error = True
-	state_item = I2P_spider_state()
-	state_item["eepsite"] = "none"
-	state_item["visited_links"] = {}
-	state_item["language"] = {}
-	state_item["extracted_eepsites"] = []
-	state_item["total_eepsite_pages"] = 0
-	state_item["title"] = "none"
-	state_item["size_main_page"] = {}
-	state_item["main_page_tokenized_words"] = []
-	cond = False
-	LANGUAGES_NLTK = [] # Lista de idiomas disponibles en la nltk
-	LANGUAGES_GOOGLE = {} # Lista de idiomas disponibles en API Google
-	main_page = True
-	extractor_i2p = LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),allow_domains=('i2p'),deny_extensions=())
+	name = dbsettings.Type.I2P.name
 	
 	def __init__(self, url=None, *args, **kwargs):
 		'''
@@ -83,19 +78,21 @@ class I2P_Spider(scrapy.Spider):
 		'''
 		super(I2P_Spider, self).__init__(*args, **kwargs)
 		logger.debug("Dentro de __init__()")
+		self.extractor_i2p = spiderBase.LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),allow_domains=('i2p'),deny_extensions=())
 		if url is not None:
-			with open(i2psettings.PATH_DATA + "languages_google.json") as f:
+			with open(spiderBase.i2psettings.PATH_DATA + "languages_google.json") as f:
 				self.LANGUAGES_GOOGLE = json.load(f)
-			with open(i2psettings.PATH_DATA + "languages_nltk.txt") as g:
+			with open(spiderBase.i2psettings.PATH_DATA + "languages_nltk.txt") as g:
 				line = g.readline() 
 				while line != "":
 					line = line.replace("\n", "")
 					self.LANGUAGES_NLTK.append(line)
 					line = g.readline()
 
-			self.parse_eepsite = urlparse.urlparse(url)
+			logger.debug("URL inicial que se recibe = %s", url)
+			self.parse_eepsite = urllib.parse.urlparse(url)
 			
-			self.non_visited_links_filename = i2psettings.PATH_ONGOING_SPIDERS + "nvl_" + self.parse_eepsite.netloc + ".txt"
+			self.non_visited_links_filename = spiderBase.i2psettings.PATH_ONGOING_SPIDERS + "nvl_" + self.parse_eepsite.netloc + ".txt"
 			if not os.path.isfile(self.non_visited_links_filename):
 				f = open(self.non_visited_links_filename, "a")
 				f.close()
@@ -114,7 +111,114 @@ class I2P_Spider(scrapy.Spider):
 						line = f.readline() 
 			
 			self.state_item["eepsite"]=self.parse_eepsite.netloc
-			spider_file = i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
+			spider_file = spiderBase.i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
+			ongoing_spider = os.path.exists(spider_file)
+			if(ongoing_spider):
+				logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
+				# Leemos la última línea y cargamos el estado.
+				target = spider_file
+				with open(target) as f:
+					try:
+						state = json.load(f)
+						file_empty = False
+					except ValueError as error:
+						logger.debug("Invalid json: %s" % error)
+						file_empty = True
+					if not file_empty:
+						self.error = False
+						if "visited_links" in state:
+							self.state_item["visited_links"] = state["visited_links"]
+							self.visited_links = self.state_item["visited_links"].copy()
+						if "language" in state:
+							self.state_item["language"] = state["language"]
+						if "extracted_eepsites" in state:
+							self.state_item["extracted_eepsites"] = state["extracted_eepsites"]
+						if "total_eepsite_pages" in state:
+							self.state_item["total_eepsite_pages"] = state["total_eepsite_pages"]
+						if "title" in state:
+							self.state_item["title"] = state["title"]
+						if "size_main_page" in state:
+							self.state_item["size_main_page"] = state["size_main_page"]
+						if "main_page_tokenized_words" in state:
+							self.state_item["main_page_tokenized_words"] = state["main_page_tokenized_words"]
+						self.main_page = False
+			else:
+				self.start_urls.append(url)
+				self.start_time = time.time()
+				logger.info("Start URL: %s", str(self.start_urls[0]))
+		else:
+			logger.error("No URL passed to crawl")
+
+
+class Freenet_Spider(spiderBase.spiderBase):
+	
+	'''
+	EN: Spider that is responsible for extracting the links contained in an freesite.
+	SP: Spider que se encarga de extraer los links contenidos en un eepsite.
+	
+	For general information about scrapy.Spider, see: https://doc.scrapy.org/en/latest/topics/spiders.html
+	Para obtener información general sobre scrapy.Spider, consulte: https://doc.scrapy.org/en/latest/topics/spiders.html
+	'''
+	
+	name = dbsettings.Type.FREENET.name
+	url = None
+	url_parsed = None #URL Parsed to filename
+	
+	def __init__(self, url=None, *args, **kwargs):
+		'''
+		EN: It initializes the seed URL list with the URL that has been passed as a parameter
+		SP: Inicializa la lista de URLs semilla con la URL pasada como parámetro.
+		
+		:param url: url of the site to crawl / url del site a crawlear
+		'''
+		super(Freenet_Spider, self).__init__(*args, **kwargs)
+		logger.debug("Dentro de __init__()")
+
+		self.extractor_i2p = spiderBase.LinkExtractor(tags=('a','area','base','link','audio','embed','iframe','img','input','script','source','track','video'),attrs=('href','src','srcset'),allow_domains=['127.0.0.1:8888','localhost:8888'], process_value=self.process_value)
+		if url is not None:
+			with open(spiderBase.i2psettings.PATH_DATA + "languages_google.json") as f:
+				self.LANGUAGES_GOOGLE = json.load(f)
+			with open(spiderBase.i2psettings.PATH_DATA + "languages_nltk.txt") as g:
+				line = g.readline() 
+				while line != "":
+					line = line.replace("\n", "")
+					self.LANGUAGES_NLTK.append(line)
+					line = g.readline()
+
+			logger.debug("URL inicial que se recibe = %s", url)
+
+			self.parse_eepsite = self.freenet_urlparse(url)
+			self.url = self.parse_eepsite.netloc
+			self.url_parsed = self.url.replace('https://', '') #Freenet parsed
+			self.url_parsed = self.url_parsed.replace('http://', '') #Freenet parsed
+			self.url_parsed = self.url_parsed.replace('/', '__') #Freenet parsed
+			self.url_parsed = self.url_parsed.replace('freenet:', '') #Deleted freenet: word
+
+			
+			#logger.debug("URL netloc parsed = {}".format(self.parse_eepsite.netloc))
+
+			#self.non_visited_links_filename = i2psettings.PATH_ONGOING_SPIDERS + "nvl_" + self.parse_eepsite.netloc + ".txt"
+			self.non_visited_links_filename = spiderBase.i2psettings.PATH_ONGOING_SPIDERS + "nvl_" + self.url_parsed + ".txt"
+			if not os.path.isfile(self.non_visited_links_filename):
+				f = open(self.non_visited_links_filename, "a")
+				f.close()
+				self.start_urls.append(url)
+			elif os.stat(self.non_visited_links_filename).st_size != 0:
+				max_size_start_urls = 50
+				count = 0
+				with open(self.non_visited_links_filename) as f:
+					line = f.readline() 
+					while line != "" and count<max_size_start_urls:
+						line = line.replace("\n", "")
+						link = "http://" + str(self.parse_eepsite.netloc) + line
+						self.start_urls.append(link)
+						logger.debug("Link añadido a start_urls: " + link)
+						count = count + 1
+						line = f.readline() 
+			
+			self.state_item["eepsite"]=self.url_parsed
+			spider_file = spiderBase.i2psettings.PATH_ONGOING_SPIDERS + self.state_item["eepsite"] + ".json"
+			#spider_file = i2psettings.PATH_ONGOING_SPIDERS + self.url_parsed + ".json"
 			ongoing_spider = os.path.exists(spider_file)
 			if(ongoing_spider):
 				logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
@@ -152,187 +256,140 @@ class I2P_Spider(scrapy.Spider):
 		else:
 			logger.error("No URL passed to crawl")
 	
-	def start_requests(self):
+	def process_value(self, value):
 		'''
-		EN: It returns an iterable of Requests which the Spider will begin to crawl.
-		SP: Devuelve un iterable de Requests que el Spider comenzará a crawlear.
+		EN: Locate the Freesite within the analyzed data.
+		SP: Localiza el Freesite dentro de los datos analizados.
 		'''
-		logger.debug("Dentro de start_requests()")
-		for u in self.start_urls:
-			yield scrapy.Request(u, callback = self.parse, errback = self.err, dont_filter=True)  
-	
-	def detect_language_nltk(self, sample):
-		'''
-		EN: It uses NLTK platform to detect the language of a given sample.
-		SP: Utiliza la plataforma NLTK para detectar el idioma de una muestra dada.
-		
-		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
-		:return: the detected language / el idioma detectado
-		'''
-		logger.debug("Dentro de detect_language_nltk()")
-		# Dividimos el texto de entrada en tokens o palabras únicas
-		tokens = nltk.tokenize.word_tokenize(sample)
-		tokens = [t.strip().lower() for t in tokens] # Convierte todos los textos a minúsculas para su posterior comparación
-		# Creamos un dict donde almacenaremos la cuenta de las stopwords para cada idioma
-		lang_count = {}
-		# Por cada idioma
-		try:
-			for lang in self.LANGUAGES_NLTK:
-				# Obtenemos las stopwords del idioma del módulo nltk
-				stop_words = unicode(nltk.corpus.stopwords.words(lang))
-				lang_count[lang] = 0 # Inicializa a 0 el contador para cada idioma
-				# Recorremos las palabras del texto a analizar
-				for word in tokens:
-					if word in stop_words: # Si la palabra se encuentra entre las stopwords, incrementa el contador
-						lang_count[lang] += 1
-			#print lang_count
-			# Obtenemos el idioma con el número mayor de coincidencias
-			language_nltk = max(lang_count, key=lang_count.get)
-			if lang_count[language_nltk] == 0:
-				language_nltk = 'undefined'
-		except UnicodeDecodeError as e:
-			logger.error('ERROR:',e)
-			language_nltk = 'error'
-		finally:
-			return language_nltk
-		
-	def detect_language_google(self, sample):
-		'''
-		EN: It uses Google Translate to detect the language of a given sample.
-		SP: Utiliza el Traductor de Google para detectar el idioma de una muestra dada.
-		
-		:param sample: sample of text from which the language is detected / muestra de texto a partir de la cual detectar el idioma
-		:return: the detected language / el idioma detectado
-		'''
-		logger.debug("Dentro de detect_language_google()")
-		language_google=""
-		try:
-			translator = Translator()
-			det = translator.detect(sample)
-			language_google = self.LANGUAGES_GOOGLE[det.lang]
-		except ValueError as e:
-			logger.error('ERROR:',e)
-			language_google = "undefined--" + det.lang
-		finally:
-			return language_google
-
-	def add_visited_links(self, link):
-		'''
-		EN: It controls the process of adding a new link to the visited_links dictionary.
-		SP: Controla el proceso de adición de un nuevo link al diccionario visited_links.
-		
-		:param link: link to process / link a procesar
-		'''
-		logger.debug("Dentro de add_visited_links()")
-		if link in self.visited_links:
-			count = self.visited_links.get(link) + 1
-			self.visited_links.update({link:count})
+		#logger.debug("Entra en process_value con el enlace: {}".format(value))
+		FREENET_REGEX = r"""((((127.0.0.1|localhost):8888/){0,1}(freenet:){0,1}(USK|SSK)@[a-zA-Z0-9~\-]{43},[a-zA-Z0-9~\-]{43},(AQACAAE|AQABAAE|AQECAAE|AAMC--8|AAIC--8|AAICAAA)/[a-zA-Z0-9\-\._%?\\& ]{0,150})/?[0-9\-]{0,10})/?(.*)"""
+		m = re.search(FREENET_REGEX, value)
+		if m:
+			#Nos aseguramos de que tenga el http en la direccion y eliminamos queries y fragments
+			
+			link = m.group(0).replace('http://', '')
+			if "127.0.0.1" not in link and "localhost" not in link:
+				link = '127.0.0.1:8888/' + link
+			#logger.debug("Freesite localizado: {}".format(link))
+			link_parse = self.freenet_urlparse(link)
+			link = 'http://' + link_parse.netloc + link_parse.path
+			return link
 		else:
-			if len(self.visited_links)>=self.MAX_VISITED_LINKS:
-				self.overflow_visited_links = self.overflow_visited_links + 1
-				logger.info("Overflow_visited_links = " + str(self.overflow_visited_links))
-				min_val = min(self.visited_links.itervalues())
-				urls_min_value=[]
-				for url, value in self.visited_links.iteritems():
-					if value==min_val:
-						urls_min_value.append(url)
-				key = random.sample(urls_min_value, 1)[0]
-				del self.visited_links[key]
-			self.visited_links[link]=1
+			#logger.debug("No se ha encontrado nada en: {}".format(value))
+			return None
+	
+	#Clase utilizada para reflejar la descomposicion de un freesite
+	class Freesite():
+		pass
 
-	def split_words_in_groups(self, words):
+	def freenet_urlparse(self, url):
 		'''
-		EN: It separates the words contained on the main page into an odd number of groups of maximum 200 words each.
-		SP: Separa las palabras contenidas en la página principal en un número impar de grupos de máximo 200 palabras cada uno.
+		EN: Break down a URL simulating the urlib function urlparse but for freenet addresses
+		SP: Descompone una URL simulando la funcion urlparse de urllib pero para direcciones freenet
 		
-		:param words: full set of words / conjunto de palabras completo
-		:return: list that contains the groups of words / lista que contiene los grupos de palabras
+		:param url: Freesite url
+		:return: The decomposition of the url / La descomposicion de la url
 		'''
-		logger.debug("Dentro de split_words_in_groups()")
-		words_delimiter=[]
-		if len(words)>=200:
-			self.cond=True
-		while self.cond:
-			words_delimiter.append(words[0:200])
-			for i in range(0,200):
-				words.pop(0)
-			if len(words)<200:
-				self.cond=False
-		if len(words_delimiter)%2==0:
-			words_delimiter.append(words[0:len(words)])
-		return words_delimiter
+
+		parse_freesite = self.Freesite()
+
+		#Agregamos el http si no lo tiene
+		if url.find('http', 0, 4) == -1:
+				url = 'http://' + url
 		
-	def main_page_analysis(self, response):
-		'''
-		EN: It analyzes and extracts information from the main page of an eepsite.
-		SP: Analiza y extrae información de la página principal de un eepsite.
-		
-		:param response: response returned by an eepsite main page / respuesta devuelta por la página principal de un eepsite
-		'''
-		logger.debug("Dentro de main_page_analysis()")
-		main_page_code = response.body
-		soup = BeautifulSoup(main_page_code,"html5lib")
-		text = soup.get_text(strip=True)
-		tokens = [t for t in text.split()]
-		main_page_without_tags = remove_tags(main_page_code)
-		title = response.xpath('normalize-space(//title/text())').extract()
-		sample = re.sub('[^?!A-Za-z0-9]+', ' ', main_page_without_tags)
-		words=sample.replace("\n","")
-		words=words.split(" ")
-		num_words=len(words)
-		logger.info("Total words in main page: " + str(num_words))
-		num_letters=0
-		for word in words:
-			num_letters = num_letters + len(word)
-		logger.info("Total letters in main page: " + str(num_letters))
-		
-		sample=self.split_words_in_groups(words)
-		language_google=[]
-		language_nltk=[]
-		for i in range(0, len(sample)):
-			# Lenguaje con API de GOOGLE:
-			try:
-				language_google.append(self.detect_language_google(" ".join(sample[i])))
-			except ValueError as e:
-				logger.error('ERROR:',e)
-				lang_google_error = "undefined--" + det.lang
-				#print "\nLanguage error: " + str(lang_google_error)
-				language_google.append(lang_google_error)
-			#print str(language_google)
-			# Lenguaje con nltk:
-			language_nltk.append(self.detect_language_nltk(" ".join(sample[i])))
-			#print str(language_nltk)
-		freq_lang_google = []
-		for w in language_google:
-			freq_lang_google.append(language_google.count(w))
-		language_google_decision = language_google[freq_lang_google.index(max(freq_lang_google))]
-		freq_lang_nltk = []
-		for w in language_nltk:
-			freq_lang_nltk.append(language_nltk.count(w))
-		language_nltk_decision = language_nltk[freq_lang_nltk.index(max(freq_lang_nltk))]
-		logger.debug("Language_google: " + str(language_google))
-		logger.debug("Language_nltk: " + str(language_nltk))
-		#logger.debug(("Pairs (Google):\n" + str(zip(language_google, freq_lang_google)))
-		#logger.debug(("Pairs (NLTK):\n" + str(zip(language_nltk, freq_lang_nltk)))
-		
-		images = response.xpath('//img').extract()
-		scripts = response.xpath('//script').extract()
-		num_images = len(images)
-		num_scripts = len(scripts)
-		#logger.debug("Images (content): " + str(images))
-		#logger.debug("Scripts (content): " + str(scripts))
-		logger.debug("Images: " + str(num_images))
-		logger.debug("Scripts: " + str(num_scripts))
-		
-		# Añadiendo al item:
-		self.state_item["title"] = title
-		self.state_item["main_page_tokenized_words"] = tokens
-		self.state_item["size_main_page"]['WORDS'] = num_words
-		self.state_item["size_main_page"]['LETTERS'] = num_letters
-		self.state_item["size_main_page"]['IMAGES'] = num_images
-		self.state_item["size_main_page"]['SCRIPTS'] = num_scripts
-		self.state_item["language"]['GOOGLE'] = language_google_decision
-		self.state_item["language"]['NLTK'] = language_nltk_decision
+		#Eliminamos la palabra freenet
+		url = url.replace('freenet:', '')
+
+		#Generamos el formato parsed simulando el urlparse de urllib para los freesites USK
+		if url.find('USK@') != -1 or url.find('USK%40') != -1:
+			url_split = url.split("/", 6)
+			parse_freesite.scheme = ""
+			parse_freesite.netloc = url_split[2] + "/" + url_split[3] + "/" + url_split[4] + "/" + url_split[5]
+			if len(url_split) == 7:
+				parse_freesite.path = "/" + url_split[6]
+				if "?" in parse_freesite.path:
+					path_split = parse_freesite.path.split("?", 1)
+					parse_freesite.path = path_split[0]
+					parse_freesite.query = "?" + path_split[1]
+				else:
+					parse_freesite.query = ""
+				if "#" in parse_freesite.path:
+					fragment_split = parse_freesite.path.split("#", 1)
+					parse_freesite.path = fragment_split[0]
+					parse_freesite.fragment = "#" + fragment_split[1]
+				elif "#" in parse_freesite.query:
+					fragment_split = parse_freesite.query.split("#", 1)
+					parse_freesite.query = fragment_split[0]
+					parse_freesite.fragment = "#" + fragment_split[1]
+				else:
+					parse_freesite.fragment = ""
+				parse_freesite.params = ""
+			else:
+				parse_freesite.path = ""
+				parse_freesite.params = ""
+				parse_freesite.query = ""
+				parse_freesite.fragment = ""
+			#logger.debug("USK Parse freesite = {}".format(parse_freesite))
+		#Generamos el formato parsed simulando el urlparse de urllib para los freesites CHK
+		elif url.find('CHK@') != -1 or url.find('CHK%40') != -1:
+			url_split = url.split("/", 2)
+			parse_freesite.scheme = ""
+			parse_freesite.netloc = url_split[2]
+			parse_freesite.path = ""
+			parse_freesite.params = ""
+			parse_freesite.query = ""
+			parse_freesite.fragment = ""
+		#Generamos el formato parsed simulando el urlparse de urllib para los freesites SSK
+		elif url.find('SSK@') != -1 or url.find('SSK%40') != -1:
+			url_split = url.split("/", 5)
+			parse_freesite.scheme = ""
+			parse_freesite.netloc = url_split[2] + "/" + url_split[3] + "/" + url_split[4]
+			if len(url_split) == 6:
+				parse_freesite.path = "/" + url_split[5]
+				if "?" in parse_freesite.path:
+					path_split = parse_freesite.path.split("?", 1)
+					parse_freesite.path = path_split[0]
+					parse_freesite.query = "?" + path_split[1]
+				else:
+					parse_freesite.query = ""
+				if "#" in parse_freesite.path:
+					fragment_split = parse_freesite.path.split("#", 1)
+					parse_freesite.path = fragment_split[0]
+					parse_freesite.fragment = "#" + fragment_split[1]
+				elif "#" in parse_freesite.query:
+					fragment_split = parse_freesite.query.split("#", 1)
+					parse_freesite.query = fragment_split[0]
+					parse_freesite.fragment = "#" + fragment_split[1]
+				else:
+					parse_freesite.fragment = ""
+				parse_freesite.params = ""
+			else:
+				parse_freesite.path = ""
+				parse_freesite.params = ""
+				parse_freesite.query = ""
+				parse_freesite.fragment = ""
+		#Generamos el formato parsed simulando el urlparse de urllib para los freesites KSK
+		elif url.find('KSK@') != -1 or url.find('KSK%40') != -1:
+			url_split = url.split("/", 2)
+			parse_freesite.scheme = ""
+			parse_freesite.netloc = url_split[2]
+			parse_freesite.path = ""
+			parse_freesite.params = ""
+			parse_freesite.query = ""
+			parse_freesite.fragment = ""
+		#ERROR
+		else:
+			logger.error("ERROR: Freesite type not found - URL = {}".format(url))
+			url_split = url.split("/", 2)
+			parse_freesite.scheme = ""
+			parse_freesite.netloc = url_split[2]
+			parse_freesite.path = ""
+			parse_freesite.params = ""
+			parse_freesite.query = ""
+			parse_freesite.fragment = ""
+
+		return parse_freesite
+
 
 	def delete_link_from_non_visited(self, link):
 		'''
@@ -341,8 +398,8 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param link: link to delete / link a eliminar
 		'''
-		logger.debug("Dentro de delete_link_from_non_visited()")
-		link_parse = urlparse.urlparse(link)
+		#logger.debug("Dentro de delete_link_from_non_visited()")
+		link_parse = self.freenet_urlparse(link)
 		link_path = link_parse.path
 		f = open(self.non_visited_links_filename,"r")
 		lines = f.readlines()
@@ -365,8 +422,8 @@ class I2P_Spider(scrapy.Spider):
 		:param link: link to check / link a comprobar
 		:return: boolean that is True if the link is in the file; False otherwise / booleano que está a True si el link se encuentra en el fichero; a False en caso contrario
 		'''
-		logger.debug("Dentro de check_link_in_non_visited()")
-		link_parse = urlparse.urlparse(link)
+		#logger.debug("Dentro de check_link_in_non_visited()")
+		link_parse = self.freenet_urlparse(link)
 		link_path = link_parse.path
 		belongs = False
 		with open(self.non_visited_links_filename) as f:
@@ -385,8 +442,8 @@ class I2P_Spider(scrapy.Spider):
 		
 		:param link: link to add / link a añadir
 		'''
-		logger.debug("Dentro de add_link_to_non_visited()")
-		link_parse = urlparse.urlparse(link)
+		logger.debug("Dentro de add_link_to_non_visited(): {}".format(link))
+		link_parse = self.freenet_urlparse(link)
 		link_path = link_parse.path
 		f = open(self.non_visited_links_filename,"a+")
 		f.write("\n")
@@ -419,12 +476,14 @@ class I2P_Spider(scrapy.Spider):
 			self.state_item["visited_links"]=self.visited_links.copy()
 			links = self.get_links(response)
 			for link in links:
-				parse_link = urlparse.urlparse(link.url)
+				parse_link = self.freenet_urlparse(link.url)
+				#Comprobar que no sea un enlace interno
 				if ((parse_link.netloc not in self.state_item["extracted_eepsites"]) and (parse_link.netloc != self.parse_eepsite.netloc)):
 					self.state_item["extracted_eepsites"].append(parse_link.netloc)
+				#Si es un enlace interno y no ha sido visitado aun
 				if ((not self.check_link_in_non_visited(link.url)) and (link.url not in self.visited_links) and (self.parse_eepsite.netloc == parse_link.netloc)):
 					self.add_link_to_non_visited(link.url)
-					yield scrapy.Request (link.url, callback = self.parse, errback = self.err, dont_filter=True)
+					yield spiderBase.scrapy.Request(link.url, callback = self.parse, errback = self.err, dont_filter=True)
 					if self.check_link_in_non_visited(response.url):
 						self.delete_link_from_non_visited(response.url)
 				yield self.state_item
@@ -433,19 +492,6 @@ class I2P_Spider(scrapy.Spider):
 			logger.error("ERROR scraping site %s: %s",response.url, e)
 			raise
 
-	
-	def get_links(self, response):
-		'''
-		EN: It extracts the links from a certain eepsite.
-		SP: Extrae los links de un determinado eepsite.
-		
-		:param response: response returned by an eepsite / respuesta devuelta por un eepsite
-		:return: list that contains the extracted links / lista que contiene los links extraídos
-		'''
-		logger.info("Extracting links ...")
-		links = self.extractor_i2p.extract_links(response)
-		return links
-	
 	def closed (self, reason):
 		'''
 		EN: It is called when the spider has ended the crawling process.
@@ -461,10 +507,13 @@ class I2P_Spider(scrapy.Spider):
 		logger.debug("Dentro de closed()")
 		logger.info("SPIDER FINALIZADO")
 		logger.info("ERROR = " + str(self.error))
-		site = self.parse_eepsite.netloc
-		ok = i2psettings.PATH_FINISHED_SPIDERS + site + ".ok"
-		fail = i2psettings.PATH_FINISHED_SPIDERS + site + ".fail"
-		target = i2psettings.PATH_ONGOING_SPIDERS + site + ".json"
+		#site = self.parse_eepsite.netloc
+		site = self.url_parsed
+		
+		logger.debug("SPIDER SITE = %s", site)
+		ok = spiderBase.i2psettings.PATH_FINISHED_SPIDERS + site + ".ok"
+		fail = spiderBase.i2psettings.PATH_FINISHED_SPIDERS + site + ".fail"
+		target = spiderBase.i2psettings.PATH_ONGOING_SPIDERS + site + ".json"
 		self.end_time = time.time()
 		if self.error:
 			f = open(fail, "w")
@@ -474,7 +523,8 @@ class I2P_Spider(scrapy.Spider):
 			f = open(ok, "w")
 			f.close()
 			logger.debug(".ok has been created at %s",ok)
-			logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
+			#logger.debug("Total time taken in crawling " + self.parse_eepsite.netloc + ": " + str(self.end_time - self.start_time) + " seconds.")
+			logger.debug("Total time taken in crawling " + self.url + ": " + str(self.end_time - self.start_time) + " seconds.")
 			if os.path.exists(self.non_visited_links_filename):
 				os.remove(self.non_visited_links_filename)
 			with open(target,'r+') as f:
@@ -483,37 +533,3 @@ class I2P_Spider(scrapy.Spider):
 				f.seek(0)
 				json.dump(data, f)
 				f.truncate()
-		
-	def err(self, failure):
-		'''
-		EN: It reports about possible errors that may occur when a request fails.
-		SP: Reporta los posibles errores que pueden producirse cuando una petición falla.
-		
-		This function is called when an error occurs (if any exception was raised while processing
-		the request). The showed errors are: HttpError, DNSLookupError y TimeoutError.
-		Esta función es llamada cuando ocurre un error (si se lanza cualquier extensión mientras se	procesa
-		una respuesta). Son mostrados los errores: HttpError, DNSLookupError y TimeoutError.
-		
-		:param failure: type of error which has ocurred / tipo de error que ha ocurrido (https://twistedmatrix.com/documents/current/api/twisted.python.failure.Failure.html)
-		'''
-		logger.debug("Dentro de err()")
-		logger.error("Detailed traceback %s ",failure.printDetailedTraceback())
-		logger.error("Error message %s ", failure.getErrorMessage())
-		
-		if failure.check(HttpError):
-			response = failure.value.response 
-			logger.error("HttpError occurred on %s", response.url)
-		elif failure.check(DNSLookupError): 
-			request = failure.request 
-			logger.error("DNSLookupError occurred on %s", request.url)
-		elif failure.check(TimeoutError, TCPTimedOutError): 
-			request = failure.request 
-			logger.error("TimeoutError occurred on %s", request.url)
-		else:
-			request = failure.request
-			if self.check_link_in_non_visited(request.url):
-				self.delete_link_from_non_visited(request.url)
-			if request.url not in self.visited_links:
-				self.add_visited_links(request.url)
-			self.state_item["visited_links"]=copy.deepcopy(self.visited_links)
-			yield self.state_item

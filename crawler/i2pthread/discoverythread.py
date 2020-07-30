@@ -18,12 +18,12 @@ from datetime import datetime
 from datetime import timedelta
 
 import regex
-from database import dbutils, dbsettings, entities
+from database import dbutils, dbsettings, entities, connection_settings
 from pony.orm import db_session
 from utils import siteutils
 
-from i2pthread import I2PThread
-from qos import request_conn
+from .i2pthread import I2PThread
+from .qos import request_conn
 
 # Set to True to show pony SQL queries
 #set_sql_debug(debug=True)
@@ -135,9 +135,15 @@ class SingleSiteDiscoveryThread(I2PThread, object):
 
                             eepsite_http = "http://" + self._eepsite
                             logging.debug("DISCOVERING: %s", self._eepsite)
-                            response = request_conn.connectThroughProxy(eepsite_http,
-                                                                        proxies={'http': 'http://localhost:4444'},
+                            if not connection_settings.PROXY:
+                                response = request_conn.connectThroughProxy(eepsite_http,
+                                                                        proxies=None,
                                                                         timeout=self._http_request_timeout)
+                            else:
+                                response = request_conn.connectThroughProxy(eepsite_http,
+                                                                        proxies={'http': 'http://'+connection_settings.PROXY},
+                                                                        timeout=self._http_request_timeout)
+
                             response_code = str(response.status_code)
                             response_time = str(response.elapsed.total_seconds())
                             # Print CSV Line

@@ -13,9 +13,29 @@
 
 import requests
 
-
 def connectThroughProxy(eepsite_url, proxies, timeout):
     # headers
     headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0'}
+    eepsite_url = eepsite_url.replace("@", "%40")
     response = requests.get(eepsite_url, proxies=proxies, headers=headers, timeout=timeout)
     return response
+    '''
+    try:
+        response = requests.get(eepsite_url, proxies=proxies, headers=headers, timeout=timeout)
+    except requests.exceptions.HTTPError as errh:
+        return errh
+        #print ("Http Error:",errh)
+    except requests.exceptions.ConnectionError as errc:
+        return errc
+        #print ("Error Connecting:",errc)
+    except requests.exceptions.ReadTimeout as errrt:
+        return errrt
+    except requests.exceptions.Timeout as errt:
+        return errt
+        #print ("Timeout Error:",errt)
+    except requests.exceptions.RequestException as err:
+        return err
+        #print ("OOps: Something Else",err)
+    
+    return response
+    '''

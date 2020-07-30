@@ -6,7 +6,7 @@
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
-import i2psettings
+from i2p import i2psettings
 
 # Scrapped items
 VISITED = "visited_links"

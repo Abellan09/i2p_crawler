@@ -7,6 +7,7 @@
 
 from scrapy import signals
 from scrapy import exceptions
+from database import connection_settings
 
 class I2PFilterMiddleware(object):
 	
@@ -55,7 +56,12 @@ class I2PProxyMiddleware(object):
 		return s
 	
 	def process_request(self, request, spider):
-		request.meta['proxy'] = "http://127.0.0.1:4444"
+		#request.meta['proxy'] = "http://127.0.0.1:8888"
+		if not connection_settings.PROXY:
+			request.meta['proxy'] = None
+		else:
+			request.meta['proxy'] = "http://"+connection_settings.PROXY
+		
 		return None
 		# Called for each request that goes through the downloader
         # middleware.

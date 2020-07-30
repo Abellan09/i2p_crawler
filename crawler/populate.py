@@ -47,7 +47,7 @@ def add_default_site_status():
     Adds default status for site crawling.
 
     """
-    for status in dbsettings.SITE_STATUS_DEFAULT_INFO.keys():
+    for status in list(dbsettings.SITE_STATUS_DEFAULT_INFO.keys()):
         entities.SiteStatus(type=status, description=dbsettings.SITE_STATUS_DEFAULT_INFO[status])
 
 
@@ -56,7 +56,7 @@ def add_default_site_types():
     Adds default types of sites found.
 
     """
-    for type in dbsettings.SITE_TYPE_DEFAULT_INFO.keys():
+    for type in list(dbsettings.SITE_TYPE_DEFAULT_INFO.keys()):
         entities.SiteType(type=type, description=dbsettings.SITE_TYPE_DEFAULT_INFO[type])
 
 
@@ -65,7 +65,7 @@ def add_default_site_sources():
     Adds default sources of sites found.
 
     """
-    for source in dbsettings.SITE_SOURCE_DEFAULT_INFO.keys():
+    for source in list(dbsettings.SITE_SOURCE_DEFAULT_INFO.keys()):
         entities.SiteSource(type=source, description=dbsettings.SITE_SOURCE_DEFAULT_INFO[source])
 
 
@@ -76,8 +76,18 @@ def add_prediscovering_sites():
 
     # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
     for site in seed_sites:
+        site_type = siteutils.get_type_site(site)
+
+        #if its a freesite, clear url
+        if site_type.name is "FREENET":
+            site = site.replace('https://', '')
+            site = site.replace('http://', '')
+            site = site.replace('freenet:', '')
+            if site[-1] is '/':
+                site = site[:-1]
+
         # is it a new site? Create it and set up the status to pending.
-        if dbutils.create_site(s_url=site, s_uuid=''):
+        if dbutils.create_site(s_url=site, s_type=site_type ,s_uuid=''):
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.PRE_DISCOVERING,
                                                        add_processing_log=False)
 

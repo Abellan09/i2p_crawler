@@ -23,6 +23,7 @@ from datetime import datetime
 from datetime import timedelta
 from i2p import i2psettings
 import settings
+from json.decoder import JSONDecodeError
 
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
@@ -60,6 +61,7 @@ def check_crawling_status():
         if (fil.endswith(".ok")) and (fil not in ok_spiders):
             ok_spiders.append(fil)
         elif (fil.endswith(".fail")) and (fil not in fail_spiders):
+            logging.debug("Entra en elif del for por {}".format(fil))
             fail_spiders.append(fil)
             
     if fail_spiders:
@@ -87,12 +89,12 @@ def check_spiders_status(uuid):
                       len(alive_spiders))
 
         for site in ongoing_db_sites:
-            logging.debug("Current alive spiders %s", alive_spiders.keys())
+            logging.debug("Current alive spiders %s", list(alive_spiders.keys()))
             p_status = psutil.Process(alive_spiders[site].pid).status()
             logging.debug("Spider/Site %s is %s.", site, p_status)
             del p_status
             # Is it not running?
-            if (site not in alive_spiders.keys()) or (alive_spiders[site].poll() is not None):
+            if (site not in list(alive_spiders.keys())) or (alive_spiders[site].poll() is not None):
                 dbutils.set_site_current_processing_status(s_status=dbsettings.Status.ERROR_DEFUNC, s_url=site)
                 alive_spiders.pop(site)
                 logging.debug("Site %s has been set up to ERROR_DEFUNC",site)
@@ -117,8 +119,10 @@ def process_fail(fail_spiders):
         for fil in fail_spiders:
             files_to_remove.append(fil)
             eliminar = i2psettings.PATH_ONGOING_SPIDERS + fil.replace(".fail", ".json")
+            #eliminar = eliminar.replace("__", "/") #Freenet Sites
             os.remove(eliminar)
             eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+            #eliminar = eliminar.replace("__", "/") #Freenet Sites
             os.remove(eliminar)
 
     except Exception as e:
@@ -133,7 +137,7 @@ def process_fail(fail_spiders):
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ERROR)
                 logging.debug("Setting the ERROR status to site %s", site)
                 # This process should not be alive
-                if site in alive_spiders.keys():
+                if site in list(alive_spiders.keys()):
                     alive_spiders.pop(site)
                     logging.debug("Removing %s from alive spiders.", site)
 
@@ -164,6 +168,7 @@ def process_ok(ok_spiders):
         try:
 
             current_site_name = fil.replace(".ok", "")
+            current_site_name = current_site_name.replace("__", "/") #Freenet Sites
             fil_json_extension = fil.replace(".ok", ".json")
             source = i2psettings.PATH_ONGOING_SPIDERS + fil_json_extension
             target = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
@@ -173,8 +178,10 @@ def process_ok(ok_spiders):
             # json file
             #last_lines = siteutils.tail(target, n=2)
             #last_lines = last_lines.replace('\n]','')
+        
             with open(target,'r') as f:
                 crawled_items = json.loads(f.readline())
+
 
             crawled_eepsites = crawled_items["extracted_eepsites"]
             logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
@@ -204,7 +211,7 @@ def process_ok(ok_spiders):
             with db_session:
                 dbutils.set_site_current_processing_status(s_url=current_site_name, s_status=dbsettings.Status.ERROR)
                 # This process should not be alive
-                if current_site_name in alive_spiders.keys():
+                if current_site_name in list(alive_spiders.keys()):
                     alive_spiders.pop(current_site_name)
                     logging.debug("Removing %s from alive spiders.", current_site_name)
 
@@ -219,6 +226,7 @@ def process_ok(ok_spiders):
         logging.debug("Deleting OK file %s",fil)
 
     logging.debug("Ending to process OK spiders")
+
 
 
 def link_eepsites(site, targeted_sites):
@@ -240,10 +248,15 @@ def link_eepsites(site, targeted_sites):
         for eepsite in targeted_sites:
             try:
                 with db_session:
+                    site_type = siteutils.get_type_site(eepsite)
                     # is it a new site? Create it and set up the status to pending.
-                    if dbutils.create_site(s_url=eepsite, s_uuid=uuid, s_source=dbsettings.Source.DISCOVERED):
-                        dbutils.set_site_current_processing_status(s_url=eepsite,
-                                                                   s_status=dbsettings.Status.DISCOVERING)
+                    site_exists = False
+                    if site_type.name is "FREENET" and ("USK@" in eepsite or "SSK@" in eepsite):
+                        site_exists = siteutils.compare_freesite(eepsite)
+                    if not site_exists:
+                        if dbutils.create_site(s_url=eepsite, s_uuid=uuid, s_type=site_type, s_source=dbsettings.Source.DISCOVERED):
+                            dbutils.set_site_current_processing_status(s_url=eepsite,
+                                                                    s_status=dbsettings.Status.DISCOVERING)
             except Exception as e:
                 logging.exception("ERROR: destination eepsite %s is already created ", eepsite)
 
@@ -257,7 +270,7 @@ def link_eepsites(site, targeted_sites):
         logging.exception("ERROR: linking site %s", site)
 
     # This process should not be alive
-    if site in alive_spiders.keys():
+    if site in list(alive_spiders.keys()):
         alive_spiders.pop(site)
         logging.debug("Removing %s from alive spiders.", site)
 
@@ -274,7 +287,7 @@ def set_site_language(site, languages):
     logging.info("Setting languages ...")
 
     with db_session:
-        for engine in languages.keys():
+        for engine in list(languages.keys()):
             logging.debug("Adding language to %s: %s,%s ", site, engine, languages[engine])
             dbutils.set_site_language(s_url=site, s_language=languages[engine], l_engine=engine)
 
@@ -363,9 +376,13 @@ def run_spider(site):
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ONGOING)
             # Increasing tries
             siteEntity = dbutils.increase_tries_on_error(s_url=site)
+            # Get Type of site
+            siteType = siteutils.get_type_site(site=site)
 
         # Try running a spider
-        command = 'scrapy crawl i2p -a url="http://' + site + '"'
+        #command = 'scrapy crawl i2p -a url="http://' + site + '"'
+        #command = 'scrapy crawl freenet -a url="http://' + site + '"'
+        command = 'scrapy crawl '+ siteType.name + ' -a url="http://' + site + '"'
         p = subprocess.Popen(shlex.split(command))
 
         logging.debug("Command launched %s", shlex.split(command))
@@ -418,7 +435,8 @@ def get_sites_from_floodfill():
         try:
             with db_session:
                 # is it a new site? Create it and set up the status to pending.
-                if dbutils.create_site(s_url=site, s_uuid=uuid, s_source=dbsettings.Source.FLOODFILL):
+                site_type = siteutils.get_type_site(site)
+                if dbutils.create_site(s_url=site, s_uuid=uuid, s_type=site_type, s_source=dbsettings.Source.FLOODFILL):
                     dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
         except Exception as e:
             logging.exception("ERROR: site %s could not be created.", site)
@@ -645,7 +663,7 @@ def signal_handler(signum, frame):
     :param frame:
     """
     if signum == signal.SIGINT:
-        raise KeyboardInterrupt, "Signal Interrupt"
+        raise KeyboardInterrupt("Signal Interrupt")
     else:
         logging.debug("Signal handler do not recognize signal number %s", signum)
 

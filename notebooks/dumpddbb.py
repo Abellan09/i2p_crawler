@@ -39,7 +39,7 @@ df_connectivity = pd.read_sql_query('select * from siteconnectivitysummary', eng
 ## Saving the results of experiments
 
 if to_save:
-    print("[+] Saving results to {0}".format(data_path + experiment_id))
+    print(("[+] Saving results to {0}".format(data_path + experiment_id)))
     df_site.to_pickle(data_path + experiment_id + "_site.pickle")
     df_status.to_pickle(data_path + experiment_id + "_status.pickle")
     df_source.to_pickle(data_path + experiment_id + "_source.pickle")

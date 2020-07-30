@@ -9,6 +9,8 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
+import settings
+
 BOT_NAME = 'i2p'
 
 SPIDER_MODULES = ['i2p.spiders']
@@ -27,8 +29,8 @@ ROBOTSTXT_OBEY = False
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 1
-DOWNLOAD_TIMEOUT = 30 # 30s
-RETRY_TIMES = 2
+DOWNLOAD_TIMEOUT = settings.HTTP_TIMEOUT
+RETRY_TIMES = settings.MAX_CRAWLING_TRIES_ON_ERROR
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16

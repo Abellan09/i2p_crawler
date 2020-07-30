@@ -1,12 +1,13 @@
+entrypoints>=0.2.2
+pexpect
+nltk >= 3.4
 scrapy >= 1.5.1
 pony >= 0.7.6
 PyMySQL >= 0.9.3
-nltk >= 3.4
-py-translator >= 2.1.8
+googletrans
 beautifulsoup4 >= 4.7.1
-request >= 2.21.0
+requests >= 2.21.0
 langdetect >= 1.0.7
-html >= 1.16
 slugify >= 0.0.1
 regex >= 2.4
 psutil

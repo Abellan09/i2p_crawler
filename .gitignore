@@ -107,3 +107,6 @@ venv.bak/
 .mypy_cache/
 
 /notes
+
+#Data Experiments
+notebooks/data

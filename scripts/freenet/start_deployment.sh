@@ -30,18 +30,18 @@ deploy() {
   echo " "
 
   # Reseting BBDD and schema
-  if [ $vm == 'i2pProjectBBDD' ]
+  if [ $vm == 'freenetProjectBBDD' ]
   then
   	echo "[+] Setting up the file environment $vm ..."
   	ssh $vm "cd $script_path; bash setup_bbdd.sh"
   	echo " "
   else
-        echo "[+] Setting up the file environment $vm ..."
+    echo "[+] Setting up the file environment $vm ..."
   	ssh $vm "cd $script_path; bash setup.sh"
   	echo " "
 
-        # Starting crawling process for VMs different from the VMs
-        echo "[+] Starting the crawling process on $vm ..."
+    # Starting crawling process for VMs different from the VMs
+    echo "[+] Starting the crawling process on $vm ..."
   	ssh $vm "cd $script_path; bash start.sh $vm"
   	echo " "
   fi

@@ -5,18 +5,18 @@
 
 root_path=~/RMAGAN/projects/I2P_Crawler
 
-cd $root_path/crawler
-
-echo "[+] Installing project dependencies in $vm ..."
-source ~/anaconda3/etc/profile.d/conda.sh
-conda activate py37
-pip install -r requirements.txt
-echo " "
-
-echo "[+] Creating folders in $vm ..."
+echo "[+] Creating folders..."
 mkdir -p logs
 mkdir -p crawler/i2p/spiders/ongoing
 mkdir -p crawler/i2p/spiders/finished
+echo " "
+
+cd $root_path/crawler
+
+echo "[+] Installing project dependencies ..."
+source ~/anaconda3/etc/profile.d/conda.sh
+conda activate py37
+pip install -r requirements.txt
 echo " "
 
 echo "[+] Deleting log and output files"

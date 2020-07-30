@@ -16,16 +16,16 @@
 PROVIDER = 'mysql'
 
 #DB host
-HOST = 'localhost'
+HOST = '192.168.44.9'
 
 #DB username
-USERNAME = 'i2p'
+USERNAME = 'freenet'
 
 #DB password
-PASSWORD = 'password'
+PASSWORD = '1Uchn53d'
 
 #DB name
-DATABASE = 'i2p_database'
+DATABASE = 'freenet_database'
 
 #Proxy configuration (host:port or None)
 # I2P = 127.0.0.1:4444

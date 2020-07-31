@@ -22,7 +22,7 @@ pull() {
 
   echo "[+] Pulling $vm from repository ..."
   # Checking out previous versions
-  ssh $vm "cd $root_path; git checkout crawler/settings.py crawler/database/connection_settings.py; git pull;"
+  ssh $vm "cd $root_path; git checkout crawler/settings.py crawler/i2p/i2psettings.py crawler/database/connection_settings.py; git pull;"
   echo " "
 
 }

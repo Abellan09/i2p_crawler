@@ -74,7 +74,7 @@ def update_seed_site(s_url, s_uuid):
 
     site = get_site(s_url=s_url)
 
-    logging.debug("Updating site %s", site.name)
+    #logging.debug("Updating site %s", site.name)
 
     try:
 
@@ -96,7 +96,7 @@ def get_site(s_url):
     :param s_url: str - URL/name of the site
     :return: Site - The site or None if it was not found.
     """
-    logging.debug("Site to get_site = %s", s_url)
+    #logging.debug("Site to get_site = %s", s_url)
 
     # Gets the site by url
     return entities.Site.get(name=s_url)

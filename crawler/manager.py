@@ -61,7 +61,6 @@ def check_crawling_status():
         if (fil.endswith(".ok")) and (fil not in ok_spiders):
             ok_spiders.append(fil)
         elif (fil.endswith(".fail")) and (fil not in fail_spiders):
-            logging.debug("Entra en elif del for por {}".format(fil))
             fail_spiders.append(fil)
             
     if fail_spiders:

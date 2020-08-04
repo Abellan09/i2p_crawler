@@ -31,4 +31,4 @@ INITIAL_SEEDS_BACH_SIZE = 59  # 590/10=59
 # Time to wait until the next seeds self-assignment
 SEEDS_ASSIGMENT_PERIOD = 1200  # seconds (10 machine, 2 minute/machine --> 20 minutes )
 # To schedule the discovering time. Each site will be discover every TIME_INTERVAL_TO_DISCOVER
-TIME_INTERVAL_TO_DISCOVER = 60  # minutes
+TIME_INTERVAL_TO_DISCOVER = 0  # minutes

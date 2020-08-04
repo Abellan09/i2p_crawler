@@ -133,6 +133,7 @@ def process_fail(fail_spiders):
             for fil in files_to_remove:
                 # If the crawling process failed, there was an ERROR
                 site = fil.replace(".fail", "")
+                site = site.replace("__", "/")
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.ERROR)
                 logging.debug("Setting the ERROR status to site %s", site)
                 # This process should not be alive

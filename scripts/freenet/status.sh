@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Check the status of I2P routers and crawling processes on the involved VMs
+# Check the status of servers and crawling processes on the involved VMs
 # Author: Emilio Figueras, 2020
 
 if [ "$#" -lt 1 ]; then
@@ -13,19 +13,20 @@ fi
 # list of all VM instances
 vm_list=`cat $1`
 
-# Remote scripts path
-i2p_data=/home/administrador/datos
-
 get_status() {
   # $1 name of the remote VM
   vm=$1
 
   echo "[+] Crawling process status on $vm ..."
-  ssh $vm "ps -ef | grep manager.py"
+  ssh $vm "ps -ef | grep 'python.*m[a]nager'"
   echo " "
 
   echo "[+] Number of spiders in ongoing status on $vm ..."
-  ssh $vm "pgrep scrapy | wc -l"
+  ssh $vm "ps -ef | egrep 'scrapy.*c[r]awl' | wc -l"
+  echo " "
+
+  echo "[+] Number of spiders in defunct status on $vm ..."
+  ssh $vm "ps axo pid,stat,args | grep scrapy | awk '\$2 ~ /^Z/ { print \$1 }' | wc -l"
   echo " "
 
   echo "[+] HD status on $vm ..."

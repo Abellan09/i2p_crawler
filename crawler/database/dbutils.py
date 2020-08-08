@@ -24,9 +24,9 @@ import logging
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P, s_source=dbsettings.Source.SEED):
+def create_site(s_url, s_uuid, s_type=dbsettings.Type.UNKNOWN, s_source=dbsettings.Source.SEED):
     """
-    Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
+    Creates a new site. If no type and status is provided, UNKNOWN and ONGOING status are setup
 
     :param s_url: str - URL of the site, which will the name of the new site
     :param s_uuid: str - UUID of the crawling process which created the site
@@ -172,7 +172,7 @@ def set_site_type(s_url, s_type):
 
 def set_site_number_of_pages(s_url, n_pages):
     """
-    Set the number of pages (html links) which are no linking to *.i2p sites
+    Set the number of pages (html links) which are no linking to sites
 
     :param s_url: str - URL/name of the site
     :param n_pages: int - Number of pages

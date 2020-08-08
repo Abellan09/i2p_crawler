@@ -1,13 +1,17 @@
-# c4i2p: Crawl for I2P
+# c4darknet: Crawl for Darknet
 
-HTTP crawling tool for the I2P Darknet sites.
+HTTP crawling tool for Darknets sites.
 
 Although it was originally conceived to be used for the I2P anonymous network, 
 this tool can also be used for crawling some others HTTP based web sites 
 like those found in TOR, Freenet and/or the surface web. 
 
-The crawler automatically extracts links to other i2p site thus getting an overall 
-view of the i2p darknet inter-connections and some other useful information.
+The crawler automatically extracts links to other darknet site thus getting an overall 
+view of the site darknet inter-connections and some other useful information.
+
+To function in a darknet it is necessary to implement access to it in 
+crawler/darknet/spiders/spider.py using the functions of spiderBase.py.
+Currently spiders for I2P and Freenet are implemented.
 
 ## How to install
 
@@ -17,7 +21,7 @@ The crawler relies on the use of an adequate environment to run it. Mandatory el
 for that are:
 
 - Linux **Unbuntu 16.04** and above (it can be run in older version)
-- **I2P router** (latest version)
+- **I2P router** (latest version), **FProxy** or darknet proxy appropiate
 - **Mysql 5.7**, though some other DBMS can be used like SQLite.
 - **Python 3.7** environment (+ dependencies found in requeriments.txt)
 
@@ -66,7 +70,7 @@ Please edit the lien in file ```connection_settings.py``` which is located
 in ```<root_project_folder>/crawler/database/```.
 
 ### Crawling
-Now it is time to crawl the I2P network. Every time you want to start a new crawling procedure,
+Now it is time to crawl the darknet network. Every time you want to start a new crawling procedure,
 we recommend to follow the next steps.
 
 1) Database population.
@@ -91,7 +95,7 @@ Spiders output JSON files in specific folders so they should already be created.
 On the contrary, please create them. For a clean and fresh running, delete all files in that folders.
 
 ```
-(py37) $ cd <root_project_folder>/crawler/i2p/spiders/
+(py37) $ cd <root_project_folder>/crawler/darknet/spiders/
 (py37) $ mkdir finished ongoing
 ```
 
@@ -114,7 +118,7 @@ If "logs" folder is not created, please create it. For a clean and fresh running
 ```
 
 If you want to supervise the crawling procedure please use see 
-```<root_project_folder>/logs/i2pcrawler.log```. Also, more information is being storage in
+```<root_project_folder>/logs/darknetcrawler.log```. Also, more information is being storage in
 the database.
 
 

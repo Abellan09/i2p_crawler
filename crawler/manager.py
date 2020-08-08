@@ -17,11 +17,11 @@ from pony.orm import db_session, set_sql_debug
 from database import dbutils
 from database import dbsettings
 from utils import siteutils
-from i2pthread import discoverythread
+from darknetthread import discoverythread
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
 from datetime import timedelta
-from i2p import i2psettings
+from darknet import darknetsettings
 import settings
 from json.decoder import JSONDecodeError
 
@@ -53,7 +53,7 @@ def check_crawling_status():
 
     logging.info("Checking spiders status ...")
 
-    finished_files = os.listdir(i2psettings.PATH_FINISHED_SPIDERS)
+    finished_files = os.listdir(darknetsettings.PATH_FINISHED_SPIDERS)
 
     logging.debug("Files in finished folder #%s", len(finished_files))
 
@@ -117,10 +117,10 @@ def process_fail(fail_spiders):
     try:
         for fil in fail_spiders:
             files_to_remove.append(fil)
-            eliminar = i2psettings.PATH_ONGOING_SPIDERS + fil.replace(".fail", ".json")
+            eliminar = darknetsettings.PATH_ONGOING_SPIDERS + fil.replace(".fail", ".json")
             #eliminar = eliminar.replace("__", "/") #Freenet Sites
             os.remove(eliminar)
-            eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+            eliminar = darknetsettings.PATH_FINISHED_SPIDERS + fil
             #eliminar = eliminar.replace("__", "/") #Freenet Sites
             os.remove(eliminar)
 
@@ -150,10 +150,10 @@ def process_ok(ok_spiders):
     SP: Procesa los ficheros con extensión ".ok".
 
     It moves the ".json" files of the sites that have been crawled correctly (.ok) from the /ongoing directory to the /finished
-    directory, opens said ".json" files, calls the link_eepsites() function in order to add the pertinent data to database,
+    directory, opens said ".json" files, calls the link_darksites() function in order to add the pertinent data to database,
     adds the sites that haven't been visited yet to the pending_sites and deletes the ".ok" files once processed.
     Mueve los ficheros ".json" de los sites que han sido crawleados correctamente (.ok) del directorio /ongoing	al directorio
-    /finished, abre dichos ficheros ".json", llama a la función link_eepsites() para añadir los datos pertinentes a la
+    /finished, abre dichos ficheros ".json", llama a la función link_darksites() para añadir los datos pertinentes a la
     base de datos, añade a pending_sites los sites que no se hayan visitado y borra los ficheros ".ok" una vez procesados.
     '''
     logging.info("Processing OK spiders ...")
@@ -170,11 +170,11 @@ def process_ok(ok_spiders):
             current_site_name = fil.replace(".ok", "")
             current_site_name = current_site_name.replace("__", "/") #Freenet Sites
             fil_json_extension = fil.replace(".ok", ".json")
-            source = i2psettings.PATH_ONGOING_SPIDERS + fil_json_extension
-            target = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
+            source = darknetsettings.PATH_ONGOING_SPIDERS + fil_json_extension
+            target = darknetsettings.PATH_FINISHED_SPIDERS + fil_json_extension
             shutil.move(source, target)
 
-            # Once a site has been crawled, what we only need is the extracted eepsite which are at the end of the
+            # Once a site has been crawled, what we only need is the extracted darksite which are at the end of the
             # json file
             #last_lines = siteutils.tail(target, n=2)
             #last_lines = last_lines.replace('\n]','')
@@ -183,8 +183,8 @@ def process_ok(ok_spiders):
                 crawled_items = json.loads(f.readline())
 
 
-            crawled_eepsites = crawled_items["extracted_eepsites"]
-            logging.debug("Extracted eepsites from " + fil + ": " + str(crawled_eepsites))
+            crawled_darksites = crawled_items["extracted_darksites"]
+            logging.debug("Extracted darksites from " + fil + ": " + str(crawled_darksites))
 
             with db_session:
                 # setting up the language
@@ -194,15 +194,15 @@ def process_ok(ok_spiders):
                 text = ' '.join(crawled_items["main_page_tokenized_words"])
                 set_site_home_info(current_site_name, crawled_items["size_main_page"], crawled_items["title"][0], text)
 
-                # moved here to handle the status of crawled eepsites
-                link_eepsites(current_site_name, crawled_eepsites)
+                # moved here to handle the status of crawled darksites
+                link_darksites(current_site_name, crawled_darksites)
 
                 # setting up connectivity summary
                 # TODO this method should be called separately once the crawling process finished to get real values of in, out and degree
-                set_site_connectivity_summary(current_site_name, crawled_items["total_eepsite_pages"])
+                set_site_connectivity_summary(current_site_name, crawled_items["total_darksite_pages"])
 
                 # setting up the number of pages to the site.
-                set_site_number_pages(current_site_name, crawled_items["total_eepsite_pages"])
+                set_site_number_pages(current_site_name, crawled_items["total_darksite_pages"])
 
         except Exception as e:
             logging.error("ERROR processing OK file %s - %s",current_site_name, e)
@@ -216,12 +216,12 @@ def process_ok(ok_spiders):
                     logging.debug("Removing %s from alive spiders.", current_site_name)
 
             # removing the JSON file for the site which causes the error.
-            eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil_json_extension
+            eliminar = darknetsettings.PATH_FINISHED_SPIDERS + fil_json_extension
             os.remove(eliminar)
 
     # Delete *.ok files in finished folder
     for fil in ok_spiders:
-        eliminar = i2psettings.PATH_FINISHED_SPIDERS + fil
+        eliminar = darknetsettings.PATH_FINISHED_SPIDERS + fil
         os.remove(eliminar)
         logging.debug("Deleting OK file %s",fil)
 
@@ -229,7 +229,7 @@ def process_ok(ok_spiders):
 
 
 
-def link_eepsites(site, targeted_sites):
+def link_darksites(site, targeted_sites):
     '''
     EN: It adds the extracted data by the crawler to the database.
     SP: Añade los datos extraídos por el crawler a la base de datos.
@@ -245,26 +245,26 @@ def link_eepsites(site, targeted_sites):
             dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.FINISHED)
             logging.debug("Site %s was setup to FINISHED.", site)
 
-        for eepsite in targeted_sites:
+        for darksite in targeted_sites:
             try:
                 with db_session:
-                    site_type = siteutils.get_type_site(eepsite)
+                    site_type = siteutils.get_type_site(darksite)
                     # is it a new site? Create it and set up the status to pending.
                     site_exists = False
-                    if site_type.name is "FREENET" and ("USK@" in eepsite or "SSK@" in eepsite):
-                        site_exists = siteutils.compare_freesite(eepsite)
+                    if site_type.name is "FREENET" and ("USK@" in darksite or "SSK@" in darksite):
+                        site_exists = siteutils.compare_freesite(darksite)
                     if not site_exists:
-                        if dbutils.create_site(s_url=eepsite, s_uuid=uuid, s_type=site_type, s_source=dbsettings.Source.DISCOVERED):
-                            dbutils.set_site_current_processing_status(s_url=eepsite,
+                        if dbutils.create_site(s_url=darksite, s_uuid=uuid, s_type=site_type, s_source=dbsettings.Source.DISCOVERED):
+                            dbutils.set_site_current_processing_status(s_url=darksite,
                                                                     s_status=dbsettings.Status.DISCOVERING)
             except Exception as e:
-                logging.exception("ERROR: destination eepsite %s is already created ", eepsite)
+                logging.exception("ERROR: destination darksite %s is already created ", darksite)
 
             with db_session:
                 # Linking
-                dbutils.create_link(site, eepsite)
+                dbutils.create_link(site, darksite)
 
-            logging.debug("New link: %s --> %s", site, eepsite)
+            logging.debug("New link: %s --> %s", site, darksite)
 
     except Exception as e:
         logging.exception("ERROR: linking site %s", site)
@@ -426,7 +426,7 @@ def get_sites_from_floodfill():
     """
 
     # Gets initial seeds
-    seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + "floodfill_seeds.txt")
+    seed_sites = siteutils.get_seeds_from_file(darknetsettings.PATH_DATA + "floodfill_seeds.txt")
 
     logging.debug("There are %s floodfill sites.", len(seed_sites))
 
@@ -509,18 +509,18 @@ def main():
     log.setLevel(logging.DEBUG)
     format = logging.Formatter('%(asctime)s %(levelname)s - %(threadName)s - mod: %(module)s, method: %(funcName)s, msg: %(message)s')
 
-    fhall = RotatingFileHandler(i2psettings.PATH_LOG + "i2pcrawler.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+    fhall = RotatingFileHandler(darknetsettings.PATH_LOG + "darknetcrawler.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
     fhall.setFormatter(format)
     fhall.setLevel(logging.DEBUG)
 
-    fherror = RotatingFileHandler(i2psettings.PATH_LOG + "i2perror.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
+    fherror = RotatingFileHandler(darknetsettings.PATH_LOG + "darkneterror.log", maxBytes=0, backupCount=0) # NO rotation, neither by size, nor by number of files
     fherror.setFormatter(format)
     fherror.setLevel(logging.ERROR)
 
     log.addHandler(fhall)
     log.addHandler(fherror)
 
-    logging.info("Starting I2P Darknet crawling ... ")
+    logging.info("Starting Darknet crawling ... ")
 
     # Generating UUID for the crawling process
     global uuid

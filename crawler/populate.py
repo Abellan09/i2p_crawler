@@ -16,7 +16,7 @@ from database import dbsettings
 from database import entities
 from database import dbutils
 from utils import siteutils
-from i2p import i2psettings
+from darknet import darknetsettings
 import settings
 import logging
 
@@ -72,7 +72,7 @@ def add_default_site_sources():
 def add_prediscovering_sites():
 
     # Gets initial seeds
-    seed_sites = siteutils.get_seeds_from_file(i2psettings.PATH_DATA + settings.INITIAL_SEEDS)
+    seed_sites = siteutils.get_seeds_from_file(darknetsettings.PATH_DATA + settings.INITIAL_SEEDS)
 
     # Create all sites in DISCOVERING status. Note that if the site exists, it will not be created
     for site in seed_sites:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from crawler.i2pthread import sitethread
+from crawler.darknetthread import sitethread
 import time
 from crawler.utils import siteutils
 
@@ -26,11 +26,11 @@ while rounds < max_rounds:
         #print(seed)
         for i in range(site_tries):
 	    time.sleep(0.15)
-            i2pt = sitethread.I2PThread(seed, rounds, i)
-            i2pt.start()
+            darknett = sitethread.DarknetThread(seed, rounds, i)
+            darknett.start()
 
         time.sleep(0.3)
-        #print("Starting " + i2pt.name)
+        #print("Starting " + darknett.name)
 
     # We should wait until all current round thread finish
     # for i in threading.enumerate():

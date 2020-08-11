@@ -150,8 +150,12 @@ def compare_freesite(site):
     :param uuid: str - Site
     :return: Bool
     """
+    #Limpiar la barra final
     if site[-1] is "/":
         site = site[:-1]
+
+    #Limpiar el caracter hashtag
+    site = site.rsplit("#", 1)[0]
 
     #Comprobamos si es USK o SSK
     is_usk = False

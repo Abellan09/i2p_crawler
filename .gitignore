@@ -108,5 +108,8 @@ venv.bak/
 
 /notes
 
-#Data Experiments
+#Data experiments
 notebooks/data
+
+#UUID
+crawler/uuid.txt

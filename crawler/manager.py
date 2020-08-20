@@ -1,4 +1,8 @@
 # encoding: utf-8
+'''
+EN: Core of the tool in charge of controlling, managing and coordinating all its components.
+SP: Núcleo de la herramienta encargado de controlar, manejar y coordinar todos sus componentes.
+'''
 
 import os			# https://docs.python.org/2/library/os.html
 import shutil		# https://docs.python.org/2/library/shutil.html
@@ -11,19 +15,20 @@ import shlex
 import signal
 import traceback
 import threading
+from logging.handlers import RotatingFileHandler
+from datetime import datetime
+from datetime import timedelta
+#from json.decoder import JSONDecodeError
 import psutil
-
 from pony.orm import db_session, set_sql_debug
 from database import dbutils
 from database import dbsettings
 from utils import siteutils
+
 from darknetthread import discoverythread
-from logging.handlers import RotatingFileHandler
-from datetime import datetime
-from datetime import timedelta
 from darknet import darknetsettings
 import settings
-from json.decoder import JSONDecodeError
+
 
 # Set to True to show pony SQL queries
 set_sql_debug(debug=False)
@@ -62,7 +67,7 @@ def check_crawling_status():
             ok_spiders.append(fil)
         elif (fil.endswith(".fail")) and (fil not in fail_spiders):
             fail_spiders.append(fil)
-            
+
     if fail_spiders:
         process_fail(fail_spiders)
     if ok_spiders:
@@ -96,7 +101,7 @@ def check_spiders_status(uuid):
             if (site not in list(alive_spiders.keys())) or (alive_spiders[site].poll() is not None):
                 dbutils.set_site_current_processing_status(s_status=dbsettings.Status.ERROR_DEFUNC, s_url=site)
                 alive_spiders.pop(site)
-                logging.debug("Site %s has been set up to ERROR_DEFUNC",site)
+                logging.debug("Site %s has been set up to ERROR_DEFUNC", site)
                 # TODO: remove the ongoing *.json file?
 
 
@@ -178,13 +183,13 @@ def process_ok(ok_spiders):
             # json file
             #last_lines = siteutils.tail(target, n=2)
             #last_lines = last_lines.replace('\n]','')
-        
-            with open(target,'r') as f:
+
+            with open(target, 'r') as f:
                 crawled_items = json.loads(f.readline())
 
 
             crawled_darksites = crawled_items["extracted_darksites"]
-            logging.debug("Extracted darksites from " + fil + ": " + str(crawled_darksites))
+            logging.debug("Extracted darksites from %s: %s", fil, str(crawled_darksites))
 
             with db_session:
                 # setting up the language
@@ -205,7 +210,7 @@ def process_ok(ok_spiders):
                 set_site_number_pages(current_site_name, crawled_items["total_darksite_pages"])
 
         except Exception as e:
-            logging.error("ERROR processing OK file %s - %s",current_site_name, e)
+            logging.error("ERROR processing OK file %s - %s", current_site_name, e)
             logging.exception("ERROR:")
             # If an error is raised, this site should be tagged as ERROR
             with db_session:
@@ -223,7 +228,7 @@ def process_ok(ok_spiders):
     for fil in ok_spiders:
         eliminar = darknetsettings.PATH_FINISHED_SPIDERS + fil
         os.remove(eliminar)
-        logging.debug("Deleting OK file %s",fil)
+        logging.debug("Deleting OK file %s", fil)
 
     logging.debug("Ending to process OK spiders")
 
@@ -257,7 +262,7 @@ def link_darksites(site, targeted_sites):
                         if dbutils.create_site(s_url=darksite, s_uuid=uuid, s_type=site_type, s_source=dbsettings.Source.DISCOVERED):
                             dbutils.set_site_current_processing_status(s_url=darksite,
                                                                     s_status=dbsettings.Status.DISCOVERING)
-            except Exception as e:
+            except Exception:
                 logging.exception("ERROR: destination darksite %s is already created ", darksite)
 
             with db_session:
@@ -266,7 +271,7 @@ def link_darksites(site, targeted_sites):
 
             logging.debug("New link: %s --> %s", site, darksite)
 
-    except Exception as e:
+    except Exception:
         logging.exception("ERROR: linking site %s", site)
 
     # This process should not be alive
@@ -388,7 +393,7 @@ def run_spider(site):
         logging.debug("Command launched %s", shlex.split(command))
         logging.debug("Process launched for %s with PID=%s, tries=%s", site, p.pid, siteEntity.error_tries)
 
-    except Exception as e:
+    except Exception:
         logging.exception("Spider of site %s could not be launched. Maybe it has already been launched.")
 
     return p
@@ -412,7 +417,7 @@ def error_to_pending(error_sites, pending_sites):
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.PENDING)
             else:
                 logging.debug("The site %s cannot be crawled because the number of max_tries on ERROR status has been reached.", site)
-                logging.debug("Setting up the DISCOVERING status to %s",site)
+                logging.debug("Setting up the DISCOVERING status to %s", site)
                 # The site cannot be crawled
                 dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
                 dbutils.reset_tries_on_error(s_url=site)
@@ -438,7 +443,7 @@ def get_sites_from_floodfill():
                 site_type = siteutils.get_type_site(site)
                 if dbutils.create_site(s_url=site, s_uuid=uuid, s_type=site_type, s_source=dbsettings.Source.FLOODFILL):
                     dbutils.set_site_current_processing_status(s_url=site, s_status=dbsettings.Status.DISCOVERING)
-        except Exception as e:
+        except Exception:
             logging.exception("ERROR: site %s could not be created.", site)
 
 
@@ -466,7 +471,7 @@ def set_seeds(n_seeds):
                 if dbutils.update_seed_site(s_url=site, s_uuid=uuid):
                     dbutils.set_site_current_processing_status(s_url=site,
                                                                s_status=dbsettings.Status.DISCOVERING)
-        except Exception as e:
+        except Exception:
             logging.exception("ERROR: site %s could not be assigned to me. Maybe it is already managed by other"
                               " manager.", site)
 
@@ -482,7 +487,7 @@ def set_uuid(path_to_file):
     try:
         with open(path_to_file, 'r') as f:
             uuid = f.readline()
-    except IOError as ioe:
+    except IOError:
         uuid = str(siteutils.generate_uuid())
         with open(path_to_file, 'w') as fr:
             fr.write(uuid)
@@ -635,7 +640,7 @@ def main():
 
     except KeyboardInterrupt:
         logging.exception("KeyboardInterrupt received ...")
-    except:
+    except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(exc_type, exc_value, exc_traceback, limit=5, file=sys.stdout)
         logging.exception("ERROR: not controlled exception.")
@@ -643,7 +648,8 @@ def main():
         logging.info("Stopping all services ...")
 
         try:
-            if isinstance(dThread, discoverythread.DiscoveringThread): dThread.stop()
+            if isinstance(dThread, discoverythread.DiscoveringThread):
+                dThread.stop()
         except UnboundLocalError:
             logging.warning("DiscoveringThread is not running, so it will not stopped.")
 
@@ -652,7 +658,7 @@ def main():
                 logging.debug("Waiting for %s thread ...", i.name)
                 i.join()
         logging.info("Exiting ...")
-        exit(1)
+        sys.exit(1)
 
 
 def signal_handler(signum, frame):
@@ -664,8 +670,8 @@ def signal_handler(signum, frame):
     """
     if signum == signal.SIGINT:
         raise KeyboardInterrupt("Signal Interrupt")
-    else:
-        logging.debug("Signal handler do not recognize signal number %s", signum)
+
+    logging.debug("Signal handler do not recognize signal number %s", signum)
 
 
 if __name__ == '__main__':

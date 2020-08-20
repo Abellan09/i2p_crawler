@@ -15,7 +15,7 @@ class DarknetFilterMiddleware(object):
 	EN: Middleware that is responsible for filtering extensions that are not going to be taken into account.
 	SP: Middleware que se encarga de filtrar las extensiones que no se van a tener en cuenta.
 	'''
-	
+
 	extensions = [
 	# images
 	".mng", ".pct", ".bmp", ".gif", ".jpg", ".jpeg", ".png", ".pst", ".psp", ".tif",
@@ -33,21 +33,21 @@ class DarknetFilterMiddleware(object):
     # other
     ".css", ".pdf", ".exe", ".bin", ".rss", ".zip", ".rar", ".tar", ".gz", ".su3",
 	]
-	
+
 	def process_request(self, request, spider):
-		if(any(ext in request.url for ext in self.extensions)):
+		if any(ext in request.url for ext in self.extensions):
 			raise exceptions.IgnoreRequest
 		else:
-			return None				
+			return None
 
 
 class DarknetProxyMiddleware(object):
-	
+
 	'''
 	EN: Middleware that is responsible for defining the proxy so that requests are made to the network.
 	SP: Middleware que se encarga de definir el proxy para que las peticiones se hagan a la red.
 	'''	
-	
+
 	@classmethod
 	def from_crawler(cls, crawler):
 		# This method is used by Scrapy to create your spiders.

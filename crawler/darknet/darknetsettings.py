@@ -89,7 +89,7 @@ DEPTH_LIMIT = 3
 #}
 
 # CUSTOM CONFIGURATION
-PATH_ONGOING_SPIDERS="darknet/spiders/ongoing/"
-PATH_FINISHED_SPIDERS="darknet/spiders/finished/"
-PATH_LOG='../logs/'
-PATH_DATA='../data/'
+PATH_ONGOING_SPIDERS = "darknet/spiders/ongoing/"
+PATH_FINISHED_SPIDERS = "darknet/spiders/finished/"
+PATH_LOG = '../logs/'
+PATH_DATA = '../data/'

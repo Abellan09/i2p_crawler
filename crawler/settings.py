@@ -25,7 +25,7 @@ MAX_SINGLE_THREADS_ON_DISCOVERING = 50
 # Http response timeout
 HTTP_TIMEOUT = 180  # Seconds
 # Initial seed file
-INITIAL_SEEDS = "seed_urls.txt"
+INITIAL_SEEDS = "test_seeds.txt"
 # Batch size of initial seeds
 INITIAL_SEEDS_BACH_SIZE = 59  # 590/10=59
 # Time to wait until the next seeds self-assignment

@@ -2,7 +2,9 @@
 
 HTTP crawling tool for the I2P Darknet sites.
 
-<img src="c4i2p_modules.png" alt="c4i2p functional modules" width="60%">
+<div align="center">
+<img src="c4i2p_modules.png" alt="c4i2p functional modules" width="70%"/>
+</div>
 
 Although it was originally conceived to be used for the I2P anonymous network, 
 this tool can also be used for crawling some others HTTP based web sites 

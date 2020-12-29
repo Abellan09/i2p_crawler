@@ -131,8 +131,8 @@ launch the crawler appending ```&> /dev/null``` but it is up to the user.
 
 ## Authors
 
-* **Alberto Abellán-Galera**
 * **Roberto Magán-Carrión**
+* **Alberto Abellán-Galera**
 * **Gabriel Maciá-Fernández**
 
 See also the list of [contributors](https://github.com/nesg-ugr/I2P_Crawler/graphs/contributors) who participated in this project.

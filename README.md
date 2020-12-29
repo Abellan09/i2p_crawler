@@ -1,13 +1,15 @@
-# c4i2p: Crawl for I2P
+# c4i2p: Crawling for I2P
 
 HTTP crawling tool for the I2P Darknet sites.
 
+<img src="c4i2p_modules.png" alt="c4i2p functional modules" width="60%">
+
 Although it was originally conceived to be used for the I2P anonymous network, 
 this tool can also be used for crawling some others HTTP based web sites 
-like those found in TOR, Freenet and/or the surface web. 
+like those found in TOR, Freenet and/or the surface web (see project c4darknet at https://github.com/EmilioFigueras/I2P_Crawler).
 
 The crawler automatically extracts links to other i2p site thus getting an overall 
-view of the i2p darknet inter-connections and some other useful information.
+view of the I2P darknet inter-connections and some other useful information.
 
 ## How to install
 

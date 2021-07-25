@@ -410,7 +410,7 @@ def error_to_pending(error_sites, pending_sites):
     # Error sites should be tagged as pending sites.
     with db_session:
         for site in error_sites:
-            if dbutils.get_site(s_url=site).error_tries < settings.MAX_CRAWLING_TRIES_ON_ERROR:
+            if dbutils.get_site(s_url=site).error_tries < settings.MAX_CRAWLING_ATTEMPTS_ON_ERROR:
                 logging.debug("The site %s has been restored. New status PENDING.", site)
                 pending_sites.insert(0, site)
                 # sets up the error site to pending status
@@ -571,7 +571,7 @@ def main():
 
         # discoverying thread
         logging.debug("Running discovering process ...")
-        dThread = discoverythread.DiscoveringThread(settings.MAX_CRAWLING_TRIES_ON_DISCOVERING,
+        dThread = discoverythread.DiscoveringThread(settings.MAX_CRAWLING_ATTEMPTS_ON_DISCOVERING,
                                                     settings.MAX_DURATION_ON_DISCOVERING,
                                                     settings.MAX_SINGLE_THREADS_ON_DISCOVERING,
                                                     settings.HTTP_TIMEOUT,
@@ -590,7 +590,7 @@ def main():
                 if pending_sites:
                     with db_session:
                         site = pending_sites.pop()
-                        if dbutils.get_site(s_url=site).error_tries < settings.MAX_CRAWLING_TRIES_ON_ERROR:
+                        if dbutils.get_site(s_url=site).error_tries < settings.MAX_CRAWLING_ATTEMPTS_ON_ERROR:
                             logging.debug("Starting spider for %s.", site)
                             p = run_spider(site)
                             # To monitor all the running spiders
@@ -610,8 +610,8 @@ def main():
             # Checking spiders status coherence between DB and the launched processes.
             check_spiders_status(uuid)
 
-            # Each settings.SEEDS_ASSIGMENT_PERIOD I try to self-assign seeds
-            if (datetime.now() - initial) > timedelta(seconds=settings.SEEDS_ASSIGMENT_PERIOD):
+            # Each settings.SEEDS_ASSIGNMENT_PERIOD I try to self-assign seeds
+            if (datetime.now() - initial) > timedelta(seconds=settings.SEEDS_ASSIGNMENT_PERIOD):
                 set_seeds(settings.INITIAL_SEEDS_BACH_SIZE)
                 initial = datetime.now()
 

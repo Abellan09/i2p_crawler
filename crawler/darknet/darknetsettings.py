@@ -30,7 +30,7 @@ ROBOTSTXT_OBEY = False
 # See also autothrottle settings and docs
 DOWNLOAD_DELAY = 1
 DOWNLOAD_TIMEOUT = settings.HTTP_TIMEOUT
-RETRY_TIMES = settings.MAX_CRAWLING_TRIES_ON_ERROR
+RETRY_TIMES = settings.MAX_CRAWLING_ATTEMPTS_ON_ERROR
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16

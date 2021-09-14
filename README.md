@@ -2,6 +2,10 @@
 
 HTTP crawling tool for Darknets sites.
 
+<div align="center">
+<img src="c4darknet_modules.png" alt="c4darknet functional modules" width="70%"/>
+</div>
+
 Although it was originally conceived to be used for the I2P anonymous network, 
 this tool can also be used for crawling some others HTTP based web sites 
 like those found in TOR, Freenet and/or the surface web. 

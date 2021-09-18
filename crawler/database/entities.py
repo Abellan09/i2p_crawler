@@ -13,16 +13,16 @@
 
 from pony.orm import *
 from datetime import datetime
+from . import connection_settings
 
 db = Database()
 
-#TODO: move this to a config file
-db.bind(provider='mysql', host='localhost', user='i2p', passwd='4=XoG!*L', db='i2p_database')
+db.bind(provider=connection_settings.PROVIDER, host=connection_settings.HOST, user=connection_settings.USERNAME, passwd=connection_settings.PASSWORD, db=connection_settings.DATABASE)
 
 
 class Site(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Required(str, unique=True)
+    name = Required(str, 510, unique=True)
     error_tries = Required(int, default=0)
     discovering_tries = Required(int, default=0)
     pages = Optional(int)
@@ -135,4 +135,6 @@ class SiteFootprint(db.Entity):
 db.generate_mapping(create_tables=True)
 # To fix encoding problems found on site crawled site titles.
 with db_session:
+    db.execute('SET NAMES utf8mb4;')
+    db.execute('ALTER DATABASE ' + connection_settings.DATABASE + ' CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci;')
     db.execute('ALTER TABLE sitehomeinfo CONVERT TO CHARACTER SET utf8mb4;')

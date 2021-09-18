@@ -11,21 +11,22 @@
     :project: I2P Crawler
     :since: 0.0.1
 """
-from pony.orm import select
+from pony.orm import select, count
 from pony.orm import desc
 from datetime import datetime
 from datetime import timedelta
 
-import entities
-import dbsettings
+from . import entities
+from . import dbsettings
+import settings
 import random
 import logging
 
 
 # NODE ENTITY - CRUD (Create Read Update Delete)
-def create_site(s_url, s_uuid, s_type=dbsettings.Type.I2P, s_source=dbsettings.Source.SEED):
+def create_site(s_url, s_uuid, s_type=dbsettings.Type.UNKNOWN, s_source=dbsettings.Source.SEED):
     """
-    Creates a new site. If no type and status is provided, I2P and ONGOING status are setup
+    Creates a new site. If no type and status is provided, UNKNOWN and ONGOING status are setup
 
     :param s_url: str - URL of the site, which will the name of the new site
     :param s_uuid: str - UUID of the crawling process which created the site
@@ -73,7 +74,7 @@ def update_seed_site(s_url, s_uuid):
 
     site = get_site(s_url=s_url)
 
-    logging.debug("Updating site %s", site.name)
+    #logging.debug("Updating site %s", site.name)
 
     try:
 
@@ -95,6 +96,8 @@ def get_site(s_url):
     :param s_url: str - URL/name of the site
     :return: Site - The site or None if it was not found.
     """
+    #logging.debug("Site to get_site = %s", s_url)
+
     # Gets the site by url
     return entities.Site.get(name=s_url)
 
@@ -169,7 +172,7 @@ def set_site_type(s_url, s_type):
 
 def set_site_number_of_pages(s_url, n_pages):
     """
-    Set the number of pages (html links) which are no linking to *.i2p sites
+    Set the number of pages (html links) which are no linking to sites
 
     :param s_url: str - URL/name of the site
     :param n_pages: int - Number of pages
@@ -435,9 +438,9 @@ def create_processing_log(s_url, s_status=dbsettings.Status.DISCOVERING, s_http_
         if site.discovering_tries == 0:
             # First try with a random sleep
             next_time_to_try = site.timestamp_s + \
-                               timedelta(minutes=random.randint(0, dbsettings.TIME_INTERVAL_TO_DISCOVER))
+                               timedelta(minutes=random.randint(0, settings.TIME_INTERVAL_TO_DISCOVER))
         else:
-            next_time_to_try = site.timestamp_s + timedelta(minutes=dbsettings.TIME_INTERVAL_TO_DISCOVER)
+            next_time_to_try = site.timestamp_s + timedelta(minutes=settings.TIME_INTERVAL_TO_DISCOVER)
 
     # Creates the new processing status
     return entities.SiteProcessingLog(site=site, status=new_status, timestamp=site.timestamp_s, \
@@ -634,3 +637,15 @@ def set_site_home_info(s_url, s_letters, s_words, s_images, s_scripts, s_title, 
     # Creates new site home info
     return entities.SiteHomeInfo(site=get_site(s_url=s_url), letters=s_letters, words=s_words, images=s_images,
                                  scripts=s_scripts, title=s_title, text=s_text)
+
+def count_freesites(freesite):
+    """
+    Returns the number of freesites equals to 'site'
+
+    :param uuid: str - Site
+    :return: number
+    """
+
+    count_sites = count(site for site in entities.Site for status in site.current_status if freesite in site.name and site.current_status.id != 8)
+    #logging.debug("DEBUG: count_sites: {}.".format(count_sites))
+    return count_sites

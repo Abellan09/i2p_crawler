@@ -1,6 +1,10 @@
-# c4i2p: Crawling for I2P
+# c4darknet: Crawl for Darknet
 
-HTTP crawling tool for the I2P Darknet sites.
+HTTP crawling tool for Darknets sites.
+
+<div align="center">
+<img src="c4darknet_modules.png" alt="c4darknet functional modules" width="70%"/>
+</div>
 
 <div align="center">
 <img src="c4i2p_modules.png" alt="c4i2p functional modules" width="70%"/>
@@ -10,8 +14,12 @@ Although it was originally conceived to be used for the I2P anonymous network,
 this tool can also be used for crawling some others HTTP based web sites 
 like those found in TOR, Freenet and/or the surface web (see project c4darknet at https://github.com/EmilioFigueras/I2P_Crawler).
 
-The crawler automatically extracts links to other i2p site thus getting an overall 
-view of the I2P darknet inter-connections and some other useful information.
+The crawler automatically extracts links to other darknet site thus getting an overall 
+view of the site darknet inter-connections and some other useful information.
+
+To function in a darknet it is necessary to implement access to it in 
+crawler/darknet/spiders/spider.py using the functions of spiderBase.py.
+Currently spiders for I2P and Freenet are implemented.
 
 ## How to install
 
@@ -21,9 +29,9 @@ The crawler relies on the use of an adequate environment to run it. Mandatory el
 for that are:
 
 - Linux **Unbuntu 16.04** and above (it can be run in older version)
-- **I2P router** (latest version)
+- **I2P router** (latest version), **FProxy** or darknet proxy appropiate
 - **Mysql 5.7**, though some other DBMS can be used like SQLite.
-- **Python 2.7** environment (+ dependencies found in requeriments.txt)
+- **Python 3.7** environment (+ dependencies found in requeriments.txt)
 
 #### Installation steps
 As python based tool, we recommend to use virtual environments. In the following, we are going
@@ -53,28 +61,24 @@ mysql> quit;
 
 1) Creating a virtual environment.
 ```
-$ conda create -n py27 python=2.7
-$ conda activate py27
-(py27) $
+$ conda create -n py37 python=3.7
+$ conda activate py37
+(py37) $
 ```
 2) Installing python dependencies.
 ```
-(py27) $ cd <root_project_folder>/crawler/
-(py27) $ pip install -r requirements.txt
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ pip install -r requirements.txt
 ```
 
 3) Database access from python.
 
 We use pony ORM for data persistence layer, so how to connect to database must be configured.
-Please edit the lien in file ```entities.py``` which is located 
-in ```<root_project_folder>/crawler/database/```. Please, change the ```password``` accordingly.
-
-```
-db.bind(provider='mysql', host='localhost', user='i2p', passwd='password', db='i2p_database')
-```
+Please edit the lien in file ```connection_settings.py``` which is located 
+in ```<root_project_folder>/crawler/database/```.
 
 ### Crawling
-Now it is time to crawl the I2P network. Every time you want to start a new crawling procedure,
+Now it is time to crawl the darknet network. Every time you want to start a new crawling procedure,
 we recommend to follow the next steps.
 
 1) Database population.
@@ -89,8 +93,8 @@ mysql> quit;
 ```
 
 ```
-(py27) $ cd <root_project_folder>/crawler/database/
-(py27) $ python populate.py
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ python populate.py
 ```
 
 2) Spiders crawling output.
@@ -99,8 +103,8 @@ Spiders output JSON files in specific folders so they should already be created.
 On the contrary, please create them. For a clean and fresh running, delete all files in that folders.
 
 ```
-(py27) $ cd <root_project_folder>/crawler/i2p/spiders/
-(py27) $ mkdir finished ongoing
+(py37) $ cd <root_project_folder>/crawler/darknet/spiders/
+(py37) $ mkdir finished ongoing
 ```
 
 3) Supervising crawling procedure: log.
@@ -109,20 +113,20 @@ In order to supervise the crawling procedure, the log file is created in a speci
 If "logs" folder is not created, please create it. For a clean and fresh running, delete this file.
 
 ```
-(py27) $ cd <root_project_folder>/
-(py27) $ mkdir logs
+(py37) $ cd <root_project_folder>/
+(py37) $ mkdir logs
 ```
 
 4) Starting the crawling process.
 
 
 ```
-(py27) $ cd <root_project_folder>/crawler/
-(py27) $ python manager.py &> /dev/null
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ python manager.py &> /dev/null
 ```
 
 If you want to supervise the crawling procedure please use see 
-```<root_project_folder>/logs/i2pcrawler.log```. Also, more information is being storage in
+```<root_project_folder>/logs/darknetcrawler.log```. Also, more information is being storage in
 the database.
 
 
@@ -134,8 +138,9 @@ launch the crawler appending ```&> /dev/null``` but it is up to the user.
 * **Roberto Magán-Carrión**
 * **Alberto Abellán-Galera**
 * **Gabriel Maciá-Fernández**
+* **Emilio Figueras Martín**
 
-See also the list of [contributors](https://github.com/nesg-ugr/I2P_Crawler/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/EmilioFigueras/I2P_Crawler/graphs/contributors) who participated in this project.
 
 ## License
 

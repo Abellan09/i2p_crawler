@@ -48,13 +48,15 @@ class Type(Enum):
     TOR = 2
     SURFACE = 3
     UNKNOWN = 4
+    FREENET = 5
 
 
 #{type:description}
 SITE_TYPE_DEFAULT_INFO = {Type.I2P.name: 'I2P eepsite',
                           Type.TOR.name: 'TOR onion site',
                           Type.SURFACE.name: 'Surface web site',
-                          Type.UNKNOWN.name: 'Unknown site type'}
+                          Type.UNKNOWN.name: 'Unknown site type',
+                          Type.FREENET.name: 'Freenet freesite'}
 
 
 # SITE SOURCE
@@ -72,5 +74,3 @@ SITE_SOURCE_DEFAULT_INFO = {Source.SEED.name: 'Site got from initial seeds',
                             Source.DISCOVERED.name: 'Site discovered from a crawling process.',
                             Source.UNKNOWN.name: 'Unknown source.'}
 
-# To schedule the discovering time. Each site will be discover every TIME_INTERVAL_TO_DISCOVER
-TIME_INTERVAL_TO_DISCOVER = 1  # minutes

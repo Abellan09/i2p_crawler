@@ -19,6 +19,7 @@ from database import dbutils, dbsettings
 import os
 import logging
 import uuid
+import re
 
 
 def get_seeds_from_file(path_to_file):
@@ -100,3 +101,80 @@ def generate_uuid():
     """
 
     return uuid.uuid1()
+
+
+def get_type_site(site):
+    """
+    Returns the type of site based on the site received
+
+    :param uuid: str - Site
+    :return: dbsettings.Type
+    """
+    URL_REGEX = r"""(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|[a-z0-9.\-]+[.](?:com|net|org|edu|gov|mil|aero|asia|biz|cat|coop|info|int|jobs|mobi|museum|name|post|\
+        pro|tel|travel|xxx|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|\
+        cl|cm|cn|co|cr|cs|cu|cv|cx|cy|cz|dd|de|dj|dk|dm|do|dz|ec|ee|eg|eh|er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|\
+        hk|hm|hn|hr|ht|hu|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mk|ml|mm|\
+        mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|no|np|nr|nu|nz|om|pa|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|\
+        sg|sh|si|sj|Ja|sk|sl|sm|sn|so|sr|ss|st|su|sv|sx|sy|sz|tc|td|tf|tg|th|tj|tk|tl|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt|yu|za|zm|\
+        zw)/)(?:[^\s()<>{}\[\]]+|\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\))+(?:\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’])|(?:(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.](?:com|\
+        net|org|edu|gov|mil|aero|asia|biz|cat|coop|info|int|jobs|mobi|museum|name|post|pro|tel|travel|xxx|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|\
+        az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|co|cr|cs|cu|cv|cx|cy|cz|dd|de|dj|dk|dm|do|dz|ec|ee|eg|eh|\
+        er|es|et|eu|fi|fj|fk|fm|fo|fr|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|\
+        kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|me|mg|mh|mk|ml|mm|mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|\
+        no|np|nr|nu|nz|om|pa|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|Ja|sk|sl|sm|sn|so|sr|ss|st|su|sv|sx|sy|sz|tc|\
+        td|tf|tg|th|tj|tk|tl|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|ws|ye|yt|yu|za|zm|zw)\b/?(?!@)))"""
+    
+    I2P_REGEX = r"""(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|[a-z0-9.\-]+[.](?:i2p)/)\
+        (?:[^\s()<>{}\[\]]+|\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\))+(?:\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’])|(?:(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.](?:i2p)\b/?(?!@)))"""
+
+    FREENET_REGEX = r"""((((127.0.0.1|localhost):8888/){0,1}(freenet:){0,1}(USK|SSK|CHK)@[a-zA-Z0-9~\-]{43},[a-zA-Z0-9~\-]{43},(AQACAAE|AQABAAE|AQECAAE|AAMC--8|AAIC--8|AAICAAA)/[a-zA-Z0-9\-\._%?\\& ]{0,150})/?[0-9\-]{0,10})/?(.*)"""
+
+    ONION_REGEX = r"""(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|[a-z0-9.\-]+[.](?:onion)/)\
+        (?:[^\s()<>{}\[\]]+|\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\))+(?:\([^\s()]*?\([^\s()]+\)[^\s()]*?\)|\([^\s]+?\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’])|(?:(?<!@)[a-z0-9]+(?:[.\-][a-z0-9]+)*[.](?:onion)\b/?(?!@)))"""
+
+    if bool(re.search(FREENET_REGEX, site)):
+        return dbsettings.Type.FREENET
+    elif bool(re.search(I2P_REGEX, site)):
+        return dbsettings.Type.I2P
+    elif bool(re.search(ONION_REGEX, site)):
+        return dbsettings.Type.TOR
+    elif bool(re.search(URL_REGEX, site)):
+        return dbsettings.Type.SURFACE
+    else:
+        return dbsettings.Type.UNKNOWN
+
+def compare_freesite(site):
+    """
+    Returns true if the site exists or false if the site doesnt exists
+
+    :param uuid: str - Site
+    :return: Bool
+    """
+    #Limpiar la barra final
+    if site[-1] is "/":
+        site = site[:-1]
+
+    #Limpiar el caracter hashtag
+    site = site.rsplit("#", 1)[0]
+
+    #Comprobamos si es USK o SSK
+    is_usk = False
+    if "USK@" in site:
+        is_usk = True
+    
+    #Seleccionamos lo de despues del arroba
+    site_parse = site.split("@", 1)[1]
+
+    if is_usk:
+        site_parse = site_parse.rsplit("/", 1)[0]
+    else:
+        site_parse = site_parse.rsplit("-", 1)[0]
+
+    number_freesites = dbutils.count_freesites(site_parse)
+    if number_freesites >= 1:
+        return True
+    else:
+        return False
+    
+
+

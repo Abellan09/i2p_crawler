@@ -28,10 +28,10 @@ def set_connectivity():
         sites = dbutils.get_sites()
 
         for site in sites:
-            print("ID {0} - {1}".format(site.id, site.name))
+            print(("ID {0} - {1}".format(site.id, site.name)))
             set_site_connectivity_summary(site.name, site.pages)
 
-    print("TOTAL sites found {0}".format(len(sites)))
+    print(("TOTAL sites found {0}".format(len(sites))))
 
 
 def set_site_connectivity_summary(site, pages):
@@ -39,8 +39,8 @@ def set_site_connectivity_summary(site, pages):
         n_incoming_links = len(dbutils.get_incoming_links(site))
         n_outgoing_links = len(dbutils.get_outgoing_links(site))
         degree = n_incoming_links + n_outgoing_links
-        print("Adding connectivity summary to {0}, in_links: {1}, out_links: {2}, degree: {3}, out_pages_links: {4}".format(
-            site, n_incoming_links, n_outgoing_links, degree, pages))
+        print(("Adding connectivity summary to {0}, in_links: {1}, out_links: {2}, degree: {3}, out_pages_links: {4}".format(
+            site, n_incoming_links, n_outgoing_links, degree, pages)))
         dbutils.set_connectivity_summary(s_url=site, n_incoming=n_incoming_links, n_outgoing=n_outgoing_links,
                                          n_degree=degree, n_pages=pages)
 
@@ -53,16 +53,16 @@ def export_links():
         links = dbutils.get_links()
 
         for link in links:
-            print("{0} - {1}".format(link.src_site.id, link.dst_site.id))
+            print(("{0} - {1}".format(link.src_site.id, link.dst_site.id)))
             #print("{0}{1} --> {1}{2}".format(link.src_site.id, link.src_site.name, link.dst_site.id, link.dst_site.name))
 
-    print("TOTAL links found {0}".format(len(links)))
+    print(("TOTAL links found {0}".format(len(links))))
 
 
 def delete_sites(site_id_list):
     with db_session:
         for id in site_id_list:
-            print("Deleting site ID={0}".format(id))
+            print(("Deleting site ID={0}".format(id)))
             dbutils.delete_links_by_site_id(id)
             dbutils.delete_site_by_id(id)
 

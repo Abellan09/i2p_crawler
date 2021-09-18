@@ -132,7 +132,7 @@ class DatabaseTests(unittest.TestCase):
 
         one_site_pending = dbutils.create_site(s_url="one_site.i2p")
 
-        print(one_site_pending.id)
+        print((one_site_pending.id))
         dbutils.set_site_current_processing_status(s_url="one_site.i2p", s_status=dbsettings.Status.DISCOVERING)
         time.sleep(1)
         dbutils.set_site_current_processing_status(s_url="one_site.i2p", s_status=dbsettings.Status.DISCOVERING)
@@ -142,7 +142,7 @@ class DatabaseTests(unittest.TestCase):
         logs = dbutils.get_processing_logs_by_site_status(s_url="one_site.i2p", s_status=dbsettings.Status.DISCOVERING)
 
         for log in logs:
-            print(log.timestamp)
+            print((log.timestamp))
 
 
 

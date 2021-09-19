@@ -6,13 +6,9 @@ HTTP crawling tool for Darknets sites.
 <img src="c4darknet_modules.png" alt="c4darknet functional modules" width="70%"/>
 </div>
 
-<div align="center">
-<img src="c4i2p_modules.png" alt="c4i2p functional modules" width="70%"/>
-</div>
-
 Although it was originally conceived to be used for the I2P anonymous network, 
 this tool can also be used for crawling some others HTTP based web sites 
-like those found in TOR, Freenet and/or the surface web (see project c4darknet at https://github.com/EmilioFigueras/I2P_Crawler).
+like those found in TOR, Freenet and/or the surface web.
 
 The crawler automatically extracts links to other darknet site thus getting an overall 
 view of the site darknet inter-connections and some other useful information.
@@ -140,7 +136,7 @@ launch the crawler appending ```&> /dev/null``` but it is up to the user.
 * **Gabriel Maciá-Fernández**
 * **Emilio Figueras Martín**
 
-See also the list of [contributors](https://github.com/EmilioFigueras/I2P_Crawler/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/nesg-ugr/c4darknet/graphs/contributors) who participated in this project.
 
 ## License
 

@@ -1,5 +1,4 @@
-# c4darknet: Crawl for Darknet
-
+# c4darknet: a crawler for darknets
 HTTP crawling tool for Darknets sites.
 
 <div align="center">

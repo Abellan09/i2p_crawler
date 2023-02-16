@@ -40,7 +40,7 @@ logger.addHandler(fh)
 class I2P_Spider(spiderBase.spiderBase):
 
 	'''
-	EN: Spider that is responsible for extracting the links contained in an darksite.
+	EN:  Spider that is responsible for extracting the links contained in an darksite.
 	SP: Spider que se encarga de extraer los links contenidos en un darksite.
 
 	For general information about scrapy.Spider, see: https://doc.scrapy.org/en/latest/topics/spiders.html

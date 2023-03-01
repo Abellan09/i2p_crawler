@@ -36,6 +36,99 @@ fh.setFormatter(format)
 fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
 
+class TOR_Spider(spiderBase.spiderBase):
+
+	'''
+	EN: Spider that is responsible for extracting the links contained in an darksite.
+	SP: Spider que se encarga de extraer los links contenidos en un darksite.
+
+	For general information about scrapy.Spider, see: https://doc.scrapy.org/en/latest/topics/spiders.html
+	Para obtener información general sobre scrapy.Spider, consulte: https://doc.scrapy.org/en/latest/topics/spiders.html
+	'''
+
+	name = dbsettings.Type.TOR.name
+
+	def __init__(self, url=None, *args, **kwargs):
+		'''
+		EN: It initializes the seed URL list with the URL that has been passed as a parameter
+		SP: Inicializa la lista de URLs semilla con la URL pasada como parámetro.
+
+		:param url: url of the site to crawl / url del site a crawlear
+		'''
+		super(TOR_Spider, self).__init__(*args, **kwargs)
+		logger.debug("Dentro de __init__()")
+		self.extractor_darknet = spiderBase.LinkExtractor(tags=('a', 'area', 'base', 'link', 'audio', 'embed', 'iframe', 'img', 'input', 'script', 'source', 'track', 'video'),
+		 						 attrs=('href', 'src', 'srcset'), allow_domains=('onion'), deny_extensions=())
+		if url is not None:
+			with open(spiderBase.darknetsettings.PATH_DATA + "languages_google.json") as f:
+				self.LANGUAGES_GOOGLE = json.load(f)
+			with open(spiderBase.darknetsettings.PATH_DATA + "languages_nltk.txt") as g:
+				line = g.readline()
+				while line != "":
+					line = line.replace("\n", "")
+					self.LANGUAGES_NLTK.append(line)
+					line = g.readline()
+
+			logger.debug("URL inicial que se recibe = %s", url)
+			self.parse_darksite = urllib.parse.urlparse(url)
+
+			self.non_visited_links_filename = spiderBase.darknetsettings.PATH_ONGOING_SPIDERS + "nvl_" + self.parse_darksite.netloc + ".txt"
+			if not os.path.isfile(self.non_visited_links_filename):
+				f = open(self.non_visited_links_filename, "a")
+				f.close()
+				self.start_urls.append(url)
+			elif os.stat(self.non_visited_links_filename).st_size != 0:
+				max_size_start_urls = 50
+				count = 0
+				with open(self.non_visited_links_filename) as f:
+					line = f.readline()
+					while line != "" and count < max_size_start_urls:
+						line = line.replace("\n", "")
+						link = "http://" + str(self.parse_darksite.netloc) + line
+						self.start_urls.append(link)
+						logger.debug("Link añadido a start_urls: %s", str(link))
+						count = count + 1
+						line = f.readline()
+
+			self.state_item["darksite"] = self.parse_darksite.netloc
+			spider_file = spiderBase.darknetsettings.PATH_ONGOING_SPIDERS + self.state_item["darksite"] + ".json"
+			ongoing_spider = os.path.exists(spider_file)
+			if ongoing_spider:
+				logger.debug("SPIDER YA LANZADO ANTERIORMENTE.")
+				# Leemos la última línea y cargamos el estado.
+				target = spider_file
+				with open(target) as f:
+					try:
+						state = json.load(f)
+						file_empty = False
+					except ValueError as error:
+						logger.debug("Invalid json: %s", error)
+						file_empty = True
+					if not file_empty:
+						self.error = False
+						if "visited_links" in state:
+							self.state_item["visited_links"] = state["visited_links"]
+							self.visited_links = self.state_item["visited_links"].copy()
+						if "language" in state:
+							self.state_item["language"] = state["language"]
+						if "extracted_darksites" in state:
+							self.state_item["extracted_darksites"] = state["extracted_darksites"]
+						if "total_darksite_pages" in state:
+							self.state_item["total_darksite_pages"] = state["total_darksite_pages"]
+						if "title" in state:
+							self.state_item["title"] = state["title"]
+						if "size_main_page" in state:
+							self.state_item["size_main_page"] = state["size_main_page"]
+						if "main_page_tokenized_words" in state:
+							self.state_item["main_page_tokenized_words"] = state["main_page_tokenized_words"]
+						self.main_page = False
+			else:
+				self.start_urls.append(url)
+				self.start_time = time.time()
+				logger.info("Start URL: %s", str(self.start_urls[0]))
+		else:
+			logger.error("No URL passed to crawl")
+
 
 class I2P_Spider(spiderBase.spiderBase):
 

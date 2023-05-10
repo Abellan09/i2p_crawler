@@ -134,15 +134,18 @@ class SingleSiteDiscoveryThread(DarknetThread, object):
                                 and time_spent <= timedelta(minutes=self._duration):
 
                             darksite_http = "http://" + self._darksite
+                            darksite_https = "https://" + self._darksite
                             logging.debug("DISCOVERING: %s", self._darksite)
                             if not connection_settings.PROXY:
-                                response = request_conn.connectThroughProxy(darksite_http,
-                                                                        proxies=None,
-                                                                        timeout=self._http_request_timeout)
+                            	try:
+                                	response = request_conn.connectThroughProxy(darksite_http,proxies=None,timeout=self._http_request_timeout)
+                            	except:
+                                	response = request_conn.connectThroughProxy(darksite_https,proxies=None,timeout=self._http_request_timeout)
                             else:
-                                response = request_conn.connectThroughProxy(darksite_http,
-                                                                        proxies={'http': 'http://'+connection_settings.PROXY},
-                                                                        timeout=self._http_request_timeout)
+                            	try:
+                                	response = request_conn.connectThroughProxy(darksite_http,proxies={'http': 'http://'+connection_settings.PROXY},timeout=self._http_request_timeout)
+                            	except:
+                                	response = request_conn.connectThroughProxy(darksite_https,proxies={'https': 'https://'+connection_settings.PROXY},timeout=self._http_request_timeout)
 
                             response_code = str(response.status_code)
                             response_time = str(response.elapsed.total_seconds())

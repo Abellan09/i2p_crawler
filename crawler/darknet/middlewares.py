@@ -56,7 +56,7 @@ class DarknetProxyMiddleware(object):
 		return s
 	
 	def process_request(self, request, spider):
-		#request.meta['proxy'] = "http://127.0.0.1:8888"
+		#request.meta['proxy'] = "http://127.0.0.1:8118"
 		if not connection_settings.PROXY:
 			request.meta['proxy'] = None
 		else:

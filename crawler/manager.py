@@ -387,7 +387,6 @@ def run_spider(site):
         # Try running a spider
         #command = 'scrapy crawl i2p -a url="http://' + site + '"'
         #command = 'scrapy crawl freenet -a url="http://' + site + '"'
-        #command = 'scrapy crawl tor -a url="http://' + site + '"'
         command = 'scrapy crawl '+ siteType.name + ' -a url="http://' + site + '"'
         p = subprocess.Popen(shlex.split(command))
 

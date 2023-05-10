@@ -19,16 +19,16 @@ PROVIDER = 'mysql'
 HOST = 'localhost'
 
 #DB username
-USERNAME = 'i2p'
+USERNAME = 'tor'
 
 #DB password
 PASSWORD = 'password'
 
 #DB name
-DATABASE = 'i2p_database'
+DATABASE = 'tor_database'
 
 #Proxy configuration (host:port or None)
 # I2P = 127.0.0.1:4444
 # FREENET = None
-# TOR = 127.0.0.1:8123
-PROXY = '127.0.0.1:8123'
+PROXY = '127.0.0.1:8118'
+

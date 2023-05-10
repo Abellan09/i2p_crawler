@@ -39,8 +39,8 @@ logger.addHandler(fh)
 class TOR_Spider(spiderBase.spiderBase):
 
 	'''
-	EN: Spider that is responsible for extracting the links contained in an darksite.
-	SP: Spider que se encarga de extraer los links contenidos en un darksite.
+	EN: Spider that is responsible for extracting the links contained in an Tor site.
+	SP: Spider que se encarga de extraer los links contenidos en un sitio Tor.
 
 	For general information about scrapy.Spider, see: https://doc.scrapy.org/en/latest/topics/spiders.html
 	Para obtener información general sobre scrapy.Spider, consulte: https://doc.scrapy.org/en/latest/topics/spiders.html
@@ -129,11 +129,10 @@ class TOR_Spider(spiderBase.spiderBase):
 		else:
 			logger.error("No URL passed to crawl")
 
-
 class I2P_Spider(spiderBase.spiderBase):
 
 	'''
-	EN:  Spider that is responsible for extracting the links contained in an darksite.
+	EN: Spider that is responsible for extracting the links contained in an darksite.
 	SP: Spider que se encarga de extraer los links contenidos en un darksite.
 
 	For general information about scrapy.Spider, see: https://doc.scrapy.org/en/latest/topics/spiders.html

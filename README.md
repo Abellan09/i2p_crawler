@@ -1,4 +1,5 @@
-# c4darknet: a crawler for darknets
+# c4darknet: Crawl for Darknet
+
 HTTP crawling tool for Darknets sites.
 
 <div align="center">
@@ -135,7 +136,7 @@ launch the crawler appending ```&> /dev/null``` but it is up to the user.
 * **Gabriel Maciá-Fernández**
 * **Emilio Figueras Martín**
 
-See also the list of [contributors](https://github.com/nesg-ugr/c4darknet/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/EmilioFigueras/c4darknet/graphs/contributors) who participated in this project.
 
 ## License
 

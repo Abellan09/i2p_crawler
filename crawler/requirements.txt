@@ -1,9 +1,14 @@
-scrapy
-pony
-PyMySQL
-nltk
-py_translator
-beautifulsoup4
-langdetect
-html
-slugify
+entrypoints>=0.2.2
+pexpect
+nltk >= 3.4
+scrapy >= 1.5.1
+pony >= 0.7.6
+PyMySQL >= 0.9.3
+googletrans
+beautifulsoup4 >= 4.7.1
+requests >= 2.21.0
+langdetect >= 1.0.7
+slugify >= 0.0.1
+regex >= 2.4
+psutil
+html5lib

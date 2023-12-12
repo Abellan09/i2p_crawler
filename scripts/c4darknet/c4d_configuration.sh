@@ -4,7 +4,7 @@
 # Author: Emilio Figueras, 2020
 
 # root path
-root_path=root_path=/home/administrador/RMAGAN/projects/c4darknet/crawler
+root_path=root_path=/home/administrador/RMAGAN/projects/c4darknet
 
 echo "[+] Setting up configuration files"
 cp $root_path/scripts/config/settings.py $root_path/crawler/

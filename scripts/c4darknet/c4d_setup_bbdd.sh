@@ -3,7 +3,7 @@
 # Resetting database and schema
 # Author: Emilio Figueras
 
-root_path=/home/administrador/RMAGAN/projects/c4darknetTOR/crawler
+root_path=/home/administrador/RMAGAN/projects/c4darknet/crawler
 cd $root_path
 
 echo "--> Deleting/creating database"

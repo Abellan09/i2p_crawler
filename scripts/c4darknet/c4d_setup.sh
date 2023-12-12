@@ -3,7 +3,7 @@
 # Deleting files
 # Author: Emilio Figueras, 2020
 
-root_path=/home/administrador/RMAGAN/projects/c4darknetTOR/crawler
+root_path=/home/administrador/RMAGAN/projects/c4darknet/crawler
 
 echo "[+] Creating folders..."
 mkdir -p /home/administrador/datos/c4darknet/logs

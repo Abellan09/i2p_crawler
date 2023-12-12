@@ -16,19 +16,21 @@
 PROVIDER = 'mysql'
 
 #DB host
-HOST = '192.168.44.9'
+HOST = '192.168.33.10'
 
 #DB username
-USERNAME = 'freenet'
+USERNAME = 'c4darknet'
 
 #DB password
 PASSWORD = '1Uchn53d'
 
 #DB name
-DATABASE = 'freenet_database'
+DATABASE = 'c4darknet'
 
 #Proxy configuration (host:port or None)
 # I2P = 127.0.0.1:4444
 # FREENET = None
+# TOR ='127.0.0.1:8118'
 #PROXY = '127.0.0.1:4444'
-PROXY = None
+#PROXY = None
+PROXY = '127.0.0.1:8118'

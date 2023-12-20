@@ -14,11 +14,11 @@ echo " "
 
 cd $root_path
 
-echo "[+] Installing project dependencies ..."
-source ~/anaconda3/etc/profile.d/conda.sh
-conda activate py37
-pip install -r requirements.txt
-echo " "
+#echo "[+] Installing project dependencies ..."
+#source ~/anaconda3/etc/profile.d/conda.sh
+#conda activate py37
+#pip install -r requirements.txt
+#echo " "
 
 echo "[+] Deleting log and output files"
 echo "--> Deleting log output"

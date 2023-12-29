@@ -89,7 +89,7 @@ DEPTH_LIMIT = 3
 #}
 
 # CUSTOM CONFIGURATION
-PATH_ONGOING_SPIDERS="/home/administrador/datos/freenet/spiders/ongoing/"
-PATH_FINISHED_SPIDERS="/home/administrador/datos/freenet/spiders/finished/"
-PATH_LOG='/home/administrador/datos/freenet/logs/'
-PATH_DATA='../data/'
+PATH_ONGOING_SPIDERS="/home/administrador/datos/c4darknet/spiders/ongoing/"
+PATH_FINISHED_SPIDERS="/home/administrador/datos/c4darknet/spiders/finished/"
+PATH_LOG='/home/administrador/datos/c4darknet/logs/'
+PATH_DATA='/home/administrador/RMAGAN/projects/c4darknet/scripts/c4darknet/freenet/data/'

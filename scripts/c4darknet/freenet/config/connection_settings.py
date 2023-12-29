@@ -19,18 +19,18 @@ PROVIDER = 'mysql'
 HOST = '192.168.33.10'
 
 #DB username
-USERNAME = 'c4darknet'
+USERNAME = 'freenet'
 
 #DB password
 PASSWORD = '1Uchn53d'
 
 #DB name
-DATABASE = 'c4darknet'
+DATABASE = 'freenet'
 
 #Proxy configuration (host:port or None)
-# I2P = 127.0.0.1:4444
-# FREENET = None
-# TOR ='127.0.0.1:8118'
+#I2p
 #PROXY = '127.0.0.1:4444'
-#PROXY = None
-PROXY = '127.0.0.1:8118'
+#Freenet
+PROXY = None
+#Tor - Through privoxy
+#PROXY = '127.0.0.1:8118'

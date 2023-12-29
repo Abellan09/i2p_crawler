@@ -32,5 +32,5 @@ DATABASE = 'tor'
 #PROXY = '127.0.0.1:4444'
 #Freenet
 #PROXY = None
-#Tor
+#Tor - Through privoxy
 PROXY = '127.0.0.1:8118'

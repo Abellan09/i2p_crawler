@@ -407,6 +407,7 @@ def error_to_pending(error_sites, pending_sites):
     :param pending_sites: list - List of current PENDING sites
     """
 
+
     # Error sites should be tagged as pending sites.
     with db_session:
         for site in error_sites:

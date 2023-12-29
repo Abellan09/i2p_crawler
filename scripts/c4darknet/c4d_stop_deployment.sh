@@ -21,12 +21,18 @@ script_path=/home/administrador/RMAGAN/projects/c4darknet/scripts/c4darknet/
 stop() {
   	# $1 name of the remote VM
   	vm=$1
-  	echo "######### VM $vm ############"
-	echo "[+] Stopping processes on $vm ..."
-  	ssh $vm "cd $script_path; bash c4d_stop.sh"
-  	echo " "
-  	echo "---- VM $vm -----"
-  	echo " "
+  	
+  	# Nothing to stop for the vm hosting the BBDD
+  	if [ $vm != 'c4darknet10' ]
+  	then
+  	
+  		echo "######### VM $vm ############"
+		echo "[+] Stopping processes on $vm ..."
+  		ssh $vm "cd $script_path; bash c4d_stop.sh"
+  		echo " "
+  		echo "---- VM $vm -----"
+  		echo " "
+  	fi
 
 }
 

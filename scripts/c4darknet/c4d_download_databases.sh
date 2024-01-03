@@ -10,7 +10,7 @@ for bbdd in i2p tor freenet;
 do
 
 	echo "[+] Dumping database of $bbdd"
-	ssh c4darknet10 "cd $script_path; bash dump_database.sh $bbdd"
+	ssh c4darknet10 "cd $script_path; bash c4d_dump_database.sh $bbdd"
 	echo " "
 
 	echo "[+] Download database $bbdd.sql"

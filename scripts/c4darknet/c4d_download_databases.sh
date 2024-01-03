@@ -3,7 +3,7 @@
 # Restarting all the crawling processes on all the involved VMs.
 # Author: Emilio Figueras, 2020
 
-script_path=script_path=/home/administrador/RMAGAN/projects/c4darknet/scripts/c4darknet/
+script_path=/home/administrador/RMAGAN/projects/c4darknet/scripts/c4darknet/
 data_path=/home/administrador/datos
 
 for bbdd in i2p tor freenet;

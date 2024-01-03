@@ -27,7 +27,7 @@ HTTP_TIMEOUT = 180  # Seconds
 # Initial seed file
 INITIAL_SEEDS = "i2p_seeds.txt"
 # Batch size of initial seeds
-INITIAL_SEEDS_BACH_SIZE = 4600 # 592/10=59'2 = 60
+INITIAL_SEEDS_BACH_SIZE = 1265 # 634/5=1264,8
 # Time to wait until the next seeds self-assignment
 SEEDS_ASSIGNMENT_PERIOD = 600  # seconds (5 machines, 2 minute/machine --> 10 minutes )
 # To schedule the discovering time. Each site will be discover every TIME_INTERVAL_TO_DISCOVER

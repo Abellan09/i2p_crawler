@@ -1,0 +1,2 @@
+127.0.0.1:8888/freenet:USK@yET8IzHqEXMLhzIJuIl1aO7aXx0tPEzh4JldQXx5las,xc1XLpeP9QiE1br5En~HcfwraeugGEwEc5TBKTjkjgE,AQACAAE/YAFI/3
+127.0.0.1:8888/USK@tiYrPDh~fDeH5V7NZjpp~QuubaHwgks88iwlRXXLLWA,yboLMwX1dChz8fWKjmbdtl38HR5uiCOdIUT86ohUyRg,AQACAAE/nerdageddon/247

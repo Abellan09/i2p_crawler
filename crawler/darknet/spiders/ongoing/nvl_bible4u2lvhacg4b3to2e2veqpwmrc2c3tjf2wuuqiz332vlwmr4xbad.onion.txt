@@ -1,0 +1,7 @@
+
+/int/old-admin/c2bfc293c39f0a7530c2aec28744305f41c3ad6dc397c294
+/static/bible_files/zef2005.xsd
+/en/bible
+/api/v1
+/sk/bible
+/en/about

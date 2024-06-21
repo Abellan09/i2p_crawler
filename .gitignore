@@ -107,3 +107,9 @@ venv.bak/
 .mypy_cache/
 
 /notes
+
+#Data experiments
+notebooks/data
+
+#UUID
+crawler/uuid.txt

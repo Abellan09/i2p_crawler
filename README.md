@@ -1,121 +1,143 @@
-# I2P CRAWLER
+# c4darknet: Crawl for Darknet
 
-This tool enables crawling on the I2P Darknet.
+HTTP crawling tool for Darknets sites.
+
+<div align="center">
+<img src="c4darknet_modules.png" alt="c4darknet functional modules" width="70%"/>
+</div>
+
+Although it was originally conceived to be used for the I2P anonymous network, 
+this tool can also be used for crawling some others HTTP based web sites 
+like those found in TOR, Freenet and/or the surface web.
+
+The crawler automatically extracts links to other darknet site thus getting an overall 
+view of the site darknet inter-connections and some other useful information.
+
+To function in a darknet it is necessary to implement access to it in 
+crawler/darknet/spiders/spider.py using the functions of spiderBase.py.
+Currently spiders for I2P and Freenet are implemented.
 
 ## How to install
 
-You can launch the crawler on Windows 10 and Ubuntu Linux (from 16.04 version) systems.
+#### Requirements
 
-In both systems, just download or clone this repository:
+The crawler relies on the use of an adequate environment to run it. Mandatory elements
+for that are:
 
-```
-git clone https://github.com/Abellan09/i2p_crawler
-```
+- Linux **Unbuntu 16.04** and above (it can be run in older version)
+- **I2P router** (latest version), **FProxy** or darknet proxy appropiate
+- **Mysql 5.7**, though some other DBMS can be used like SQLite.
+- **Python 3.7** environment (+ dependencies found in requeriments.txt)
 
-Then, you have to install/configure some things:
+#### Installation steps
+As python based tool, we recommend to use virtual environments. In the following, we are going
+to use conda (https://www.anaconda.com) to create and manage python environments.
 
-First of all, it is neccesary to install an instance of I2P.
-In second place, you need Python 2.7 and Scrapy.
-It is recommended to install DB Browser for SQLite to manage the database easily.
-Last, you have to create the "ongoing" and "finished" directories.
-
-### Windows
-
-1) I2P.
-
-Download (and execute) the installer from [I2P](https://geti2p.net/es/download).
-
-2) Python and Scrapy
-
-Download (and execute) the installer from [Python](https://www.python.org/downloads).
-Then, to install scrapy: ```pip install scrapy```
-
-3) DB Browser for SQLite.
-
-Download (and execute) the installer from [SQLite Browser](https://sqlitebrowser.org).
-
-4) Ongoing and finished directories.
-
-Go to the root of the cloned project.
-Change directory to ~/spiders and create the directories inside it.
+**Dabatase**
+1) Download and install database management system. We choose Mysql but some other can be used.
 
 ```
-cd /i2p_crawler/crawler/i2p/i2p/spiders
-mkdir ongoing
-mkdir finished
+sudo apt install -y mysql-server-5.7 mysql-client-5.7
 ```
 
-### Linux
+2) Creating schema and users.
 
-1) I2P.
-
-```
-sudo apt-add-repository ppa:i2p-maintainers/i2p
-sudo apt-get update
-sudo apt-get install i2p
-```
-
-2) Python and Scrapy
+Scheme ```i2p_database```, user ```i2p``` and password ```password``` will be created after 
+executing the following commands.
 
 ```
-sudo apt install python2.7
-sudo apt install python-pip
-sudo pip install scrapy
+$ sudo mysql
+mysql> create database i2p_database;
+mysql> create user 'i2p'@'localhost' identified by 'password';
+mysql> grant all privileges on `i2p_database`.* to 'i2p'@'localhost';
+mysql> quit;
 ```
 
-3) DB Browser for SQLite.
+**Python environment and dependencies**
 
+1) Creating a virtual environment.
 ```
-sudo add-apt-repository -y ppa:linuxgndu/sqlitebrowser
-sudo apt-get update
-sudo apt-get install sqlitebrowser
+$ conda create -n py37 python=3.7
+$ conda activate py37
+(py37) $
 ```
-
-4) Ongoing and finished directories.
-
+2) Installing python dependencies.
 ```
-cd /i2p_crawler/crawler/i2p/i2p/spiders
-mkdir ongoing
-mkdir finished
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ pip install -r requirements.txt
 ```
 
-## Usage example
+3) Database access from python.
 
-First, you have to raise an instance of I2P (it is recommended that the instance is active as much time as possible for better results).
+We use pony ORM for data persistence layer, so how to connect to database must be configured.
+Please edit the lien in file ```connection_settings.py``` which is located 
+in ```<root_project_folder>/crawler/database/```.
 
-In Windows, just click on the "Start I2P" button; in Linux, start the service with ```i2prouter start```
+### Crawling
+Now it is time to crawl the darknet network. Every time you want to start a new crawling procedure,
+we recommend to follow the next steps.
 
-Then, go to the directory ~i2p_crawler/crawler/i2p with ```cd ~/i2p_crawler/crawler/i2p/``` and run the crawler:
+1) Database population.
 
-```
-python manager.py
-```
-
-The script "manager.py" will try to crawl the entire I2P (all the eepsites it finds). This can take too much time (difficult to estimate).
-If you prefer crawling only one eepsite, run the spider "spider.py" in the next way:
-
-```
-scrapy crawl i2p -a url=URL -o OUTPUT.json
-```
-
-Where "URL" is the URL of the eepsite you want to crawl and "OUTPUT" is the name of the file where the results of crawling will be.
-For example:
+We recommend to drop and create the scheme before running the crawling for a clean and fresh running.
 
 ```
-scrapy crawl i2p -a url=http://eepsite.example.i2p -o output_example.json
+$ sudo mysql
+mysql> drop database i2p_database;
+mysql> create database i2p_database;
+mysql> quit;
 ```
 
-## Built With
+```
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ python populate.py
+```
 
-* [Python](https://www.python.org) - Used language.
-* [Scrapy](https://scrapy.org) - Used crawling framework.
+2) Spiders crawling output.
 
-## Author
+Spiders output JSON files in specific folders so they should already be created. 
+On the contrary, please create them. For a clean and fresh running, delete all files in that folders.
 
-* **Alberto Abellán**
+```
+(py37) $ cd <root_project_folder>/crawler/darknet/spiders/
+(py37) $ mkdir finished ongoing
+```
 
-See also the list of [contributors](https://github.com/Abellan09/i2p_crawler/graphs/contributors) who participated in this project.
+3) Supervising crawling procedure: log.
+
+In order to supervise the crawling procedure, the log file is created in a specific folder.
+If "logs" folder is not created, please create it. For a clean and fresh running, delete this file.
+
+```
+(py37) $ cd <root_project_folder>/
+(py37) $ mkdir logs
+```
+
+4) Starting the crawling process.
+
+
+```
+(py37) $ cd <root_project_folder>/crawler/
+(py37) $ python manager.py &> /dev/null
+```
+
+If you want to supervise the crawling procedure please use see 
+```<root_project_folder>/logs/darknetcrawler.log```. Also, more information is being storage in
+the database.
+
+
+*Note:* The crawling procedure output tons of logs and information on standard output so we recommend to 
+launch the crawler appending ```&> /dev/null``` but it is up to the user.
+
+## Authors
+
+* **Roberto Magán-Carrión**
+* **Alberto Abellán-Galera**
+* **Gabriel Maciá-Fernández**
+* **Emilio Figueras Martín**
+
+See also the list of [contributors](https://github.com/EmilioFigueras/c4darknet/graphs/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE) file for details.

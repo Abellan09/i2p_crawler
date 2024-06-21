@@ -1,0 +1,250 @@
+######### VM i2pProjectBBDD ############
+[+] I2prouter status on i2pProjectBBDD ...
+   Active: inactive (dead) since Fri 2019-05-17 14:39:13 CEST; 3 weeks 0 days ago
+ 
+[+] Crawling process status on i2pProjectBBDD ...
+adminis+ 21722 21721  0 21:04 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 21724 21722  0 21:04 ?        00:00:00 grep manager.py
+ 
+[+] Ongoing spiders i2pProjectBBDD ...
+0
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210001
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 203 sites
+ 
+ 
+[+] HD status i2pProjectBBDD ...
+/dev/sda1       9.7G  8.3G  1.4G  86% /
+/dev/sdc1        99G  4.5G   89G   5% /mnt/datos
+ 
+[+] MEM status i2pProjectBBDD ...
+              total        used        free      shared  buff/cache   available
+Mem:           4.8G        742M        2.5G        3.8M        1.6G        3.8G
+Swap:            0B          0B          0B
+ 
+---- VM i2pProjectBBDD -----
+ 
+######### VM i2pProjectM1 ############
+[+] I2prouter status on i2pProjectM1 ...
+   Active: active (running) since Thu 2019-05-23 11:11:09 CEST; 2 weeks 1 days ago
+ 
+[+] Crawling process status on i2pProjectM1 ...
+adminis+  4914     1 62 18:51 ?        01:24:11 python manager.py
+adminis+ 13982 13946  0 21:05 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 13984 13982  0 21:05 ?        00:00:00 grep manager.py
+ 
+[+] Ongoing spiders i2pProjectM1 ...
+2
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210501
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 480 sites
+ 
+ 
+---- VM i2pProjectM1 -----
+ 
+######### VM i2pProjectM7 ############
+[+] I2prouter status on i2pProjectM7 ...
+   Active: active (running) since Mon 2019-06-03 20:52:45 CEST; 4 days ago
+ 
+[+] Crawling process status on i2pProjectM7 ...
+adminis+ 13624 13623  0 21:05 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 13626 13624  0 21:05 ?        00:00:00 grep manager.py
+adminis+ 15277     1 13 18:46 ?        00:18:52 python manager.py
+ 
+[+] Ongoing spiders i2pProjectM7 ...
+2
+ 
+[+] Floodfill status
+[+] Fecha: 20190525_154001
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 200 sites
+ 
+ 
+---- VM i2pProjectM7 -----
+ 
+######### VM i2pProjectM2 ############
+[+] I2prouter status on i2pProjectM2 ...
+   Active: active (running) since Fri 2019-05-17 16:45:08 CEST; 3 weeks 0 days ago
+ 
+[+] Crawling process status on i2pProjectM2 ...
+adminis+  7749  7724  0 21:05 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+  7752  7749  0 21:05 ?        00:00:00 grep manager.py
+adminis+ 26679     1 57 18:52 ?        01:16:52 python manager.py
+ 
+[+] Ongoing spiders i2pProjectM2 ...
+0
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210501
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 252 sites
+ 
+ 
+---- VM i2pProjectM2 -----
+ 
+######### VM i2pProjectM8 ############
+[+] I2prouter status on i2pProjectM8 ...
+   Active: active (running) since Mon 2019-06-03 21:27:45 CEST; 3 days ago
+ 
+[+] Crawling process status on i2pProjectM8 ...
+adminis+ 21217 21215  0 21:05 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 21219 21217  0 21:05 ?        00:00:00 grep manager.py
+adminis+ 23542     1 12 18:47 ?        00:17:48 python manager.py
+ 
+[+] Ongoing spiders i2pProjectM8 ...
+5
+ 
+[+] Floodfill status
+[+] Fecha: 20190525_154001
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 200 sites
+ 
+ 
+---- VM i2pProjectM8 -----
+ 
+######### VM i2pProjectM3 ############
+[+] I2prouter status on i2pProjectM3 ...
+   Active: active (running) since Fri 2019-05-17 17:29:01 CEST; 3 weeks 0 days ago
+ 
+[+] Crawling process status on i2pProjectM3 ...
+adminis+  8920     1 48 18:53 ?        01:04:11 python manager.py
+adminis+ 22298 22273  0 21:05 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 22301 22298  0 21:05 ?        00:00:00 grep manager.py
+ 
+[+] Ongoing spiders i2pProjectM3 ...
+4
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210501
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 282 sites
+ 
+ 
+---- VM i2pProjectM3 -----
+ 
+######### VM i2pProjectM9 ############
+[+] I2prouter status on i2pProjectM9 ...
+   Active: active (running) since Mon 2019-06-03 21:28:44 CEST; 3 days ago
+ 
+[+] Crawling process status on i2pProjectM9 ...
+adminis+ 25611 25610  0 21:06 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 25613 25611  0 21:06 ?        00:00:00 grep manager.py
+adminis+ 31748     1 13 18:48 ?        00:18:39 python manager.py
+ 
+[+] Ongoing spiders i2pProjectM9 ...
+3
+ 
+[+] Floodfill status
+[+] Fecha: 20190525_154001
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 200 sites
+ 
+ 
+---- VM i2pProjectM9 -----
+ 
+######### VM i2pProjectM4 ############
+[+] I2prouter status on i2pProjectM4 ...
+   Active: active (running) since Fri 2019-05-17 17:43:07 CEST; 3 weeks 0 days ago
+ 
+[+] Crawling process status on i2pProjectM4 ...
+adminis+  1183  1182  0 21:06 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+  1187  1183  0 21:06 ?        00:00:00 grep manager.py
+adminis+ 30352     1 52 18:54 ?        01:08:56 python manager.py
+ 
+[+] Ongoing spiders i2pProjectM4 ...
+4
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210501
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 297 sites
+ 
+ 
+---- VM i2pProjectM4 -----
+ 
+######### VM i2pProjectM10 ############
+[+] I2prouter status on i2pProjectM10 ...
+   Active: active (running) since Mon 2019-06-03 21:29:24 CEST; 3 days ago
+ 
+[+] Crawling process status on i2pProjectM10 ...
+adminis+  8311     1 12 18:49 ?        00:17:07 python manager.py
+adminis+ 21939 21938  0 21:06 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 21941 21939  0 21:06 ?        00:00:00 grep manager.py
+ 
+[+] Ongoing spiders i2pProjectM10 ...
+4
+ 
+[+] Floodfill status
+[+] Fecha: 20190525_154001
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 200 sites
+ 
+ 
+---- VM i2pProjectM10 -----
+ 
+######### VM i2pProjectM5 ############
+[+] I2prouter status on i2pProjectM5 ...
+   Active: active (running) since Fri 2019-05-17 17:39:36 CEST; 3 weeks 0 days ago
+ 
+[+] Crawling process status on i2pProjectM5 ...
+adminis+ 10212     1 70 18:56 ?        01:31:53 python manager.py
+adminis+ 23339 23338  0 21:06 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 23341 23339  0 21:06 ?        00:00:00 grep manager.py
+ 
+[+] Ongoing spiders i2pProjectM5 ...
+2
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210501
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 964 sites
+ 
+ 
+---- VM i2pProjectM5 -----
+ 
+######### VM i2pProjectM6 ############
+[+] I2prouter status on i2pProjectM6 ...
+   Active: active (running) since Fri 2019-05-17 16:55:59 CEST; 3 weeks 0 days ago
+ 
+[+] Crawling process status on i2pProjectM6 ...
+adminis+ 13267     1 71 18:57 ?        01:32:33 python manager.py
+adminis+ 17114 17107  0 21:07 ?        00:00:00 bash -c ps -ef | grep manager.py
+adminis+ 17116 17114  0 21:07 ?        00:00:00 grep manager.py
+ 
+[+] Ongoing spiders i2pProjectM6 ...
+4
+ 
+[+] Floodfill status
+[+] Fecha: 20190607_210501
+[+] Leyendo logs en /var/log/i2p/log-router-0.txt /var/log/i2p/log-router-1.txt /var/log/i2p/log-router-2.txt
+[+] Extrayendo urls tipo i2p
+[+] Script finalizado. Resultado en i2p_list.txt
+[+] Obtenidos: 1139 sites
+ 
+ 
+---- VM i2pProjectM6 -----
+ 
